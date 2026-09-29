@@ -1,0 +1,9 @@
+.venv
+.git
+.idea
+allure-results
+allure-report
+tests
+framework
+envs
+**/__pycache__
