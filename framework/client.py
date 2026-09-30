@@ -30,6 +30,3 @@ class ApiClient:
 
     def delete(self, path: str, **kwargs) -> Response:
         return self.request("DELETE", path, **kwargs)
-
-
-
