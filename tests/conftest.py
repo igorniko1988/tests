@@ -3,11 +3,18 @@ import uuid
 from pytest import fixture
 
 from framework.client import ApiClient
+from framework.config import Settings
+
+
+@fixture(scope="session")
+def configs():
+    settings = Settings()
+    return settings
 
 
 @fixture
-def api_client():
-    with ApiClient("http://localhost:8080") as client:
+def api_client(configs):
+    with ApiClient(base_url=configs.base_url, timeout=configs.timeout) as client:
         yield client
 
 
