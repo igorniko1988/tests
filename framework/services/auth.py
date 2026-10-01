@@ -12,3 +12,6 @@ class AuthApi:
 
     def login(self, user_data: dict) -> httpx.Response:
         return self._client.post("/auth/login", json=user_data)
+
+    def me(self, auth: httpx.Auth | None = None) -> httpx.Response:
+        return self._client.get('/me', auth=auth)
