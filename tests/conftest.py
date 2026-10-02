@@ -43,13 +43,16 @@ def auth_token(auth_api, user_credential):
     token = authorised_user.json()["access_token"]
     return token
 
+
 @fixture
 def bearer_token(auth_token):
     return BearerAuth(auth_token)
 
+
 @fixture
 def auth_api(api_client):
     return AuthApi(api_client)
+
 
 @fixture
 def balance_api(api_client):

@@ -21,9 +21,7 @@ async def lock_balance(session: AsyncSession, user_id: uuid.UUID, asset: str) ->
         .on_conflict_do_nothing(index_elements=["user_id", "asset"])
     )
     return await session.scalar(
-        select(Balance)
-        .where(Balance.user_id == user_id, Balance.asset == asset)
-        .with_for_update()
+        select(Balance).where(Balance.user_id == user_id, Balance.asset == asset).with_for_update()
     )
 
 

@@ -8,10 +8,9 @@ class BalancesApi:
         self._client = client
 
     def get(self, auth: httpx.Auth | None = None) -> httpx.Response:
-        return self._client.get('/balances', auth=auth)
+        return self._client.get("/balances", auth=auth)
 
     def deposit(self, asset: str, amount: str, auth: httpx.Auth | None = None) -> httpx.Response:
         return self._client.post(
-            '/balances/deposit',
-            json ={"asset": asset, "amount": amount},
-            auth=auth)
+            "/balances/deposit", json={"asset": asset, "amount": amount}, auth=auth
+        )

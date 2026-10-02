@@ -26,7 +26,12 @@ def verify_password(password: str, stored: str) -> bool:
 def create_access_token(user_id: uuid.UUID) -> tuple[str, int]:
     ttl = settings.access_token_ttl_seconds
     now = datetime.now(UTC)
-    payload = {"sub": str(user_id), "iat": now, "exp": now + timedelta(seconds=ttl), "type": "access"}
+    payload = {
+        "sub": str(user_id),
+        "iat": now,
+        "exp": now + timedelta(seconds=ttl),
+        "type": "access",
+    }
     return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm), ttl
 
 
