@@ -74,7 +74,7 @@ def test_user_with_wrong_password(auth_api, user_credential):
         "password": "WrongPassword1!",
     }
 
-    non_authorized_user = auth_api.login(user_with_incorrect_email)
+    non_authorized_user = auth_api.login(user_with_incorrect_password)
 
     assert non_authorized_user.status_code == 401
     assert non_authorized_user.json()["error"]["message"] == "Invalid email or password"
