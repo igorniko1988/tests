@@ -2,10 +2,10 @@ import uuid
 
 from pytest import fixture
 
+from framework.auth import BearerAuth
 from framework.client import ApiClient
 from framework.config import Settings
 from framework.services.auth import AuthApi
-from framework.auth import BearerAuth
 from framework.services.balances import BalancesApi
 
 
