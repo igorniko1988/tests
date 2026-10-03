@@ -1,6 +1,8 @@
-from framework.utils.masking import hide_headers, hide_sensitive_fields
+import copy
 
-MASK = "****"
+import pytest
+
+from framework.utils.masking import MASK, hide_headers, hide_sensitive_fields
 
 
 def test_authorization_header_is_masked():
@@ -35,7 +37,7 @@ def test_nested_field_is_masked():
     assert result == {"user": {"password": MASK}}
 
 
-def test_test_fields_inside_list_are_masked():
+def test_fields_inside_list_are_masked():
     data = {"items": [{"access_token": "a"}, {"access_token": "b"}]}
 
     result = hide_sensitive_fields(data)
@@ -43,9 +45,50 @@ def test_test_fields_inside_list_are_masked():
     assert result == {"items": [{"access_token": MASK}, {"access_token": MASK}]}
 
 
-def test_non_container_returned_as_is():
-    data = "text", 42, None
+@pytest.mark.parametrize("value", ["text", 42, None])
+def test_non_container_returned_as_is(value):
+    result = hide_sensitive_fields(value)
+
+    assert result == value
+
+
+def test_field_name_case_insensitive():
+    data = {"Password": "123"}
 
     result = hide_sensitive_fields(data)
 
-    assert result == data
+    assert result == {"Password": MASK}
+
+
+def test_refresh_token_is_masked():
+    data = {"refresh_token": "abc"}
+
+    result = hide_sensitive_fields(data)
+
+    assert result == {"refresh_token": MASK}
+
+
+def test_cookie_header_is_masked():
+    data = {"Cookie": "session=abc"}
+
+    result = hide_headers(data)
+
+    assert result == {"Cookie": MASK}
+
+
+def test_hide_sensitive_fields_does_not_modify_input():
+    data = {"user": {"password": "123"}, "items": [{"access_token": "a"}]}
+    original = copy.deepcopy(data)
+
+    hide_sensitive_fields(data)
+
+    assert data == original
+
+
+def test_hide_headers_does_not_modify_input():
+    data = {"Authorization": "Bearer abc"}
+    original = copy.deepcopy(data)
+
+    hide_headers(data)
+
+    assert data == original

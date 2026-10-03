@@ -27,9 +27,10 @@ def login_response(login_request):
     return response
 
 
-def test_headers(login_request):
+def test_headers_authorization_masked(login_request):
     result = format_headers(login_request.headers)
     assert "authorization: ****" in result
+    assert "Bearer abc" not in result
 
 
 def test_request_starts_with_method_and_url(login_request):
@@ -37,9 +38,26 @@ def test_request_starts_with_method_and_url(login_request):
     assert result.startswith("POST http://test/auth/login")
 
 
+def test_request_hides_token(login_request):
+    result = format_request(login_request)
+    assert "Bearer abc" not in result
+
+
+def test_request_hides_password(login_request):
+    result = format_request(login_request)
+    assert '"123"' not in result
+    assert "a@b.com" in result
+
+
 def test_response_starts_with_status_and_time(login_response):
     result = format_response(login_response)
     assert result.startswith("200 OK (0.034 s)")
+
+
+def test_response_hides_access_token(login_response):
+    result = format_response(login_response)
+    assert "xyz" not in result
+    assert "bearer" in result
 
 
 def test_json_body_password_is_masked():
