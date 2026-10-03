@@ -1,4 +1,7 @@
+import allure
 from httpx import Client, Response
+
+from framework.http.http_logging import format_request, format_response
 
 
 class ApiClient:
@@ -17,7 +20,20 @@ class ApiClient:
         self._client.close()
 
     def request(self, method: str, path: str, **kwargs) -> Response:
-        return self._client.request(method, path, **kwargs)
+        response = self._client.request(method, path, **kwargs)
+        with allure.step(f"{method} {path} --> {response.status_code}"):
+            allure.attach(
+                format_request(response.request),
+                name="request",
+                attachment_type=allure.attachment_type.TEXT,
+            )
+
+            allure.attach(
+                format_response(response),
+                name="response",
+                attachment_type=allure.attachment_type.TEXT,
+            )
+        return response
 
     def get(self, path: str, **kwargs) -> Response:
         return self.request("GET", path, **kwargs)

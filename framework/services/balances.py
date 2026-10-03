@@ -1,6 +1,6 @@
 import httpx
 
-from framework.client import ApiClient
+from framework.http.client import ApiClient
 
 
 class BalancesApi:
