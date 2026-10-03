@@ -8,6 +8,7 @@ class ServiceSettings(BaseSettings):
     jwt_secret: str = "local-dev-secret-change-me-32-bytes-min"
     jwt_algorithm: str = "HS256"
     access_token_ttl_seconds: int = 900
+    chaos_rate: float = 0.0
 
 
 settings = ServiceSettings()
