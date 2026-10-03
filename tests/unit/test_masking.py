@@ -1,4 +1,4 @@
-from framework.masking import hide_headers, hide_sensitive_fields
+from framework.utils.masking import hide_headers, hide_sensitive_fields
 
 MASK = "****"
 
