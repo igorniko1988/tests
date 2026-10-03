@@ -39,6 +39,9 @@
   `uv run uvicorn exchange.main:app --reload --port 8000`.
 - Стек: FastAPI, SQLAlchemy 2 (async) + Postgres, JWT (PyJWT). Суммы — Decimal, в API строкой.
 - Схема БД создаётся на старте (`create_all`), миграций пока нет.
+- Режим сбоев: `EXCHANGE_CHAOS_RATE=0.3 docker compose up -d` — 30% запросов отвечают 503
+  с `Retry-After: 1`; половина сбоев случается уже после обработки запроса.
+  `/health` и `/docs` не затрагиваются. По умолчанию выключен.
 
 ## Окружение
 

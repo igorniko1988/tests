@@ -6,6 +6,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy import text
 
 from exchange.api import auth, balances, orders
+from exchange.chaos import install_chaos
 from exchange.db import SessionLocal, create_schema
 from exchange.errors import install_error_handlers
 
@@ -18,6 +19,7 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(title="Mini Exchange", version="0.1.0", lifespan=lifespan)
 install_error_handlers(app)
+install_chaos(app)
 
 
 @app.middleware("http")

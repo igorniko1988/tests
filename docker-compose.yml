@@ -18,6 +18,7 @@ services:
     environment:
       EXCHANGE_DATABASE_URL: postgresql+asyncpg://exchange:exchange@db:5432/exchange
       EXCHANGE_JWT_SECRET: docker-secret-change-me-at-least-32-bytes
+      EXCHANGE_CHAOS_RATE: ${EXCHANGE_CHAOS_RATE:-0}
     ports:
       - "8080:8000"
     depends_on:
