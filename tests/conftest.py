@@ -1,8 +1,10 @@
 import os
 
+import pytest
 from pytest import fixture
 
 from framework.config import Settings
+from framework.db.client import Database
 from framework.factories.users import create_user, random_credentials
 from framework.services.auth import AuthApi
 from framework.services.balances import BalancesApi
@@ -90,3 +92,10 @@ def funded_user(make_user):
     user = make_user()
     user.balances.deposit("USDT", "100").raise_for_status()
     return user
+
+
+@fixture(scope="session")
+def db(configs):
+    if configs.db_url is None:
+        pytest.skip("на этом окружении нет доступа к базе")
+    return Database(configs.db_url)

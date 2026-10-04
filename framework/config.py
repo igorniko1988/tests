@@ -6,3 +6,4 @@ class Settings(BaseSettings):
 
     base_url: str = "http://localhost:8080"
     timeout: float = 10
+    db_url: str | None = None
