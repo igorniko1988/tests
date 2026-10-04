@@ -42,6 +42,8 @@
 - Режим сбоев: `EXCHANGE_CHAOS_RATE=0.3 docker compose up -d` — 30% запросов отвечают 503
   с `Retry-After: 1`; половина сбоев случается уже после обработки запроса.
   `/health` и `/docs` не затрагиваются. По умолчанию выключен.
+- Stage-экземпляр: `docker compose --profile stage up -d` → http://localhost:8081.
+  Своя база и JWT-секрет, 5% сбоев (`EXCHANGE_STAGE_CHAOS_RATE`). Обычный `up` его не трогает.
 
 ## Окружение
 

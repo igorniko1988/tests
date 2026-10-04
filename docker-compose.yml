@@ -24,3 +24,31 @@ services:
     depends_on:
       db:
         condition: service_healthy
+
+  # Второй экземпляр стенда, имитирует общий stage: своя база, свой секрет,
+  # немного нестабильности. Запуск: docker compose --profile stage up -d
+  db-stage:
+    image: postgres:16-alpine
+    profiles: ["stage"]
+    environment:
+      POSTGRES_USER: exchange
+      POSTGRES_PASSWORD: exchange
+      POSTGRES_DB: exchange
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U exchange"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  exchange-stage:
+    build: .
+    profiles: ["stage"]
+    environment:
+      EXCHANGE_DATABASE_URL: postgresql+asyncpg://exchange:exchange@db-stage:5432/exchange
+      EXCHANGE_JWT_SECRET: stage-secret-not-the-same-as-docker-32b
+      EXCHANGE_CHAOS_RATE: ${EXCHANGE_STAGE_CHAOS_RATE:-0.05}
+    ports:
+      - "8081:8000"
+    depends_on:
+      db-stage:
+        condition: service_healthy
