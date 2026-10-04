@@ -1,9 +1,8 @@
 from framework.models.order import Order, OrderStatus
 
 
-def test_create_order(make_user):
-    alice = make_user()
-    alice.balances.deposit("USDT", "10")
+def test_create_order(funded_user):
+    alice = funded_user
 
     response = alice.orders.create_order("ETH-USDT", "BUY", price="2", quantity="3")
 
@@ -13,13 +12,12 @@ def test_create_order(make_user):
     assert order.filled_quantity == 0
 
     usdt = alice.get_balance("USDT")
-    assert usdt.available == 4
+    assert usdt.available == 94
     assert usdt.locked == 6
 
 
-def test_cancel_order(make_user):
-    alice = make_user()
-    alice.balances.deposit("USDT", "10")
+def test_cancel_order(funded_user):
+    alice = funded_user
     created = alice.orders.create_order("ETH-USDT", "BUY", price="2", quantity="3")
     order = Order.model_validate(created.json())
 
@@ -29,7 +27,7 @@ def test_cancel_order(make_user):
     assert Order.model_validate(response.json()).status == OrderStatus.CANCELED
 
     usdt = alice.get_balance("USDT")
-    assert usdt.available == 10
+    assert usdt.available == 100
     assert usdt.locked == 0
 
 

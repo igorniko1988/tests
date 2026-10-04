@@ -24,7 +24,7 @@ def configs():
     return settings
 
 
-@fixture
+@fixture(scope="session")
 def api_client(configs):
     with ApiClient(base_url=configs.base_url, timeout=configs.timeout) as client:
         yield client
@@ -54,17 +54,17 @@ def bearer_token(auth_token):
     return BearerAuth(auth_token)
 
 
-@fixture
+@fixture(scope="session")
 def auth_api(api_client):
     return AuthApi(api_client)
 
 
-@fixture
+@fixture(scope="session")
 def balance_api(api_client):
     return BalancesApi(api_client)
 
 
-@fixture
+@fixture(scope="session")
 def orders_api(api_client):
     return OrdersApi(api_client)
 
@@ -82,3 +82,11 @@ def make_user(configs):
 
     for user in users:
         user.client.close()
+
+
+@fixture
+def funded_user(make_user):
+    """Пользователь, у которого уже есть 100 USDT."""
+    user = make_user()
+    user.balances.deposit("USDT", "100").raise_for_status()
+    return user
