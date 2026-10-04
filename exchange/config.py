@@ -9,6 +9,7 @@ class ServiceSettings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_ttl_seconds: int = 900
     chaos_rate: float = 0.0
+    matching_interval: float = 1.0
 
 
 settings = ServiceSettings()
