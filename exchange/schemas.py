@@ -16,11 +16,11 @@ def _format_amount(value: Decimal) -> str:
     return format(value.normalize(), "f") if value else "0"
 
 
-Amount = Annotated[Decimal, PlainSerializer(_format_amount, return_type=str)]
+Amount = Annotated[Decimal, PlainSerializer(_format_amount, return_type=str, when_used="json")]
 PositiveAmount = Annotated[
     Decimal,
     Field(gt=0, max_digits=36, decimal_places=18),
-    PlainSerializer(_format_amount, return_type=str),
+    PlainSerializer(_format_amount, return_type=str, when_used="json"),
 ]
 
 

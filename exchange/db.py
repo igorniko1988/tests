@@ -3,7 +3,7 @@ import uuid
 from datetime import UTC, datetime
 from decimal import Decimal
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Numeric, String, UniqueConstraint
+from sqlalchemy import JSON, DateTime, Enum, ForeignKey, Numeric, String, UniqueConstraint
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -79,6 +79,21 @@ class Order(Base):
     )
 
 
+class IdempotencyKey(Base):
+    """Сохранённый ответ на запрос с заголовком Idempotency-Key."""
+
+    __tablename__ = "idempotency_keys"
+    __table_args__ = (UniqueConstraint("user_id", "key"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
+    key: Mapped[str] = mapped_column(String(255))
+    request_hash: Mapped[str] = mapped_column(String(64))
+    status_code: Mapped[int]
+    response_body: Mapped[dict] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
 async def get_session():
     async with SessionLocal() as session:
         yield session
@@ -89,4 +104,13 @@ async def create_schema() -> None:
         await conn.run_sync(Base.metadata.create_all)
 
 
-__all__ = ["AsyncSession", "Balance", "Order", "OrderSide", "OrderStatus", "OrderType", "User"]
+__all__ = [
+    "AsyncSession",
+    "Balance",
+    "IdempotencyKey",
+    "Order",
+    "OrderSide",
+    "OrderStatus",
+    "OrderType",
+    "User",
+]

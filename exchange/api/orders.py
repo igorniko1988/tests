@@ -1,11 +1,16 @@
+import hashlib
 import uuid
+from decimal import Decimal
+from typing import Annotated
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Header
+from fastapi.responses import JSONResponse
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 from exchange.api.balances import lock_balance
 from exchange.api.deps import Session, UserId
-from exchange.db import Order, OrderSide, OrderStatus
+from exchange.db import IdempotencyKey, Order, OrderSide, OrderStatus
 from exchange.errors import ApiError
 from exchange.schemas import SYMBOLS, CreateOrderRequest, OrderOut
 
@@ -22,9 +27,35 @@ def _funds_to_lock(order: Order) -> tuple[str, object]:
     return base, remaining
 
 
+async def _find_key(session, user_id: uuid.UUID, key: str) -> IdempotencyKey | None:
+    query = select(IdempotencyKey).where(
+        IdempotencyKey.user_id == user_id, IdempotencyKey.key == key
+    )
+    return await session.scalar(query)
+
+
+def _replay(saved: IdempotencyKey, request_hash: str) -> JSONResponse:
+    if saved.request_hash != request_hash:
+        raise ApiError(
+            422, "idempotency_key_reused", "Idempotency-Key was used with a different request"
+        )
+    return JSONResponse(status_code=saved.status_code, content=saved.response_body)
+
+
 @router.post("/orders", status_code=201, response_model=OrderOut)
-async def create_order(body: CreateOrderRequest, user_id: UserId, session: Session):
-    order = Order(user_id=user_id, **body.model_dump())
+async def create_order(
+    body: CreateOrderRequest,
+    user_id: UserId,
+    session: Session,
+    idempotency_key: Annotated[str | None, Header(max_length=255)] = None,
+):
+    request_hash = hashlib.sha256(body.model_dump_json().encode()).hexdigest()
+    if idempotency_key:
+        saved = await _find_key(session, user_id, idempotency_key)
+        if saved:
+            return _replay(saved, request_hash)
+
+    order = Order(user_id=user_id, filled_quantity=Decimal(0), **body.model_dump())
     asset, amount = _funds_to_lock(order)
     balance = await lock_balance(session, user_id, asset)
     if balance.available < amount:
@@ -33,7 +64,24 @@ async def create_order(body: CreateOrderRequest, user_id: UserId, session: Sessi
     balance.available -= amount
     balance.locked += amount
     session.add(order)
-    await session.commit()
+    await session.flush()
+
+    if idempotency_key:
+        session.add(
+            IdempotencyKey(
+                user_id=user_id,
+                key=idempotency_key,
+                request_hash=request_hash,
+                status_code=201,
+                response_body=OrderOut.model_validate(order).model_dump(mode="json"),
+            )
+        )
+    try:
+        await session.commit()
+    except IntegrityError:
+        # Такой же запрос с этим ключом успел раньше: наш откатился целиком
+        await session.rollback()
+        return _replay(await _find_key(session, user_id, idempotency_key), request_hash)
     return order
 
 
