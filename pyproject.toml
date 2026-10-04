@@ -26,6 +26,7 @@ tests = [
     "allure-pytest>=2.13",
     "tenacity>=9.0",
     "faker>=30.0",
+    "pytest-xdist>=3.8.0",
 ]
 dev = [
     { include-group = "service" },
