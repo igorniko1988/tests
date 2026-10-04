@@ -20,6 +20,7 @@ class OrderStatus(StrEnum):
     PARTIALLY_FILLED = "PARTIALLY_FILLED"
     FILLED = "FILLED"
     CANCELED = "CANCELED"
+    EXPIRED = "EXPIRED"
 
 
 class Order(BaseModel):
@@ -33,5 +34,6 @@ class Order(BaseModel):
     quantity: Decimal
     filled_quantity: Decimal
     status: OrderStatus
+    expires_at: datetime | None
     created_at: datetime
     updated_at: datetime
