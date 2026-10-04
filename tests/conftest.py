@@ -1,3 +1,4 @@
+import os
 import uuid
 
 from pytest import fixture
@@ -11,7 +12,14 @@ from framework.transport.client import ApiClient
 
 @fixture(scope="session")
 def configs():
-    settings = Settings()
+    env = os.environ.get("ENV", "docker")
+    settings = Settings(_env_file=f"envs/{env}.env")
+
+    os.makedirs("allure-results", exist_ok=True)
+    with open("allure-results/environment.properties", "w") as f:
+        f.write(f"ENV={env}\n")
+        f.write(f"BASE_URL={settings.base_url}\n")
+
     return settings
 
 
