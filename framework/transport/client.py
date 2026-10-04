@@ -1,5 +1,5 @@
 import allure
-from httpx import BaseTransport, Client, Response
+from httpx import Auth, BaseTransport, Client, Response
 from tenacity import Retrying, retry_if_result, stop_after_attempt, wait_exponential
 
 from framework.transport.http_logging import format_request, format_response
@@ -16,6 +16,7 @@ class ApiClient:
         transport: BaseTransport | None = None,
         retry_attempts: int = 1,
         retry_backoff: float = 0.5,
+        auth: Auth | None = None,
     ):
         self.base_url = base_url
         self.timeout = timeout
@@ -23,7 +24,7 @@ class ApiClient:
         self.retry_attempts = retry_attempts
         self.retry_backoff = retry_backoff
         self._client = Client(
-            base_url=self.base_url, timeout=self.timeout, transport=self.transport
+            base_url=self.base_url, timeout=self.timeout, transport=self.transport, auth=auth
         )
 
     def __enter__(self):
@@ -48,6 +49,9 @@ class ApiClient:
         return retrying(self._send, method, path, **kwargs)
 
     def _send(self, method: str, path: str, **kwargs) -> Response:
+        # auth=None из сервиса не должен отключать токен, заданный клиенту
+        if kwargs.get("auth") is None:
+            kwargs.pop("auth", None)
         response = self._client.request(method, path, **kwargs)
         with allure.step(f"{method} {path} --> {response.status_code}"):
             allure.attach(

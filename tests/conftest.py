@@ -9,6 +9,7 @@ from framework.services.balances import BalancesApi
 from framework.services.orders import OrdersApi
 from framework.transport.auth import BearerAuth
 from framework.transport.client import ApiClient
+from framework.user import LoggedInUser
 
 
 @fixture(scope="session")
@@ -76,3 +77,29 @@ def balance_api(api_client):
 @fixture
 def orders_api(api_client):
     return OrdersApi(api_client)
+
+
+@fixture
+def make_user(configs, auth_api):
+    clients = []
+
+    def create() -> LoggedInUser:
+        uid = uuid.uuid4().hex[:8]
+        credentials = {"email": f"qa+{uid}@example.com", "password": f"Aa1!{uid}secret"}
+        assert auth_api.register(credentials).status_code == 201
+        token = auth_api.login(credentials).json()["access_token"]
+
+        client = ApiClient(
+            base_url=configs.base_url,
+            timeout=configs.timeout,
+            retry_attempts=configs.retry_attempts,
+            retry_backoff=configs.retry_backoff,
+            auth=BearerAuth(token),
+        )
+        clients.append(client)
+        return LoggedInUser(credentials["email"], client)
+
+    yield create
+
+    for client in clients:
+        client.close()
