@@ -1,15 +1,14 @@
 import os
-import uuid
 
 from pytest import fixture
 
 from framework.config import Settings
+from framework.factories.users import create_user, random_credentials
 from framework.services.auth import AuthApi
 from framework.services.balances import BalancesApi
 from framework.services.orders import OrdersApi
 from framework.transport.auth import BearerAuth
 from framework.transport.client import ApiClient
-from framework.user import LoggedInUser
 
 
 @fixture(scope="session")
@@ -33,11 +32,7 @@ def api_client(configs):
 
 @fixture
 def user_credential():
-    uid = uuid.uuid4().hex[:8]
-    return {
-        "email": f"qa+{uid}@example.com",
-        "password": f"Aa1!{uuid.uuid4().hex[:12]}",
-    }
+    return random_credentials()
 
 
 @fixture
@@ -75,20 +70,15 @@ def orders_api(api_client):
 
 
 @fixture
-def make_user(configs, auth_api):
-    clients = []
+def make_user(configs):
+    users = []
 
-    def create() -> LoggedInUser:
-        uid = uuid.uuid4().hex[:8]
-        credentials = {"email": f"qa+{uid}@example.com", "password": f"Aa1!{uid}secret"}
-        assert auth_api.register(credentials).status_code == 201
-        token = auth_api.login(credentials).json()["access_token"]
-
-        client = ApiClient(configs.base_url, configs.timeout, auth=BearerAuth(token))
-        clients.append(client)
-        return LoggedInUser(credentials["email"], client)
+    def create():
+        user = create_user(configs.base_url, configs.timeout)
+        users.append(user)
+        return user
 
     yield create
 
-    for client in clients:
-        client.close()
+    for user in users:
+        user.client.close()
