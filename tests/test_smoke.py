@@ -2,6 +2,9 @@ from decimal import Decimal
 
 import pytest
 
+from framework.models.balance import Balance
+from framework.models.user import User
+
 
 @pytest.mark.smoke
 def test_health(api_client):
@@ -44,7 +47,10 @@ def test_me_without_token(auth_api):
 
 def test_me(auth_api, user_credential, bearer_token):
     me = auth_api.me(auth=bearer_token)
+
     assert me.status_code == 200
+
+    User.model_validate(me.json())
     assert me.json()["email"] == user_credential["email"]
 
 
@@ -84,10 +90,15 @@ def test_user_can_make_deposit(balance_api, user_credential, bearer_token):
     make_deposit = balance_api.deposit(auth=bearer_token, asset="USDT", amount="1")
     assert make_deposit.status_code == 200
 
-    user_assets = balance_api.get(auth=bearer_token)
-    usdt_balance = next(b for b in user_assets.json() if b["asset"] == "USDT")
+    Balance.model_validate(make_deposit.json())
 
-    assert Decimal(usdt_balance["available"]) == Decimal("1")
+    user_assets = balance_api.get(auth=bearer_token)
+    assert user_assets.status_code == 200
+    balances = [Balance.model_validate(b) for b in user_assets.json()]
+
+    usdt_balance = next(b for b in balances if b.asset == "USDT")
+
+    assert usdt_balance.available == Decimal("1")
 
 
 def test_deposit_without_token(balance_api, user_credential):
