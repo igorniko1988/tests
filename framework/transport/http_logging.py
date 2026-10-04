@@ -28,9 +28,15 @@ def format_request(request: httpx.Request) -> str:
     return f"{first_line}\n\n{headers}\n\n{body}"
 
 
+def format_elapsed(response: httpx.Response) -> str:
+    try:
+        return f"{response.elapsed.total_seconds():.3f} s"
+    except RuntimeError:
+        return "n/a"
+
+
 def format_response(response: httpx.Response) -> str:
-    seconds = response.elapsed.total_seconds()
-    first_line = f"{response.status_code} {response.reason_phrase} ({seconds:.3f} s)"
+    first_line = f"{response.status_code} {response.reason_phrase} ({format_elapsed(response)})"
     headers = format_headers(response.headers)
     body = format_body(response.content)
     return f"{first_line}\n\n{headers}\n\n{body}"
