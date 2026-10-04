@@ -27,12 +27,7 @@ def configs():
 
 @fixture
 def api_client(configs):
-    with ApiClient(
-        base_url=configs.base_url,
-        timeout=configs.timeout,
-        retry_attempts=configs.retry_attempts,
-        retry_backoff=configs.retry_backoff,
-    ) as client:
+    with ApiClient(base_url=configs.base_url, timeout=configs.timeout) as client:
         yield client
 
 
@@ -89,13 +84,7 @@ def make_user(configs, auth_api):
         assert auth_api.register(credentials).status_code == 201
         token = auth_api.login(credentials).json()["access_token"]
 
-        client = ApiClient(
-            base_url=configs.base_url,
-            timeout=configs.timeout,
-            retry_attempts=configs.retry_attempts,
-            retry_backoff=configs.retry_backoff,
-            auth=BearerAuth(token),
-        )
+        client = ApiClient(configs.base_url, configs.timeout, auth=BearerAuth(token))
         clients.append(client)
         return LoggedInUser(credentials["email"], client)
 
