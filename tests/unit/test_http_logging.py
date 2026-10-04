@@ -4,7 +4,12 @@ from datetime import timedelta
 import httpx
 from pytest import fixture
 
-from framework.http.http_logging import format_body, format_headers, format_request, format_response
+from framework.transport.http_logging import (
+    format_body,
+    format_headers,
+    format_request,
+    format_response,
+)
 
 
 @fixture
@@ -58,6 +63,14 @@ def test_response_hides_access_token(login_response):
     result = format_response(login_response)
     assert "xyz" not in result
     assert "bearer" in result
+
+
+def test_response_without_elapsed_does_not_fail(login_request):
+    response = httpx.Response(200, request=login_request)
+
+    result = format_response(response)
+
+    assert result.startswith("200 OK (n/a)")
 
 
 def test_json_body_password_is_masked():

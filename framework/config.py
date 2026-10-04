@@ -6,3 +6,5 @@ class Settings(BaseSettings):
 
     base_url: str = "http://localhost:8080"
     timeout: float = 10
+    retry_attempts: int = 3
+    retry_backoff: float = 0.5

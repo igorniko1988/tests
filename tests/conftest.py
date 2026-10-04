@@ -3,10 +3,10 @@ import uuid
 from pytest import fixture
 
 from framework.config import Settings
-from framework.http.auth import BearerAuth
-from framework.http.client import ApiClient
 from framework.services.auth import AuthApi
 from framework.services.balances import BalancesApi
+from framework.transport.auth import BearerAuth
+from framework.transport.client import ApiClient
 
 
 @fixture(scope="session")
@@ -17,7 +17,12 @@ def configs():
 
 @fixture
 def api_client(configs):
-    with ApiClient(base_url=configs.base_url, timeout=configs.timeout) as client:
+    with ApiClient(
+        base_url=configs.base_url,
+        timeout=configs.timeout,
+        retry_attempts=configs.retry_attempts,
+        retry_backoff=configs.retry_backoff,
+    ) as client:
         yield client
 
 
