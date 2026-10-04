@@ -8,5 +8,6 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-default-groups --group service
 
 COPY exchange ./exchange
+COPY trainer ./trainer
 EXPOSE 8000
 CMD ["uvicorn", "exchange.main:app", "--host", "0.0.0.0", "--port", "8000"]

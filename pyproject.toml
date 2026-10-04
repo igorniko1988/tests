@@ -29,6 +29,7 @@ tests = [
     "pytest-xdist>=3.8.0",
     "psycopg[binary]>=3.3.6",
     "hypothesis>=6.168.3",
+    "requests>=2.34.2",
 ]
 dev = [
     { include-group = "service" },

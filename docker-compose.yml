@@ -25,6 +25,13 @@ services:
       db:
         condition: service_healthy
 
+  # Тренажёр для лайвкодинга: задачи в стиле собеседований, см. LIVECODING.md
+  trainer:
+    build: .
+    command: ["uvicorn", "trainer.app:app", "--host", "0.0.0.0", "--port", "8000"]
+    ports:
+      - "8090:8000"
+
   # Второй экземпляр стенда, имитирует общий stage: своя база, свой секрет,
   # немного нестабильности. Запуск: docker compose --profile stage up -d
   db-stage:
