@@ -1,9 +1,11 @@
 import os
-import uuid
 
+import pytest
 from pytest import fixture
 
 from framework.config import Settings
+from framework.db.client import Database
+from framework.factories.users import create_user, random_credentials
 from framework.services.auth import AuthApi
 from framework.services.balances import BalancesApi
 from framework.services.orders import OrdersApi
@@ -24,24 +26,15 @@ def configs():
     return settings
 
 
-@fixture
+@fixture(scope="session")
 def api_client(configs):
-    with ApiClient(
-        base_url=configs.base_url,
-        timeout=configs.timeout,
-        retry_attempts=configs.retry_attempts,
-        retry_backoff=configs.retry_backoff,
-    ) as client:
+    with ApiClient(base_url=configs.base_url, timeout=configs.timeout) as client:
         yield client
 
 
 @fixture
 def user_credential():
-    uid = uuid.uuid4().hex[:8]
-    return {
-        "email": f"qa+{uid}@example.com",
-        "password": f"Aa1!{uuid.uuid4().hex[:12]}",
-    }
+    return random_credentials()
 
 
 @fixture
@@ -63,16 +56,46 @@ def bearer_token(auth_token):
     return BearerAuth(auth_token)
 
 
-@fixture
+@fixture(scope="session")
 def auth_api(api_client):
     return AuthApi(api_client)
 
 
-@fixture
+@fixture(scope="session")
 def balance_api(api_client):
     return BalancesApi(api_client)
 
 
-@fixture
+@fixture(scope="session")
 def orders_api(api_client):
     return OrdersApi(api_client)
+
+
+@fixture
+def make_user(configs):
+    users = []
+
+    def create():
+        user = create_user(configs.base_url, configs.timeout)
+        users.append(user)
+        return user
+
+    yield create
+
+    for user in users:
+        user.client.close()
+
+
+@fixture
+def funded_user(make_user):
+    """Пользователь, у которого уже есть 100 USDT."""
+    user = make_user()
+    user.balances.deposit("USDT", "100").raise_for_status()
+    return user
+
+
+@fixture(scope="session")
+def db(configs):
+    if configs.db_url is None:
+        pytest.skip("на этом окружении нет доступа к базе")
+    return Database(configs.db_url)
