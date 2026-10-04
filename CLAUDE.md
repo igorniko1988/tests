@@ -81,6 +81,8 @@
   Поиск: `docker compose logs exchange | grep <request_id>`.
 - Kubernetes (Docker Desktop): `kubectl apply -f k8s/exchange.yaml`, затем
   `kubectl -n exchange port-forward svc/exchange 8082:8000`. Образ — локальный `api_learning-exchange:latest`.
+- WebSocket `/ws/orderbook/{symbol}`: сначала `snapshot`, затем `update` на каждое изменение стакана;
+  `sequence` растёт на 1. Неизвестный символ — закрытие с кодом 4004.
 - Stage-экземпляр: `docker compose --profile stage up -d` → http://localhost:8081.
   Своя база и JWT-секрет, 5% сбоев (`EXCHANGE_STAGE_CHAOS_RATE`). Обычный `up` его не трогает.
 
