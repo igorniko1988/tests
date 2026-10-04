@@ -3,7 +3,7 @@ import uuid
 from datetime import UTC, datetime
 from decimal import Decimal
 
-from sqlalchemy import JSON, DateTime, Enum, ForeignKey, Numeric, String, UniqueConstraint
+from sqlalchemy import JSON, DateTime, Enum, ForeignKey, Numeric, String, UniqueConstraint, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -37,6 +37,7 @@ class OrderStatus(enum.StrEnum):
     PARTIALLY_FILLED = "PARTIALLY_FILLED"
     FILLED = "FILLED"
     CANCELED = "CANCELED"
+    EXPIRED = "EXPIRED"
 
 
 class User(Base):
@@ -73,6 +74,7 @@ class Order(Base):
     status: Mapped[OrderStatus] = mapped_column(
         Enum(OrderStatus, native_enum=False), default=OrderStatus.NEW
     )
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, onupdate=utcnow
@@ -102,6 +104,10 @@ async def get_session():
 async def create_schema() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # Миграций нет: новые колонки в уже созданных таблицах добавляем вручную
+        await conn.execute(
+            text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ")
+        )
 
 
 __all__ = [

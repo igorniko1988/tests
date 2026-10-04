@@ -1,16 +1,18 @@
+import base64
 import hashlib
 import uuid
+from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Annotated
 
-from fastapi import APIRouter, Header
+from fastapi import APIRouter, Header, Query, Response
 from fastapi.responses import JSONResponse
-from sqlalchemy import select
+from sqlalchemy import select, tuple_
 from sqlalchemy.exc import IntegrityError
 
 from exchange.api.balances import lock_balance
 from exchange.api.deps import Session, UserId
-from exchange.db import IdempotencyKey, Order, OrderSide, OrderStatus
+from exchange.db import IdempotencyKey, Order, OrderSide, OrderStatus, utcnow
 from exchange.errors import ApiError
 from exchange.schemas import SYMBOLS, CreateOrderRequest, OrderOut
 
@@ -55,7 +57,10 @@ async def create_order(
         if saved:
             return _replay(saved, request_hash)
 
-    order = Order(user_id=user_id, filled_quantity=Decimal(0), **body.model_dump())
+    fields = body.model_dump(exclude={"expires_in_seconds"})
+    order = Order(user_id=user_id, filled_quantity=Decimal(0), **fields)
+    if body.expires_in_seconds:
+        order.expires_at = utcnow() + timedelta(seconds=body.expires_in_seconds)
     asset, amount = _funds_to_lock(order)
     balance = await lock_balance(session, user_id, asset)
     if balance.available < amount:
@@ -85,12 +90,45 @@ async def create_order(
     return order
 
 
+def _encode_cursor(order: Order) -> str:
+    raw = f"{order.created_at.isoformat()}|{order.id}"
+    return base64.urlsafe_b64encode(raw.encode()).decode()
+
+
+def _decode_cursor(cursor: str) -> tuple[datetime, uuid.UUID]:
+    try:
+        created_at, order_id = base64.urlsafe_b64decode(cursor.encode()).decode().split("|")
+        return datetime.fromisoformat(created_at), uuid.UUID(order_id)
+    except ValueError:
+        raise ApiError(400, "invalid_cursor", "Cursor is malformed") from None
+
+
 @router.get("/orders", response_model=list[OrderOut])
-async def list_orders(user_id: UserId, session: Session, status: OrderStatus | None = None):
-    query = select(Order).where(Order.user_id == user_id).order_by(Order.created_at.desc())
+async def list_orders(
+    user_id: UserId,
+    session: Session,
+    response: Response,
+    status: OrderStatus | None = None,
+    limit: int = Query(default=100, ge=1, le=100),
+    cursor: str | None = None,
+):
+    """Ордера от новых к старым. Следующая страница — в заголовке X-Next-Cursor."""
+    query = (
+        select(Order)
+        .where(Order.user_id == user_id)
+        .order_by(Order.created_at.desc(), Order.id.desc())
+        .limit(limit + 1)
+    )
     if status is not None:
         query = query.where(Order.status == status)
-    return list(await session.scalars(query))
+    if cursor:
+        query = query.where(tuple_(Order.created_at, Order.id) < _decode_cursor(cursor))
+
+    orders = list(await session.scalars(query))
+    if len(orders) > limit:
+        orders = orders[:limit]
+        response.headers["X-Next-Cursor"] = _encode_cursor(orders[-1])
+    return orders
 
 
 async def _get_own_order(session, order_id: uuid.UUID, user_id: uuid.UUID, lock=False) -> Order:

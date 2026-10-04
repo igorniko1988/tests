@@ -12,8 +12,9 @@ from decimal import Decimal
 from sqlalchemy import select
 
 from exchange.api.balances import lock_balance
+from exchange.api.orders import _funds_to_lock
 from exchange.config import settings
-from exchange.db import Order, OrderSide, OrderStatus, SessionLocal
+from exchange.db import Order, OrderSide, OrderStatus, SessionLocal, utcnow
 from exchange.schemas import SYMBOLS
 
 log = logging.getLogger(__name__)
@@ -62,8 +63,23 @@ async def _trade(session, buy: Order, sell: Order) -> None:
     _fill(sell, qty)
 
 
+async def expire_orders(session) -> None:
+    query = (
+        select(Order)
+        .where(Order.status.in_(OPEN), Order.expires_at.is_not(None), Order.expires_at <= utcnow())
+        .with_for_update()
+    )
+    for order in await session.scalars(query):
+        asset, amount = _funds_to_lock(order)
+        balance = await lock_balance(session, order.user_id, asset)
+        balance.locked -= amount
+        balance.available += amount
+        order.status = OrderStatus.EXPIRED
+
+
 async def match_once() -> None:
     async with SessionLocal() as session:
+        await expire_orders(session)
         for symbol in SYMBOLS:
             while True:
                 buy = await _best(session, symbol, OrderSide.BUY)

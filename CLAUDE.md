@@ -44,6 +44,8 @@
   `/health` и `/docs` не затрагиваются. По умолчанию выключен.
 - Сопоставление ордеров идёт в фоне раз в `EXCHANGE_MATCHING_INTERVAL` секунд (по умолчанию 1):
   исполнение видно не сразу. Цена сделки — цена более раннего ордера.
+- `GET /orders`: курсорная пагинация (`limit`, `cursor`), следующая страница в заголовке
+  `X-Next-Cursor`. Ордер с `expires_in_seconds` становится `EXPIRED`, деньги возвращаются.
 - Stage-экземпляр: `docker compose --profile stage up -d` → http://localhost:8081.
   Своя база и JWT-секрет, 5% сбоев (`EXCHANGE_STAGE_CHAOS_RATE`). Обычный `up` его не трогает.
 

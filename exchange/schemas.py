@@ -67,6 +67,7 @@ class CreateOrderRequest(BaseModel):
     type: OrderType = OrderType.LIMIT
     price: PositiveAmount
     quantity: PositiveAmount
+    expires_in_seconds: int | None = Field(default=None, gt=0, le=86400)
 
 
 class OrderOut(BaseModel):
@@ -80,5 +81,6 @@ class OrderOut(BaseModel):
     quantity: Amount
     filled_quantity: Amount
     status: OrderStatus
+    expires_at: datetime | None
     created_at: datetime
     updated_at: datetime
