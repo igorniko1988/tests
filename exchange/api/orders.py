@@ -1,4 +1,5 @@
 import uuid
+from decimal import Decimal
 
 from fastapi import APIRouter
 from sqlalchemy import select
@@ -24,7 +25,7 @@ def _funds_to_lock(order: Order) -> tuple[str, object]:
 
 @router.post("/orders", status_code=201, response_model=OrderOut)
 async def create_order(body: CreateOrderRequest, user_id: UserId, session: Session):
-    order = Order(user_id=user_id, **body.model_dump())
+    order = Order(user_id=user_id, filled_quantity=Decimal(0), **body.model_dump())
     asset, amount = _funds_to_lock(order)
     balance = await lock_balance(session, user_id, asset)
     if balance.available < amount:
