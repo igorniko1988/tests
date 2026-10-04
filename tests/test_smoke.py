@@ -2,8 +2,8 @@ from decimal import Decimal
 
 import pytest
 
-from framework.models.user import User
 from framework.models.balance import Balance
+from framework.models.user import User
 
 
 @pytest.mark.smoke

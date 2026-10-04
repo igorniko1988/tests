@@ -6,6 +6,7 @@ from pytest import fixture
 from framework.config import Settings
 from framework.services.auth import AuthApi
 from framework.services.balances import BalancesApi
+from framework.services.orders import OrdersApi
 from framework.transport.auth import BearerAuth
 from framework.transport.client import ApiClient
 
@@ -70,3 +71,8 @@ def auth_api(api_client):
 @fixture
 def balance_api(api_client):
     return BalancesApi(api_client)
+
+
+@fixture
+def orders_api(api_client):
+    return OrdersApi(api_client)
