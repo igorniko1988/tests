@@ -83,6 +83,7 @@ def make_user(configs):
     yield create
 
     for user in users:
+        user.cancel_open_orders()  # чтобы чужие ордера не исполнялись в других тестах
         user.client.close()
 
 
