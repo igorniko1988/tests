@@ -1,9 +1,9 @@
 from faker import Faker
 
+from framework.actors.user import LoggedInUser
 from framework.services.auth import AuthApi
 from framework.transport.auth import BearerAuth
 from framework.transport.client import ApiClient
-from framework.user import LoggedInUser
 
 fake = Faker()
 
