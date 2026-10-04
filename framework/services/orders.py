@@ -14,6 +14,7 @@ class OrdersApi:
         price: str,
         quantity: str,
         type: str = "LIMIT",
+        idempotency_key: str | None = None,
         auth: httpx.Auth | None = None,
     ) -> httpx.Response:
         body = {
@@ -23,7 +24,8 @@ class OrdersApi:
             "price": price,
             "quantity": quantity,
         }
-        return self._client.post("/orders", json=body, auth=auth)
+        headers = {"Idempotency-Key": idempotency_key} if idempotency_key else {}
+        return self._client.post("/orders", json=body, headers=headers, auth=auth)
 
     def get_order(self, order_id: str, auth: httpx.Auth | None = None) -> httpx.Response:
         return self._client.get(f"/orders/{order_id}", auth=auth)
