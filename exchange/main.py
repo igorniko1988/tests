@@ -1,3 +1,4 @@
+import asyncio
 import uuid
 from contextlib import asynccontextmanager
 
@@ -9,12 +10,15 @@ from exchange.api import auth, balances, orders
 from exchange.chaos import install_chaos
 from exchange.db import SessionLocal, create_schema
 from exchange.errors import install_error_handlers
+from exchange.matching import run_matching
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     await create_schema()
+    matching = asyncio.create_task(run_matching())
     yield
+    matching.cancel()
 
 
 app = FastAPI(title="Mini Exchange", version="0.1.0", lifespan=lifespan)
