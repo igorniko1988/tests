@@ -46,6 +46,8 @@
   исполнение видно не сразу. Цена сделки — цена более раннего ордера.
 - `GET /orders`: курсорная пагинация (`limit`, `cursor`), следующая страница в заголовке
   `X-Next-Cursor`. Ордер с `expires_in_seconds` становится `EXPIRED`, деньги возвращаются.
+- WebSocket `/ws/orderbook/{symbol}`: сначала `snapshot`, затем `update` на каждое изменение стакана;
+  `sequence` растёт на 1. Неизвестный символ — закрытие с кодом 4004.
 - Stage-экземпляр: `docker compose --profile stage up -d` → http://localhost:8081.
   Своя база и JWT-секрет, 5% сбоев (`EXCHANGE_STAGE_CHAOS_RATE`). Обычный `up` его не трогает.
 
