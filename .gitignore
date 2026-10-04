@@ -10,3 +10,4 @@ envs/*.local.env
 .idea/
 .DS_Store
 .schemathesis/
+.hypothesis/

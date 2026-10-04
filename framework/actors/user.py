@@ -16,7 +16,8 @@ class LoggedInUser:
 
     def get_balance(self, asset: str) -> Balance:
         balances = [Balance.model_validate(b) for b in self.balances.get().json()]
-        return next(b for b in balances if b.asset == asset)
+        empty = Balance(asset=asset, available=0, locked=0)  # счёта ещё нет — значит, ноль
+        return next((b for b in balances if b.asset == asset), empty)
 
     def get_order(self, order_id) -> Order:
         return Order.model_validate(self.orders.get_order(order_id).json())

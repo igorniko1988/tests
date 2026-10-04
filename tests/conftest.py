@@ -3,7 +3,7 @@ import os
 import pytest
 from pytest import fixture
 
-from framework.config import Settings
+from framework.config import load_settings
 from framework.db.client import Database
 from framework.factories.users import create_user, random_credentials
 from framework.services.auth import AuthApi
@@ -15,12 +15,11 @@ from framework.transport.client import ApiClient
 
 @fixture(scope="session")
 def configs():
-    env = os.environ.get("ENV", "docker")
-    settings = Settings(_env_file=f"envs/{env}.env")
+    settings = load_settings()
 
     os.makedirs("allure-results", exist_ok=True)
     with open("allure-results/environment.properties", "w") as f:
-        f.write(f"ENV={env}\n")
+        f.write(f"ENV={os.environ.get('ENV', 'docker')}\n")
         f.write(f"BASE_URL={settings.base_url}\n")
 
     return settings
