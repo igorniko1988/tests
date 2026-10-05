@@ -1,7 +1,7 @@
 """Тренажёр для лайвкодинга: маленькие API в стиле задач с собеседований.
 
-В эндпоинтах намеренно спрятаны баги. Документация к каждой задаче —
-в LIVECODING.md, исходник тренажёра во время решения не смотреть.
+Эндпоинты работают строго по документации из LIVECODING.md — цель тренажёра
+научиться писать тесты, а не искать баги.
 """
 
 from fastapi import FastAPI, Path, Query, Request
@@ -28,13 +28,14 @@ FORMATS = ("video", "picture")
 
 
 @app.get("/v1/ads/")
-async def list_ads(commercial: int = Query(ge=0, le=101)):
-    commercial_count = TOTAL_ADS * commercial // 101
+async def list_ads(commercial: int = Query(ge=0, le=100)):
+    commercial_count = TOTAL_ADS * commercial // 100
     ads = []
     for i in range(commercial_count):
         ads.append({"ad_id": i + 1, "type": "commercial", "format": FORMATS[i % 2]})
     for i in range(TOTAL_ADS - commercial_count):
-        ads.append({"ad_id": i + 1, "type": "nonprofit", "format": FORMATS[i % 2]})
+        ad_id = commercial_count + i + 1
+        ads.append({"ad_id": ad_id, "type": "nonprofit", "format": FORMATS[i % 2]})
     return {"count": len(ads), "ads": ads}
 
 
@@ -44,13 +45,13 @@ PRODUCTS = {
     1: {"id": 1, "name": "Keyboard", "price": 49.9, "in_stock": True},
     2: {"id": 2, "name": "Mouse", "price": 19.99, "in_stock": True},
     3: {"id": 3, "name": "Monitor", "price": 189.0, "in_stock": False},
-    4: {"id": 4, "name": "Headset", "price": "59.5", "in_stock": True},
-    5: {"id": 5, "name": "", "price": 9.99, "in_stock": True},
+    4: {"id": 4, "name": "Headset", "price": 59.5, "in_stock": True},
+    5: {"id": 5, "name": "Cable", "price": 9.99, "in_stock": True},
 }
 
 
 @app.get("/v1/products/{product_id}")
-async def get_product(product_id: int = Path(ge=0)):
+async def get_product(product_id: int = Path(gt=0)):
     product = PRODUCTS.get(product_id)
     if product is None:
         return JSONResponse(status_code=404, content={"error": "not_found"})
@@ -69,7 +70,7 @@ USERS = {
     },
     2: {
         "id": 2,
-        "email": "boris.example.com",
+        "email": "boris@example.com",
         "age": 35,
         "status": "active",
         "created_at": "2025-04-01T08:30:00Z",
@@ -77,7 +78,7 @@ USERS = {
     3: {
         "id": 3,
         "email": "vera@example.com",
-        "age": 17,
+        "age": 21,
         "status": "blocked",
         "created_at": "2025-05-20T15:45:00Z",
     },
@@ -85,7 +86,7 @@ USERS = {
         "id": 4,
         "email": "gleb@example.com",
         "age": 42,
-        "status": "Active",
+        "status": "active",
         "created_at": "2025-06-02T12:00:00Z",
     },
     5: {
@@ -107,8 +108,6 @@ USERS = {
 
 @app.get("/v1/users/{user_id}")
 async def get_user(user_id: int = Path(gt=0)):
-    if user_id > 2**31:
-        raise OverflowError("id does not fit into int32")
     user = USERS.get(user_id)
     if user is None:
         return JSONResponse(status_code=404, content={"error": "not_found"})
