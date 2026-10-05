@@ -2,7 +2,7 @@
 
 Задачи в стиле собеседований AQA. Тренажёр: `docker compose up -d trainer` → http://localhost:8090.
 
-Правила: таймер 30 минут, исходник `trainer/` не открывать, решение — в `livecoding/task_NN.py`,
+Правила: таймер 20–30 минут, решение — в `livecoding/task_NN.py`,
 запуск — `uv run pytest livecoding/task_01.py -v`.
 
 ---
