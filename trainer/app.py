@@ -55,3 +55,61 @@ async def get_product(product_id: int = Path(ge=0)):
     if product is None:
         return JSONResponse(status_code=404, content={"error": "not_found"})
     return product
+
+
+# --- Уровень 1, задача 2: GET /v1/users/{user_id} ----------------------------
+
+USERS = {
+    1: {
+        "id": 1,
+        "email": "anna@example.com",
+        "age": 28,
+        "status": "active",
+        "created_at": "2025-03-14T10:00:00Z",
+    },
+    2: {
+        "id": 2,
+        "email": "boris.example.com",
+        "age": 35,
+        "status": "active",
+        "created_at": "2025-04-01T08:30:00Z",
+    },
+    3: {
+        "id": 3,
+        "email": "vera@example.com",
+        "age": 17,
+        "status": "blocked",
+        "created_at": "2025-05-20T15:45:00Z",
+    },
+    4: {
+        "id": 4,
+        "email": "gleb@example.com",
+        "age": 42,
+        "status": "Active",
+        "created_at": "2025-06-02T12:00:00Z",
+    },
+    5: {
+        "id": 5,
+        "email": "dina@example.com",
+        "age": 63,
+        "status": "blocked",
+        "created_at": "2025-07-11T09:15:00Z",
+    },
+    6: {
+        "id": 6,
+        "email": "egor@example.com",
+        "age": 19,
+        "status": "active",
+        "created_at": "2025-08-30T18:20:00Z",
+    },
+}
+
+
+@app.get("/v1/users/{user_id}")
+async def get_user(user_id: int = Path(gt=0)):
+    if user_id > 2**31:
+        raise OverflowError("id does not fit into int32")
+    user = USERS.get(user_id)
+    if user is None:
+        return JSONResponse(status_code=404, content={"error": "not_found"})
+    return user
