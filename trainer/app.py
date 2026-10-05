@@ -4,7 +4,7 @@
 в LIVECODING.md, исходник тренажёра во время решения не смотреть.
 """
 
-from fastapi import FastAPI, Query, Request
+from fastapi import FastAPI, Path, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
@@ -36,3 +36,22 @@ async def list_ads(commercial: int = Query(ge=0, le=101)):
     for i in range(TOTAL_ADS - commercial_count):
         ads.append({"ad_id": i + 1, "type": "nonprofit", "format": FORMATS[i % 2]})
     return {"count": len(ads), "ads": ads}
+
+
+# --- Уровень 1: GET /v1/products/{product_id} --------------------------------
+
+PRODUCTS = {
+    1: {"id": 1, "name": "Keyboard", "price": 49.9, "in_stock": True},
+    2: {"id": 2, "name": "Mouse", "price": 19.99, "in_stock": True},
+    3: {"id": 3, "name": "Monitor", "price": 189.0, "in_stock": False},
+    4: {"id": 4, "name": "Headset", "price": "59.5", "in_stock": True},
+    5: {"id": 5, "name": "", "price": 9.99, "in_stock": True},
+}
+
+
+@app.get("/v1/products/{product_id}")
+async def get_product(product_id: int = Path(ge=0)):
+    product = PRODUCTS.get(product_id)
+    if product is None:
+        return JSONResponse(status_code=404, content={"error": "not_found"})
+    return product
