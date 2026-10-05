@@ -4,6 +4,8 @@
 научиться писать тесты, а не искать баги.
 """
 
+from typing import Literal
+
 from fastapi import FastAPI, Path, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -112,3 +114,41 @@ async def get_user(user_id: int = Path(gt=0)):
     if user is None:
         return JSONResponse(status_code=404, content={"error": "not_found"})
     return user
+
+
+# --- Уровень 2: GET /v1/catalog — фильтры через query-параметры ---------------
+
+CATALOG = [
+    {"id": 1, "name": "Laptop", "category": "electronics", "price": 999.0, "in_stock": True},
+    {"id": 2, "name": "Phone", "category": "electronics", "price": 599.0, "in_stock": False},
+    {"id": 3, "name": "Headphones", "category": "electronics", "price": 79.9, "in_stock": True},
+    {"id": 4, "name": "T-shirt", "category": "clothes", "price": 15.0, "in_stock": True},
+    {"id": 5, "name": "Jacket", "category": "clothes", "price": 120.0, "in_stock": True},
+    {"id": 6, "name": "Sneakers", "category": "clothes", "price": 89.0, "in_stock": False},
+    {"id": 7, "name": "Novel", "category": "books", "price": 12.5, "in_stock": True},
+    {"id": 8, "name": "Cookbook", "category": "books", "price": 25.0, "in_stock": False},
+    {"id": 9, "name": "Atlas", "category": "books", "price": 45.0, "in_stock": True},
+    {"id": 10, "name": "Mug", "category": "home", "price": 9.99, "in_stock": True},
+    {"id": 11, "name": "Lamp", "category": "home", "price": 45.0, "in_stock": True},
+    {"id": 12, "name": "Chair", "category": "home", "price": 150.0, "in_stock": False},
+]
+
+
+@app.get("/v1/catalog")
+async def search_catalog(
+    category: Literal["electronics", "clothes", "books", "home"] | None = None,
+    min_price: float | None = Query(default=None, ge=0),
+    max_price: float | None = Query(default=None, ge=0),
+    in_stock: bool | None = None,
+):
+    if min_price is not None and max_price is not None and min_price > max_price:
+        return JSONResponse(status_code=400, content={"error": "bad_request"})
+    items = [
+        item
+        for item in CATALOG
+        if (category is None or item["category"] == category)
+        and (min_price is None or item["price"] >= min_price)
+        and (max_price is None or item["price"] <= max_price)
+        and (in_stock is None or item["in_stock"] == in_stock)
+    ]
+    return {"count": len(items), "items": items}
