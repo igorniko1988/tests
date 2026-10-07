@@ -1,6 +1,7 @@
 """
 F1. Урок 1 — классы и объекты.
 
+Теория: practice/f1_01_classes.md
 Запуск: uv run python practice/f1_01_classes.py
 
 Задача 1. Баланс.
