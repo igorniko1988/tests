@@ -51,7 +51,12 @@
 - [ ] Первые тесты: страница входа, логин, кабинет; `goto`, `fill`, `click`, `select_option`, `check`
 - [ ] Локаторы: `get_by_role`, `get_by_label`, `get_by_text`, `get_by_placeholder`, `get_by_test_id`; приоритет локаторов
 - [ ] Проверки `expect(...)`: `to_be_visible`, `to_have_text`, `to_have_value`, `to_have_count`, `to_have_url`
-- [ ] Архитектура: Browser → BrowserContext → Page; sync и async API
+- [ ] Как устроен Playwright: Python-клиент → driver (отдельный процесс) → браузер; одно постоянное соединение, события приходят сами
+- [ ] Протоколы браузеров: CDP для Chromium, встроенные протоколы в собранных Firefox и WebKit; сравнение с W3C WebDriver (Selenium) и «внутри браузера» (Cypress)
+- [ ] Модель Browser → BrowserContext → Page → Frame: что изолирует context (cookies, localStorage, кэш, разрешения), почему context дешёвый, а browser дорогой
+- [ ] Как pytest-playwright раздаёт объекты: browser — один на прогон, context и page — новые на каждый тест; два пользователя = два context
+- [ ] Как Playwright ждёт сам: ленивые локаторы (ищутся при каждом действии, нет stale element), actionability-проверки перед действием, повтор `expect`, strict mode
+- [ ] sync и async API: синхронный — обёртка над асинхронным, когда какой
 - [ ] pytest для UI: встроенные фикстуры pytest-playwright (`page`, `context`, `browser`, `browser_name`, `base_url`), `conftest.py`, `parametrize`, маркеры
 - [ ] **Собес:** чем Playwright отличается от Selenium и Cypress (протокол, скорость, ожидания, вкладки, языки)
 - [ ] **Собес:** какие локаторы выбираешь и почему не XPath / длинные CSS-цепочки
