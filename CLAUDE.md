@@ -34,7 +34,8 @@
 
 ## Стенд
 
-- Запуск: `docker compose up -d --build` → http://localhost:8080 (Swagger на `/docs`).
+- Запуск: `docker compose up -d --build` → http://localhost:8080 (веб-интерфейс на `/app/`,
+  Swagger на `/docs`). Фронтенд — ванильный JS в `exchange/web/`, у элементов есть `data-testid`.
 - Локально без Docker-сервиса: `docker compose up -d db`, затем
   `uv run uvicorn exchange.main:app --reload --port 8000`.
 - Стек: FastAPI, SQLAlchemy 2 (async) + Postgres, JWT (PyJWT). Суммы — Decimal, в API строкой.
