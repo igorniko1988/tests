@@ -26,6 +26,7 @@ tests = [
     "pydantic-settings>=2.6",
     "faker>=30.0",
     "allure-pytest>=2.13",
+    "psycopg[binary]>=3.2",
 ]
 dev = [
     { include-group = "service" },
