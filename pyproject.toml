@@ -26,10 +26,6 @@ tests = [
     "pydantic-settings>=2.6",
     "faker>=30.0",
     "allure-pytest>=2.13",
-]>=3.3.6",
-    "hypothesis>=6.168.3",
-    "playwright>=1.63.0",
-    "pytest-playwright>=0.9.0",
 ]
 dev = [
     { include-group = "service" },
