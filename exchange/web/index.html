@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mini Exchange</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>Mini Exchange</h1>
+    <div class="user" data-testid="user-panel" hidden>
+      <span data-testid="user-email"></span>
+      <button type="button" data-testid="logout-button">Выйти</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Вход и регистрация -->
+    <section id="auth-page" class="card narrow" data-testid="auth-page">
+      <h2>Вход</h2>
+      <form id="auth-form" novalidate>
+        <label>Email
+          <input type="email" name="email" data-testid="email-input" autocomplete="username" required>
+        </label>
+        <label>Пароль
+          <input type="password" name="password" data-testid="password-input" autocomplete="current-password" required>
+        </label>
+        <p class="error" role="alert" data-testid="auth-error" hidden></p>
+        <div class="row">
+          <button type="submit" data-testid="login-button">Войти</button>
+          <button type="button" class="secondary" data-testid="register-button">Зарегистрироваться</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Личный кабинет -->
+    <section id="dashboard" data-testid="dashboard" hidden>
+      <div class="grid">
+        <div class="card">
+          <h2>Балансы</h2>
+          <table data-testid="balances-table">
+            <thead><tr><th>Актив</th><th>Доступно</th><th>Заблокировано</th></tr></thead>
+            <tbody></tbody>
+          </table>
+
+          <h3>Пополнить</h3>
+          <form id="deposit-form" class="inline" novalidate>
+            <select name="asset" data-testid="deposit-asset" aria-label="Актив">
+              <option>USDT</option><option>BTC</option><option>ETH</option>
+            </select>
+            <input name="amount" placeholder="Сумма" data-testid="deposit-amount" aria-label="Сумма">
+            <button type="submit" data-testid="deposit-button">Пополнить</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2>Новый ордер</h2>
+          <form id="order-form" novalidate>
+            <label>Пара
+              <select name="symbol" data-testid="order-symbol">
+                <option>ETH-USDT</option><option>BTC-USDT</option>
+              </select>
+            </label>
+            <fieldset class="row" data-testid="order-side">
+              <legend>Сторона</legend>
+              <label><input type="radio" name="side" value="BUY" checked> Купить</label>
+              <label><input type="radio" name="side" value="SELL"> Продать</label>
+            </fieldset>
+            <label>Цена
+              <input name="price" data-testid="order-price">
+            </label>
+            <label>Количество
+              <input name="quantity" data-testid="order-quantity">
+            </label>
+            <p class="error" role="alert" data-testid="order-error" hidden></p>
+            <button type="submit" data-testid="place-order-button">Разместить ордер</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row space-between">
+          <h2>Мои ордера</h2>
+          <label class="filter">Статус
+            <select data-testid="orders-filter">
+              <option value="">Все</option>
+              <option value="NEW">NEW</option>
+              <option value="PARTIALLY_FILLED">PARTIALLY_FILLED</option>
+              <option value="FILLED">FILLED</option>
+              <option value="CANCELED">CANCELED</option>
+            </select>
+          </label>
+        </div>
+        <p class="muted" data-testid="orders-empty" hidden>Ордеров пока нет</p>
+        <table data-testid="orders-table">
+          <thead>
+            <tr><th>Пара</th><th>Сторона</th><th>Цена</th><th>Кол-во</th><th>Исполнено</th><th>Статус</th><th></th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" role="status" data-testid="toast" hidden></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
