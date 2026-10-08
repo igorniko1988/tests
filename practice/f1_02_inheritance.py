@@ -45,23 +45,135 @@ F1. Урок 2 — наследование, композиция, @property, @c
 
 
 # --- Задача 1 ---
+class Account:
+    def __init__(self, email, balance = 0):
+        self.email = email
+        self.balance = balance
 
+    def describe(self):
+        return f'{self.email} with the balance {self.balance}'
+
+
+class AdminAccount(Account):
+    def __init__(self, email, balance, permissions: list):
+        super().__init__(email, balance)
+        self.permissions = permissions
+
+    def describe(self):
+        return f'{self.email} with the balance {self.balance} and its admin'
+
+a = Account('nk@gmail.com', 100)
+b = AdminAccount('sad@gmail.com',0,[1,2,3,5,5])
+
+print(a.describe())
+print(b.describe())
 
 # --- Задача 2 ---
 
+class Balance:
+    def __init__(self, asset, available=0):
+        self.asset = asset
+        self.available = available
 
+    def deposit(self, value):
+        self.available += value
+
+class Wallet:
+    assets = {'BTC', 'ETH', 'USDT'}
+
+    def __init__(self):
+        self.balances = {v:Balance(v) for v in self.assets}
+
+    def get(self, asset):
+        return self.balances[asset].available
+
+    def deposit(self, asset, value):
+        self.balances[asset].deposit(value)
+
+class Trader:
+    def __init__(self, email):
+        self.email = email
+        self.wallet = Wallet()
+
+
+w = Wallet()
+w.deposit('ETH',12312312)
+print(w.get('ETH'))
 # --- Задача 3 ---
+class Position:
+    def __init__(self, quantity, price):
+        self.quantity = quantity
+        self.price = price
 
+    @property
+    def value(self):
+        val = self.price * self.quantity
+        return val
+
+    @property
+    def quantity(self):
+        return self._quantity
+
+
+    @quantity.setter
+    def quantity(self, value: int):
+        if value < 0:
+            raise ValueError('Value is under zero')
+        self._quantity = value
+
+p = Position(23,2)
 
 # --- Задача 4 ---
 
+from faker import Faker
 
+
+class Credentials:
+    def __init__(self, email, password):
+        self.email = email
+        self.password = password
+
+    @staticmethod
+    def is_strong(password: str):
+        return len(password) > 8
+
+    @classmethod
+    def from_dict(cls, data: dict):
+        return cls(data['email'], data['password'])
+
+    @classmethod
+    def random(cls):
+        faker = Faker()
+        return cls(faker.email(), faker.password())
+
+print('**********')
+fake_creds = Credentials.random()
+print(fake_creds.password, fake_creds.email)
+print(fake_creds.is_strong(fake_creds.password))
 # --- Задача 5 ---
+from dataclasses import dataclass, field
+
+@dataclass()
+class Order:
+    symbol: str
+    side: str
+    price: float
+    quantity: int
+    status: str = 'NEW'
+    tags: list = field(default_factory=list)
+
+o1 = Order('BTC','short', 2, 10, 'NEW',[1,2,3,4])
+o2 = Order('BTC','short', 2, 10, 'NEW',[1,2,3,4,6])
+
+print(o1 == o2 )
+o1.tags.append(123)
+o1.quantity = 23
+print(o1.tags)
 
 
 # --- Ответы на вопросы собеса ---
-# 1.
-# 2.
-# 3.
-# 4.
-# 5.
+# 1. Inheritance answears the question "Is object the parent class", as for composition is parent class has object
+# 2. By calling super initializator we adding propertis from parent class
+# 3. Property helps for example make validation on definite property
+# 4. Classmethod usually uses for creating alternative object, as for staticmethod its like for helping function outside of the using self
+# 5. Dataclass uses for models defference between pydantics, dataclass doesnts use type validation

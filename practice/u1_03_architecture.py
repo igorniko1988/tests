@@ -39,13 +39,14 @@
     Внутри async def вызови sync_playwright(). Запиши текст ошибки и объясни, почему так.
 
 Вопросы собеса (ответы — в разделе «Собес» теории; ответь своими словами в «Ответах»):
-    1. Чем Playwright отличается от Selenium?
+    1. Чем Playwright отличается от Selenium? instead of sending http requests every time, playwright holds one connection and waiting for the event from the browser, its based on cdp protocol and works thwo websockets with autowaiting
+
     2. Чем Playwright отличается от Cypress?
-    3. Как устроен Playwright внутри?
-    4. Почему Playwright не может работать с обычным Firefox или Safari?
-    5. sync или async API — что выбираешь и почему?
-    6. Что делать, если нужной возможности нет в API Playwright?
-    7. Почему тесты на Playwright стабильнее?
+    3. Как устроен Playwright внутри? it has 3 layers , python client - send json commands to the node js driver (here is all logics ) via cdp into browser
+    4. Почему Playwright не может работать с обычным Firefox или Safari? firefox and safari have no cdp, only patching aproaches
+    5. sync или async API — что выбираешь и почему? sync it gives the same speed
+    6. Что делать, если нужной возможности нет в API Playwright? make own helpers and utilz
+    7. Почему тесты на Playwright стабильнее? have autowaitings 
 """
 
 import asyncio
@@ -57,7 +58,29 @@ from playwright.sync_api import sync_playwright
 
 
 # Задача 1
+from playwright.sync_api import sync_playwright, expect
+from faker import Faker
+with sync_playwright() as p:
+    browser = p.chromium.launch(headless=True, slow_mo=300)
+    context = browser.new_context(base_url='http://localhost:8080', viewport={'width': 380, 'height': 480})
+    page = context.new_page()
 
+    page.goto('/app')
+    page.screenshot(path='iphone.png')
+
+    email = f"user_{uuid4().hex[:8]}@test.com"
+
+    page.goto("/app/")
+    page.get_by_role("textbox", name="Email").fill(email)
+    page.get_by_role("textbox", name="Пароль").fill("password123")
+    page.get_by_role("button", name="Зарегистрироваться").click()
+
+    expect(page.get_by_test_id("dashboard")).to_be_visible()
+    expect(page.get_by_test_id("user-email")).to_have_text(email)
+    print(email)
+
+    context.close()
+    browser.close()
 
 # Задача 2
 

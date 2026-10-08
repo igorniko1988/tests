@@ -40,29 +40,101 @@ F1. Урок 3 — декораторы.
     4. Как написать декоратор с параметрами (@retry(times=3))? Почему три уровня функций?
     5. В каком порядке применяются несколько декораторов?
 """
+from functools import wraps
 
 
 # --- Задача 1 ---
+def add(a,b):
+    return a + b
 
+def multiply(a, b):
+    return a * b
 
+def apply(func, a, b):
+    return func(a, b)
+
+print(apply(multiply,2,5))
 # --- Задача 2 ---
 
 
+def log_calls(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        print(f'Function name {func.__name__} with arguments {args} and {kwargs}')
+        result = func(*args, **kwargs)
+        return result
+    return wrapper
+
+@log_calls
+def print_hello(name):
+    return f'hi {name}'
+
+print(print_hello('niko'))
+
 # --- Задача 3 ---
+from time import time
+
+def timer(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time()
+        result = func(*args, **kwargs)
+        result_time = time() - start
+        return result_time
+    return wrapper
+
+@timer
+def print_hello(name):
+    return f'hi {name}'
+
+print(print_hello('mik'))
+
 
 
 # --- Задача 4 ---
+def retry(retry_number):
+    def wrapper(func):
+        @wraps(func)
+        def inner(*args, **kwargs):
+            for i in range(1, retry_number + 1):
+                try:
+                    return func(*args, **kwargs)
+                except Exception:
+                    if i == retry_number:
+                        raise
+                    print('One more try')
+        return inner
+    return wrapper
 
+@retry(4)
+def print_number(number):
+    for i in range(number):
+        if i < 3:
+            raise ValueError('too low number')
+    return f'Final number is {number}'
+
+print(print_number(5))
 
 # --- Задача 5 ---
+def positive_amount(func):
+    if func.amount <= 0:
+        raise ValueError
+
 
 
 # --- Задача 6 ---
 
 
+@timer
+@log_calls
+def print_hi():
+    print('hi')
+    return 'hi'
+
+print_hi()
 # --- Ответы на вопросы собеса ---
-# 1.
-# 2.
-# 3.
-# 4.
-# 5.
+# 1. Decorator above function adds any aditional logic it depends on the needs
+# 2. By this data we pass any arguments in the decorated function
+# 3. functools.wraps stands for the correct name in the decorated function, if wraps doesnt exist the name by default wrapper or wrapped
+# 4. Pass several layers of function first will take retry number, lower will take function and the last arguments
+# 5. from down to up

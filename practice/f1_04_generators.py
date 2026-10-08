@@ -50,26 +50,120 @@ F1. Урок 4 — генераторы, yield и контекстные мен�
 
 # --- Задача 1 ---
 
+def gen(prefix: str, count: int):
+
+    gen = (prefix + f'-{number}' for number in range(count))
+    return gen
+
+    # calls = 0
+    # result = []
+    # while calls <= count:
+    #     result.append(prefix + f'-{calls}')
+    #     calls +=1
+    # yield result
+
+x = gen('number', 5)
+
+
+# for pref in x:
+#     print(pref)
+
+print(next(x))
+print(next(x))
+print(next(x))
+
+
+
 
 # --- Задача 2 ---
+import sys
 
+print(sys.getsizeof([x for x in range(10000)]))
+print(sys.getsizeof((x for x in range(10000))))
+
+# for x in (x for x in range(10000)):
+#     print(x)
+
+# for x in [x for x in range(10000)]:
+#     print(x)
 
 # --- Задача 3 ---
+PAGES = [["o1", "o2"], ["o3", "o4"], ["o5"]]
 
+
+def fetch_page(number):
+    print(f'Loading the page {number} ')
+    return PAGES[number]
+
+def all_orders(number):
+    g = (page for page in fetch_page(number))
+    for gen in g:
+        yield from gen
+
+print(all_orders(1))
 
 # --- Задача 4 ---
+
+class TestUser:
+    def __init__(self, email):
+        self.email = email
+
+
+    def __enter__(self):
+        print(f'Printing test user with email {self.email}')
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        print(f'Deleting the user with email {self.email}')
+        return False
+
+with TestUser('niko@gmail.com') as user:
+    print('magician')
+
+
+# with TestUser('niko@gmail.com') as user2:
+#     try:
+#         print('magician')
+#         raise ValueError('hiiii')
+#     except Exception as e:
+#         raise
 
 
 # --- Задача 5 ---
 
+from contextlib import contextmanager
+
+@contextmanager
+def prepare_user(user_email):
+    print('this is start')
+    try:
+        yield
+    finally:
+        print('Goodbye')
+
+with prepare_user('niko@gmai.com'):
+    from time import sleep
+    sleep(2)
+
 
 # --- Задача 6 ---
 
+@contextmanager
+def fake_fixture(*args):
+    print('setup')
+    prepare_data = args
+    try:
+        yield prepare_user
+    finally:
+        print('teardown')
+
+with fake_fixture(1,2,3,4,5):
+    sleep(5)
 
 # --- Ответы на вопросы собеса ---
-# 1.
-# 2.
-# 3.
-# 4.
-# 5.
-# 6.
+# 1. Yield return the result and freezes till the next call of the function end its process
+# 2. Lists stores all the data in the memory, generators stores only the last data
+# 3. Yiels garanties that the code after yeild will be executed evein if the tests failed
+# 4. with garanties that exit criteria will be executed
+# 5. may be nothig will change its just the result of exit criteria
+# 6. using contextmanager from contextlib, so by adding contextmanager decorater
