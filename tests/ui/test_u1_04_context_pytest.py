@@ -23,7 +23,7 @@
     test_logged_in: через logged_in_page проверь, что в localStorage есть токен:
         page.evaluate("localStorage.getItem('token')") не None.
     test_fresh_context: с обычной page открой /app/ — видна форма входа, токена нет.
-    Запусти оба теста в любом порядке (-k / -p no:randomly не нужно) — объясни в «Ответах»,
+    Запусти оба теста вместе — объясни в «Ответах»,
     почему второй не видит логина первого.
 
 Задача 4. Две вкладки одного context.
