@@ -31,6 +31,9 @@ tests = [
     "pytest-rerunfailures>=16.7",
     "pytest-xdist>=3.8.0",
     "filelock>=4.1.0",
+    "pillow>=12.3.0",
+    "pixelmatch>=0.4.0",
+    "axe-playwright-python>=0.1.8",
 ]
 dev = [
     { include-group = "service" },
