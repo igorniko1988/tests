@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="ru">
+<head><meta charset="utf-8"><title>Отчёт</title><link rel="stylesheet" href="styles.css"></head>
+<body>
+  <main class="card narrow">
+    <h1 data-testid="report-title"></h1>
+    <p data-testid="report-generated"></p>
+    <a href="lab.html">Назад в лабораторию</a>
+  </main>
+  <script>
+    const asset = new URLSearchParams(location.search).get("asset") || "—";
+    document.title = `Отчёт ${asset}`;
+    document.querySelector('[data-testid="report-title"]').textContent = `Отчёт по ${asset}`;
+    document.querySelector('[data-testid="report-generated"]').textContent = "Сформирован автоматически";
+  </script>
+</body>
+</html>
