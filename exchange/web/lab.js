@@ -316,3 +316,45 @@ byTestId("copy-button").addEventListener("click", async () => {
     result.textContent = `Не удалось скопировать: ${error.name}`;
   }
 });
+
+// --- Модальное окно подтверждения -------------------------------------------------
+
+const overlay = byTestId("modal-overlay");
+const withdrawButton = byTestId("withdraw-button");
+const agree = byTestId("modal-agree");
+const confirmButton = byTestId("modal-confirm");
+
+function openModal(amount) {
+  byTestId("modal-text").textContent = `Вывести ${amount} USDT на внешний кошелёк?`;
+  agree.checked = false;
+  confirmButton.disabled = true;
+  overlay.hidden = false;
+  agree.focus();
+}
+
+function closeModal(result) {
+  overlay.hidden = true;
+  byTestId("withdraw-result").textContent = result;
+  withdrawButton.focus();                       // фокус возвращается на кнопку, открывшую окно
+}
+
+withdrawButton.addEventListener("click", () => {
+  const amount = byTestId("withdraw-amount").value.trim();
+  if (!(Number(amount) > 0)) {
+    byTestId("withdraw-result").textContent = "Введите сумму больше 0";
+    return;
+  }
+  openModal(amount);
+});
+agree.addEventListener("change", () => (confirmButton.disabled = !agree.checked));
+confirmButton.addEventListener("click", () => {
+  closeModal(`Заявка на вывод ${byTestId("withdraw-amount").value.trim()} USDT создана`);
+  toast("Заявка создана");
+});
+byTestId("modal-cancel").addEventListener("click", () => closeModal("Вывод отменён"));
+overlay.addEventListener("click", (event) => {
+  if (event.target === overlay) closeModal("Вывод отменён");   // клик по фону
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !overlay.hidden) closeModal("Вывод отменён");
+});

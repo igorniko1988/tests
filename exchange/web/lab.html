@@ -117,7 +117,15 @@
       <price-ticker symbol="BTC-USDT" price="65000" data-testid="ticker"></price-ticker>
     </section>
 
-    <!-- 9. Окружение браузера -->
+    <!-- 9. Модальное окно -->
+    <section class="card" data-testid="withdraw">
+      <h2>Вывод средств</h2>
+      <label>Сумма, USDT <input data-testid="withdraw-amount" inputmode="decimal"></label>
+      <button type="button" data-testid="withdraw-button">Вывести</button>
+      <p data-testid="withdraw-result">—</p>
+    </section>
+
+    <!-- 10. Окружение браузера -->
     <section class="card" data-testid="env">
       <h2>Окружение</h2>
       <dl>
@@ -141,6 +149,18 @@
       <button type="button" class="icon" data-testid="refresh-icon">⟳</button>
     </section>
   </main>
+
+  <div class="overlay" data-testid="modal-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" data-testid="confirm-modal">
+      <h2 id="modal-title">Подтвердите вывод</h2>
+      <p data-testid="modal-text"></p>
+      <label><input type="checkbox" data-testid="modal-agree"> Я проверил адрес кошелька</label>
+      <div class="row">
+        <button type="button" data-testid="modal-confirm" disabled>Подтвердить</button>
+        <button type="button" class="secondary" data-testid="modal-cancel">Отмена</button>
+      </div>
+    </div>
+  </div>
 
   <div class="toast" role="status" data-testid="toast" hidden></div>
   <script src="lab.js"></script>
