@@ -11,3 +11,7 @@ envs/*.local.env
 .DS_Store
 .schemathesis/
 .hypothesis/
+
+# Playwright: сохранённые логины (storage state) и артефакты прогонов
+.auth/
+test-results/

@@ -27,6 +27,10 @@ tests = [
     "faker>=30.0",
     "allure-pytest>=2.13",
     "psycopg[binary]>=3.2",
+    "pytest-repeat>=0.9.4",
+    "pytest-rerunfailures>=16.7",
+    "pytest-xdist>=3.8.0",
+    "filelock>=4.1.0",
 ]
 dev = [
     { include-group = "service" },
@@ -43,6 +47,10 @@ testpaths = ["tests"]
 pythonpath = ["."]
 # macOS 12: свежий Chromium от Playwright не ставится, поэтому используем установленный Chrome
 addopts = "-ra --strict-markers --browser-channel chrome"
+base_url = 'http://localhost:8080'
+markers = [
+    'smoke: fast tests for fast check'
+]
 
 [tool.ruff]
 line-length = 100
