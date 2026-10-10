@@ -2,8 +2,7 @@
 
 Запуск:  uv run python practice/build_ui_course.py
 
-Для каждого урока берёт теорию (practice/uN_MM_*.md), условия задач (docstring файла заданий —
-без кода решений) и файл для ревью, если он есть. Заголовки теории сдвигаются на уровень ниже,
+Для каждого урока берёт теорию (practice/uN_MM_*.md), условия задач (docstring из practice/tasks/) и файл для ревью, если он есть. Заголовки теории сдвигаются на уровень ниже,
 блоки кода не трогаются. Документ пересобирается целиком — руками его не правят.
 """
 
@@ -13,7 +12,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 PRACTICE = ROOT / "practice"
-TESTS = ROOT / "tests" / "ui"
+TASKS = PRACTICE / "tasks"
 OUT = PRACTICE / "UI_COURSE.md"
 
 MODULES = {
@@ -55,7 +54,7 @@ def tasks_of(path: Path) -> str | None:
 
 
 def task_file(module: int, lesson: int) -> Path | None:
-    for folder in (TESTS, PRACTICE):
+    for folder in (TASKS, PRACTICE):
         for path in sorted(folder.glob(f"*u{module}_{lesson:02d}_*.py")):
             if "review_me" not in path.name and "build_" not in path.name:
                 return path

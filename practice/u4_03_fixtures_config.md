@@ -1,6 +1,6 @@
 # U4. Урок 3 — фикстуры страниц и конфиг окружений
 
-Задания: `tests/ui/test_u4_03_fixtures_config.py`, код — `ui_framework/config/`, `ui_framework/fixtures/`.
+Задания: `practice/tasks/test_u4_03_fixtures_config.py`, решение — `tests/ui/test_u4_03_fixtures_config.py` (создаёшь сам), код — `ui_framework/config/`, `ui_framework/fixtures/`.
 
 Основы фикстур (scope, yield, conftest, `browser_context_args`) были в U1.4. Здесь — то, из чего
 собирают фреймворк: фикстуры страниц, фабрики с уборкой, `request` и маркеры с данными,

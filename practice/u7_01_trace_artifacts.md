@@ -1,6 +1,6 @@
 # U7. Урок 1 — Trace Viewer, скриншоты, видео и отчёт
 
-Задания: `tests/ui/test_u7_01_trace_artifacts.py`.
+Задания: `practice/tasks/test_u7_01_trace_artifacts.py`, решение — `tests/ui/test_u7_01_trace_artifacts.py` (создаёшь сам).
 
 План: какие артефакты даёт pytest-playwright и как их включить; где они лежат (проверено);
 ловушка — context вне фикстур без артефактов; Trace Viewer — что в нём есть и как разбирать падение

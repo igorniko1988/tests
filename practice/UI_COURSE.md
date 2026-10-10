@@ -64,7 +64,7 @@
 
 *Теория: `practice/u1_01_first_tests.md`*
 
-Задания: `tests/ui/test_u1_01_first_tests.py` (условия в docstring, код пишешь сам).
+Задания: `practice/tasks/test_u1_01_first_tests.py`, решение — `tests/ui/test_u1_01_first_tests.py` (создаёшь сам) (условия в docstring, код пишешь сам).
 Все примеры ниже — на нашем стенде, их можно сразу запускать.
 
 ---
@@ -494,7 +494,7 @@ def test_login_existing_user(page: Page):
 > Браузер — опцией `--browser firefox` / `webkit` (можно несколько сразу). Окружение — через
 > `--base-url`: в тестах только относительные пути, `page.goto("/app/")`.
 
-### Задания — `tests/ui/test_u1_01_first_tests.py`
+### Задания — `practice/tasks/test_u1_01_first_tests.py`
 
 ```text
 U1. Урок 1 — первые тесты на Playwright.
@@ -543,7 +543,7 @@ U1. Урок 1 — первые тесты на Playwright.
 
 *Теория: `practice/u1_02_locators_assertions.md`*
 
-Задания: `tests/ui/test_u1_02_locators_assertions.py`.
+Задания: `practice/tasks/test_u1_02_locators_assertions.py`, решение — `tests/ui/test_u1_02_locators_assertions.py` (создаёшь сам).
 В U1.1 был обзор. Здесь — как Playwright на самом деле находит элементы, все приёмы уточнения
 (цепочки, filter, and_/or_), работа с таблицами и списками и полный набор `expect`.
 
@@ -990,7 +990,7 @@ def test_cancel_order(page: Page):
 > `to_match_aria_snapshot`: описываю дерево доступности блока в YAML (роли и имена), Playwright
 > сравнивает. Одна проверка заменяет пять `to_be_visible` и заодно контролирует доступность.
 
-### Задания — `tests/ui/test_u1_02_locators_assertions.py`
+### Задания — `practice/tasks/test_u1_02_locators_assertions.py`
 
 ```text
 U1. Урок 2 — локаторы и проверки подробно.
@@ -1429,7 +1429,7 @@ U1. Урок 3 — как устроен Playwright.
 
 *Теория: `practice/u1_04_context_pytest.md`*
 
-Задания: `tests/ui/test_u1_04_context_pytest.py` и `tests/ui/conftest.py`.
+Задания: `practice/tasks/test_u1_04_context_pytest.py`, решение — `tests/ui/test_u1_04_context_pytest.py` (создаёшь сам) и `tests/ui/conftest.py`.
 
 План: что именно изолирует context и как этим пользоваться (два пользователя, сохранённый логин);
 как Playwright ждёт перед каждым действием; pytest-часть — фикстуры, conftest, parametrize, маркеры
@@ -1894,7 +1894,7 @@ uv run pytest --device "iPhone 13"                   # профиль устро
 > XFAIL со ссылкой на баг; когда починят, будет XPASS, и метку надо снять.
 > С `strict=True` XPASS считается падением.
 
-### Задания — `tests/ui/test_u1_04_context_pytest.py`
+### Задания — `practice/tasks/test_u1_04_context_pytest.py`
 
 ```text
 U1. Урок 4 — BrowserContext, ожидания и pytest для UI.
@@ -2207,7 +2207,7 @@ U1. Урок 4 — BrowserContext, ожидания и pytest для UI.
 | `try/except` вокруг проверки | тест никогда не падает | убрать |
 | пароли и адреса в коде | секреты в git, нет гибкости | конфиг, переменные окружения |
 
-### Задания — `tests/ui/test_u1_05_livecoding.py`
+### Задания — `practice/tasks/test_u1_05_livecoding.py`
 
 ```text
 U1. Урок 5 — лайвкодинг на время.
@@ -2349,7 +2349,7 @@ def test_4_cancel(page: Page):
 
 *Теория: `practice/u2_01_waiting_async_ui.md`*
 
-Задания: `tests/ui/test_u2_01_waiting_async_ui.py`.
+Задания: `practice/tasks/test_u2_01_waiting_async_ui.py`, решение — `tests/ui/test_u2_01_waiting_async_ui.py` (создаёшь сам).
 
 План: почему `expect` ждёт, а `assert` нет, и какие методы Locator «не ждут»; полный набор
 проверок `expect`; как устроен асинхронный UI нашего стенда (автообновление, тосты, disabled-кнопки)
@@ -2539,8 +2539,8 @@ deposit(page, "USDT", "100")    # проверка тоста проходит �
 три `place_order` подряд создавали два ордера. Варианты:
 - перед вторым действием дождаться, что тост исчез: `expect(toast).to_be_hidden()`;
 - проверять **бизнес-результат**, а не тост: баланс стал 200;
-- ждать ответ сервера на каждый запрос (`expect_response`) — так сделаны хелперы
-  `deposit` и `place_order` в `tests/ui/helpers.py`.
+- ждать ответ сервера на каждый запрос (`expect_response`) — так стоит переделать свои хелперы
+  `deposit` и `place_order` (задача 4 этого урока).
 
 ##### Ловушка 3: проверка «мигающего» состояния
 
@@ -2703,12 +2703,23 @@ def wait_until(condition, timeout: float = 10, interval: float = 0.5, message: s
 #### 9. Как воспроизвести флейк: медленная сеть
 
 Флейк «иногда падает в CI» локально не ловится — всё быстрое. Замедли сеть, и гонка видна
-каждый раз. В `tests/ui/helpers.py` есть хелпер:
+каждый раз. Хелпер — положи к своим хелперам:
 
 ```python
-from tests.ui.helpers import slow_network
+def slow_network(page: Page, latency_ms: int) -> None:
+    """Добавить задержку к каждому запросу страницы — как медленный CI или мобильная сеть.
 
-slow_network(page, 400)       # +400 мс к каждому запросу (только Chromium, через CDP)
+    Только Chromium: работает через CDP (Network.emulateNetworkConditions).
+    """
+    cdp = page.context.new_cdp_session(page)
+    cdp.send("Network.enable")
+    cdp.send(
+        "Network.emulateNetworkConditions",
+        {"offline": False, "latency": latency_ms, "downloadThroughput": -1, "uploadThroughput": -1},
+    )
+
+
+slow_network(page, 400)       # +400 мс к каждому запросу
 ```
 
 На стенде с задержкой 400 мс сразу после тоста «Баланс пополнен» `text_content()` баланса
@@ -2790,7 +2801,7 @@ slow_network(page, 400)       # +400 мс к каждому запросу (то
 > этого плохо подходит: он замедляет действия теста, и гонки с сетью исчезают. Потом смотрю
 > trace: где тест прочитал значение раньше, чем оно обновилось.
 
-### Задания — `tests/ui/test_u2_01_waiting_async_ui.py`
+### Задания — `practice/tasks/test_u2_01_waiting_async_ui.py`
 
 ```text
 U2. Урок 1 — web-first assertions и асинхронный UI.
@@ -2800,7 +2811,7 @@ U2. Урок 1 — web-first assertions и асинхронный UI.
     uv run pytest tests/ui/test_u2_01_waiting_async_ui.py -v
 
 Можно использовать: фикстуры logged_in_page, create_user, user_email (tests/ui/conftest.py),
-хелперы register, deposit, place_order, balance_row, amount, slow_network (tests/ui/helpers.py).
+свои хелперы (register, deposit — из U1.4; place_order, balance_row, amount — допиши по мере надобности), slow_network — код в теории U2.1, раздел 9.
 Правила: никаких sleep / wait_for_timeout; проверки — только expect (кроме задачи 1а).
 
 Задача 1. Флейк своими руками.
@@ -2883,7 +2894,7 @@ U2. Урок 1 — web-first assertions и асинхронный UI.
 
 *Теория: `practice/u2_02_chains_filters_strict.md`*
 
-Задания: `tests/ui/test_u2_02_chains_filters_strict.py`.
+Задания: `practice/tasks/test_u2_02_chains_filters_strict.py`, решение — `tests/ui/test_u2_02_chains_filters_strict.py` (создаёшь сам).
 
 Основы локаторов (`get_by_*`, `filter`, `first/nth`, `and_/or_`, строка таблицы → кнопка)
 были в U1.2. Здесь — то, на чём реально ломаются тесты: strict mode и как его разрешать,
@@ -3249,7 +3260,7 @@ PWDEBUG=1 uv run pytest tests/ui/test_u2_02_chains_filters_strict.py -k cancel
 > `locator.highlight()`, `count()` и `all_text_contents()` в отладчике. Читаю сообщение strict mode —
 > там все найденные элементы. После прогона — Trace Viewer: что нашёл каждый локатор на каждом шаге.
 
-### Задания — `tests/ui/test_u2_02_chains_filters_strict.py`
+### Задания — `practice/tasks/test_u2_02_chains_filters_strict.py`
 
 ```text
 U2. Урок 2 — цепочки, фильтры и strict mode.
@@ -3259,7 +3270,7 @@ U2. Урок 2 — цепочки, фильтры и strict mode.
     uv run pytest tests/ui/test_u2_02_chains_filters_strict.py -v
 
 Можно использовать: фикстуры logged_in_page, create_user (tests/ui/conftest.py),
-хелперы deposit, place_order (возвращает JSON ордера), balance_row, amount (tests/ui/helpers.py).
+свои хелперы deposit, place_order (пусть возвращает JSON ордера, см. U2.1), balance_row, amount.
 Правила: XPath нельзя; .first / nth — только там, где задача это разрешает, с комментарием почему.
 
 Задача 1. Strict mode своими глазами.
@@ -3339,7 +3350,7 @@ U2. Урок 2 — цепочки, фильтры и strict mode.
 
 *Теория: `practice/u2_03_codegen_inspector.md`*
 
-Задания: `tests/ui/test_u2_03_codegen_inspector.py`.
+Задания: `practice/tasks/test_u2_03_codegen_inspector.py`, решение — `tests/ui/test_u2_03_codegen_inspector.py` (создаёшь сам).
 
 План: как записать сценарий codegen'ом и какие опции нужны на нашем стенде; что он генерирует
 и почему это ещё не тест; как переписать запись в нормальный тест (чек-лист); Inspector —
@@ -3599,7 +3610,7 @@ pw:api   click action done
 > ждёт — элемент невидим, disabled, двигается, или его перекрывает другой элемент, и какой именно.
 > Дальше чиню причину, а не ставлю `force=True`.
 
-### Задания — `tests/ui/test_u2_03_codegen_inspector.py`
+### Задания — `practice/tasks/test_u2_03_codegen_inspector.py`
 
 ```text
 U2. Урок 3 — Codegen и Inspector.
@@ -3673,7 +3684,7 @@ U2. Урок 3 — Codegen и Inspector.
 
 *Теория: `practice/u2_04_flaky_interview.md`*
 
-Задания: `tests/ui/test_u2_04_flaky.py`.
+Задания: `practice/tasks/test_u2_04_flaky.py`, решение — `tests/ui/test_u2_04_flaky.py` (создаёшь сам).
 
 План: что такое флейк и почему он дорогой; откуда они берутся (классификация с примерами,
 которые мы уже встретили на стенде); как воспроизвести и найти причину; как чинить
@@ -3963,7 +3974,7 @@ Inspector: `PWDEBUG=1`, `page.pause()` + Record. `DEBUG=pw:api` — чего ж�
 > уникальные имена, цены вне диапазона других тестов; очистка после себя, если ресурс общий;
 > не полагаться на «пустое» состояние системы. В идеале — изолированное окружение на прогон.
 
-### Задания — `tests/ui/test_u2_04_flaky.py`
+### Задания — `practice/tasks/test_u2_04_flaky.py`
 
 ```text
 U2. Урок 4 — флейки и собес по модулю U2.
@@ -4041,7 +4052,7 @@ U2. Урок 4 — флейки и собес по модулю U2.
 
 *Теория: `practice/u3_01_tabs_popups_iframes.md`*
 
-Задания: `tests/ui/test_u3_01_tabs_popups_iframes.py`. Страница: **лаборатория** `/app/lab.html`
+Задания: `practice/tasks/test_u3_01_tabs_popups_iframes.py`, решение — `tests/ui/test_u3_01_tabs_popups_iframes.py` (создаёшь сам). Страница: **лаборатория** `/app/lab.html`
 (блоки «Вкладки и окна», «Виджет курса»; стенд пересобери: `docker compose up -d --build`).
 
 Модуль U3: U3.1 вкладки, окна, iframe → U3.2 диалоги и файлы → U3.3 мышь, клавиатура, скролл →
@@ -4202,7 +4213,7 @@ Cross-origin iframe (платёжная форма на домене прова�
 > Сторонний провайдер в автотестах не дёргаю — капчи, лимиты, 2FA. Логин — через API и storage_state или
 > мок ответа провайдера. Механику popup проверяю на тестовом провайдере, если он есть.
 
-### Задания — `tests/ui/test_u3_01_tabs_popups_iframes.py`
+### Задания — `practice/tasks/test_u3_01_tabs_popups_iframes.py`
 
 ```text
 U3. Урок 1 — вкладки, всплывающие окна и iframe.
@@ -4262,7 +4273,7 @@ U3. Урок 1 — вкладки, всплывающие окна и iframe.
 
 *Теория: `practice/u3_02_dialogs_files.md`*
 
-Задания: `tests/ui/test_u3_02_dialogs_files.py`. Страница: лаборатория `/app/lab.html`
+Задания: `practice/tasks/test_u3_02_dialogs_files.py`, решение — `tests/ui/test_u3_02_dialogs_files.py` (создаёшь сам). Страница: лаборатория `/app/lab.html`
 (блоки «Диалоги», «Импорт и экспорт»).
 
 План: нативные диалоги `alert` / `confirm` / `prompt` / `beforeunload` и как Playwright с ними
@@ -4447,7 +4458,7 @@ assert rows[0] == "ticker,price,change"
 > Нативный — окно браузера, блокирует JS страницы; в DOM его нет, работаю через событие `dialog`.
 > Модальное окно — обычный HTML-элемент с ролью dialog; с ним работаю локаторами и компонентом (U4.2).
 
-### Задания — `tests/ui/test_u3_02_dialogs_files.py`
+### Задания — `practice/tasks/test_u3_02_dialogs_files.py`
 
 ```text
 U3. Урок 2 — диалоги браузера, загрузка и скачивание файлов.
@@ -4511,7 +4522,7 @@ U3. Урок 2 — диалоги браузера, загрузка и скач
 
 *Теория: `practice/u3_03_mouse_keyboard_scroll.md`*
 
-Задания: `tests/ui/test_u3_03_mouse_keyboard_scroll.py`. Страница: лаборатория `/app/lab.html`
+Задания: `practice/tasks/test_u3_03_mouse_keyboard_scroll.py`, решение — `tests/ui/test_u3_03_mouse_keyboard_scroll.py` (создаёшь сам). Страница: лаборатория `/app/lab.html`
 (меню «Ещё», «Избранное», «Котировки», «Лента сделок»).
 
 План: hover и меню по наведению; drag & drop (высокоуровнево и вручную); клавиатура — `press`,
@@ -4697,7 +4708,7 @@ loc.tap()                                          # тач (context с has_touc
 > `page.keyboard.press("ControlOrMeta+K")` — сочетание отправляется туда, где фокус; потом проверяю результат —
 > например, `to_be_focused` у поля поиска. `ControlOrMeta` — чтобы тест работал и на macOS, и на Linux в CI.
 
-### Задания — `tests/ui/test_u3_03_mouse_keyboard_scroll.py`
+### Задания — `practice/tasks/test_u3_03_mouse_keyboard_scroll.py`
 
 ```text
 U3. Урок 3 — мышь, клавиатура, скролл и бесконечные списки.
@@ -4756,7 +4767,7 @@ U3. Урок 3 — мышь, клавиатура, скролл и бескон�
 
 *Теория: `practice/u3_04_shadow_tables_storage_interview.md`*
 
-Задания: `tests/ui/test_u3_04_shadow_tables_storage.py`. Страница: лаборатория `/app/lab.html`
+Задания: `practice/tasks/test_u3_04_shadow_tables_storage.py`, решение — `tests/ui/test_u3_04_shadow_tables_storage.py` (создаёшь сам). Страница: лаборатория `/app/lab.html`
 («Тикер (веб-компонент)», «Котировки», баннер cookies).
 
 План: Shadow DOM — что это и как Playwright с ним работает (проверено); динамические таблицы —
@@ -4938,7 +4949,7 @@ context.storage_state()["origins"]                       # [{'origin': 'http://l
 > CSS автора с `display` перебивает встроенное правило `[hidden]`. Поэтому проверяю видимость через
 > `to_be_visible`/`to_be_hidden` — они смотрят на реальную отрисовку, а не на атрибут.
 
-### Задания — `tests/ui/test_u3_04_shadow_tables_storage.py`
+### Задания — `practice/tasks/test_u3_04_shadow_tables_storage.py`
 
 ```text
 U3. Урок 4 — Shadow DOM, таблицы, cookies и localStorage; собес по модулю U3.
@@ -5010,7 +5021,7 @@ U3. Урок 4 — Shadow DOM, таблицы, cookies и localStorage; собе
 
 *Теория: `practice/u4_01_page_object.md`*
 
-Задания: `tests/ui/test_u4_01_page_object.py`, код — в `ui_framework/pages/`.
+Задания: `practice/tasks/test_u4_01_page_object.py`, решение — `tests/ui/test_u4_01_page_object.py` (создаёшь сам), код — в `ui_framework/pages/`.
 Ревью: `practice/u4_01_review_me.py`.
 
 План: какую проблему решает Page Object; граница «страница — как, тест — что»; как устроить
@@ -5344,7 +5355,7 @@ def dashboard(auth_page: AuthPage, user_email: str) -> DashboardPage:
 > stale element. В Playwright локаторы ленивые: объявляю их атрибутами, они ищутся заново при
 > каждом действии. Плюс встроенные ожидания и `expect` — в PO не нужны свои wait-обёртки.
 
-### Задания — `tests/ui/test_u4_01_page_object.py`
+### Задания — `practice/tasks/test_u4_01_page_object.py`
 
 ```text
 U4. Урок 1 — Page Object.
@@ -5358,7 +5369,7 @@ U4. Урок 1 — Page Object.
     - в тестах НЕТ page.get_by_* / page.locator — только методы и локаторы из PO;
     - в PO нет бизнес-проверок (раздел 4 теории), разрешены wait_loaded и проверка ответа своего действия;
     - для проверок PO отдаёт Locator, тест делает expect;
-    - tests/ui/helpers.py в этом уроке не используем — всё через PO.
+    - свои хелперы из прошлых уроков в этом уроке не используем — всё через PO.
 
 Задача 1. BasePage (ui_framework/pages/base_page.py).
     Атрибут класса path, __init__(page) с локатором toast, метод open() -> self.
@@ -5501,7 +5512,7 @@ def test_order_flow(page: Page):
 
 *Теория: `practice/u4_02_components.md`*
 
-Задания: `tests/ui/test_u4_02_components.py`, код — в `ui_framework/components/`.
+Задания: `practice/tasks/test_u4_02_components.py`, решение — `tests/ui/test_u4_02_components.py` (создаёшь сам), код — в `ui_framework/components/`.
 
 План: почему PO страницы разрастается и что такое компонент; корневой локатор и поиск
 внутри него; композиция страницы из компонентов; компонент строки таблицы; общий компонент
@@ -5788,7 +5799,7 @@ dashboard.deposit("USDT", "1000")                 # фасад: страница
 > Для сценариев, где участвуют несколько компонентов или есть переход, — да: «войти», «выйти».
 > Действия внутри одного блока — через компонент, иначе страница дублирует все методы компонентов.
 
-### Задания — `tests/ui/test_u4_02_components.py`
+### Задания — `practice/tasks/test_u4_02_components.py`
 
 ```text
 U4. Урок 2 — компоненты.
@@ -5859,7 +5870,7 @@ U4. Урок 2 — компоненты.
 
 *Теория: `practice/u4_03_fixtures_config.md`*
 
-Задания: `tests/ui/test_u4_03_fixtures_config.py`, код — `ui_framework/config/`, `ui_framework/fixtures/`.
+Задания: `practice/tasks/test_u4_03_fixtures_config.py`, решение — `tests/ui/test_u4_03_fixtures_config.py` (создаёшь сам), код — `ui_framework/config/`, `ui_framework/fixtures/`.
 
 Основы фикстур (scope, yield, conftest, `browser_context_args`) были в U1.4. Здесь — то, из чего
 собирают фреймворк: фикстуры страниц, фабрики с уборкой, `request` и маркеры с данными,
@@ -6242,7 +6253,7 @@ uv run pytest -m "regression and not slow"
 > через `pytest_plugins` в корневом conftest. Специфичное для набора тестов — в conftest этой папки.
 > Так фреймворк можно переиспользовать, а conftest тестов остаётся маленьким.
 
-### Задания — `tests/ui/test_u4_03_fixtures_config.py`
+### Задания — `practice/tasks/test_u4_03_fixtures_config.py`
 
 ```text
 U4. Урок 3 — фикстуры страниц и конфиг окружений.
@@ -6318,7 +6329,7 @@ U4. Урок 3 — фикстуры страниц и конфиг окруже�
 
 *Теория: `practice/u4_04_utils_allure_structure.md`*
 
-Задания: `tests/ui/test_u4_04_utils_allure.py`, код — `ui_framework/utils/`, `ui_framework/data/`,
+Задания: `practice/tasks/test_u4_04_utils_allure.py`, решение — `tests/ui/test_u4_04_utils_allure.py` (создаёшь сам), код — `ui_framework/utils/`, `ui_framework/data/`,
 `ui_framework/fixtures/reporting.py`.
 
 План: что такое слой утилит и что в него класть (и что нет); деньги и даты; генераторы и модели
@@ -6679,7 +6690,7 @@ tests/
 > `frozen` защищает от случайного изменения общего объекта. Данные читаются как предметная область,
 > а не как набор строк.
 
-### Задания — `tests/ui/test_u4_04_utils_allure.py`
+### Задания — `practice/tasks/test_u4_04_utils_allure.py`
 
 ```text
 U4. Урок 4 — утилиты, Allure и структура проекта.
@@ -6755,7 +6766,7 @@ U4. Урок 4 — утилиты, Allure и структура проекта.
 
 *Теория: `practice/u4_05_screenplay_interview.md`*
 
-Задания: `tests/ui/test_u4_05_screenplay_framework.py`, код — `ui_framework/screenplay/`.
+Задания: `practice/tasks/test_u4_05_screenplay_framework.py`, решение — `tests/ui/test_u4_05_screenplay_framework.py` (создаёшь сам), код — `ui_framework/screenplay/`.
 
 План: что такое Screenplay и чем он отличается от Page Object; мини-реализация поверх наших PO;
 когда что выбирать; чек-лист готового каркаса UI-фреймворка; шпаргалка и банк вопросов по модулю U4.
@@ -7024,7 +7035,7 @@ alice.attempts_to(PlaceOrder("BUY", "100", "1"))                     # пров�
 > состояние, зашитые данные, тесты лезут в `page` мимо PO, правка одной кнопки ломает много мест.
 > Лечу разбиением на компоненты и разделением экранов.
 
-### Задания — `tests/ui/test_u4_05_screenplay_framework.py`
+### Задания — `practice/tasks/test_u4_05_screenplay_framework.py`
 
 ```text
 U4. Урок 5 — Screenplay, собес по модулю U4 и каркас фреймворка.
@@ -7087,7 +7098,7 @@ U4. Урок 5 — Screenplay, собес по модулю U4 и каркас �
 
 *Теория: `practice/u5_01_api_in_playwright.md`*
 
-Задания: `tests/ui/test_u5_01_api_in_playwright.py`, код — `ui_framework/api/`.
+Задания: `practice/tasks/test_u5_01_api_in_playwright.py`, решение — `tests/ui/test_u5_01_api_in_playwright.py` (создаёшь сам), код — `ui_framework/api/`.
 
 План: зачем UI-тестам API; `APIRequestContext` — откуда взять и чем отличаются варианты; запросы
 и ответы; авторизация на стенде; тонкий API-клиент; подготовка через API → проверка в UI
@@ -7388,7 +7399,7 @@ for attempt in range(3):
 > ключа повторять нельзя — если ответ потерялся после обработки, повтор задвоит данные. Если API
 > поддерживает Idempotency-Key — генерирую ключ на операцию и повторяю с ним.
 
-### Задания — `tests/ui/test_u5_01_api_in_playwright.py`
+### Задания — `practice/tasks/test_u5_01_api_in_playwright.py`
 
 ```text
 U5. Урок 1 — API внутри Playwright.
@@ -7460,7 +7471,7 @@ U5. Урок 1 — API внутри Playwright.
 
 *Теория: `practice/u5_02_test_data.md`*
 
-Задания: `tests/ui/test_u5_02_test_data.py`, код — `ui_framework/data/`, `tests/ui/data/`.
+Задания: `practice/tasks/test_u5_02_test_data.py`, решение — `tests/ui/test_u5_02_test_data.py` (создаёшь сам), код — `ui_framework/data/`, `tests/ui/data/`.
 
 План: стратегии данных (seed или генерация на тест); Faker и его ловушки; фабрики «пользователь /
 пользователь с балансом / с ордерами»; builder; уникальность при параллельном запуске и префикс
@@ -7765,7 +7776,7 @@ def shared_dir(tmp_path_factory):                  # на весь прогон
 > Кейсы — в JSON или CSV рядом с тестами, загружаю при сборке и превращаю в `pytest.param` с читаемыми id.
 > Модели и генераторы — во фреймворке. Временные файлы — в `tmp_path`, не в папке проекта.
 
-### Задания — `tests/ui/test_u5_02_test_data.py`
+### Задания — `practice/tasks/test_u5_02_test_data.py`
 
 ```text
 U5. Урок 2 — тестовые данные.
@@ -7838,7 +7849,7 @@ U5. Урок 2 — тестовые данные.
 
 *Теория: `practice/u5_03_storage_state_parallel.md`*
 
-Задания: `tests/ui/test_u5_03_storage_state_parallel.py`, код — `ui_framework/fixtures/auth.py`.
+Задания: `practice/tasks/test_u5_03_storage_state_parallel.py`, решение — `tests/ui/test_u5_03_storage_state_parallel.py` (создаёшь сам), код — `ui_framework/fixtures/auth.py`.
 
 План: три уровня «не логиниться в каждом тесте»; логин один раз на сессию, на воркер, на все
 воркеры (filelock); истечение токена; роли; несколько пользователей в тесте; что изолирует context,
@@ -8081,7 +8092,7 @@ def isolated_price(low: int = 300, high: int = 499) -> str:
 > плагины применяют только на контроллере, — как base_url из ini у pytest-base-url. Вывод print не виден.
 > Лечится изоляцией данных, блокировками и проверкой, что тесты не зависят друг от друга.
 
-### Задания — `tests/ui/test_u5_03_storage_state_parallel.py`
+### Задания — `practice/tasks/test_u5_03_storage_state_parallel.py`
 
 ```text
 U5. Урок 3 — storage_state, роли, изоляция и параллельный запуск.
@@ -8150,7 +8161,7 @@ U5. Урок 3 — storage_state, роли, изоляция и параллел
 
 *Теория: `practice/u5_04_interview.md`*
 
-Задания: `tests/ui/test_u5_04_livecoding.py`, ревью — `practice/u5_04_review_me.py`.
+Задания: `practice/tasks/test_u5_04_livecoding.py`, решение — `tests/ui/test_u5_04_livecoding.py` (создаёшь сам), ревью — `practice/u5_04_review_me.py`.
 
 План: шпаргалка по модулю; банк вопросов (ссылки на разделы «Собес» U5.1–U5.3 плюс новые
 вопросы-сценарии и вопрос на проектирование); ключевые ответы на английском; на что смотреть
@@ -8285,7 +8296,7 @@ U5. Урок 3 — storage_state, роли, изоляция и параллел
 - [ ] секреты в коде, в шагах Allure, в логах;
 - [ ] SQL с f-строкой вместо параметров.
 
-### Задания — `tests/ui/test_u5_04_livecoding.py`
+### Задания — `practice/tasks/test_u5_04_livecoding.py`
 
 ```text
 U5. Урок 4 — собес по модулю U5.
@@ -8444,7 +8455,7 @@ def cleanup():
 
 *Теория: `practice/u6_01_route_mocks.md`*
 
-Задания: `tests/ui/test_u6_01_route_mocks.py`, код — `ui_framework/network/`.
+Задания: `practice/tasks/test_u6_01_route_mocks.py`, решение — `tests/ui/test_u6_01_route_mocks.py` (создаёшь сам), код — `ui_framework/network/`.
 
 План: зачем подменять бэкенд в UI-тестах; `page.route` / `context.route` и четыре ответа обработчика
 (`fulfill`, `continue_`, `fallback`, `abort`); сопоставление URL (ловушка с query — проверено);
@@ -8721,7 +8732,7 @@ Page и context закрываются после теста — моки с н�
 > ответов или по схеме, проверяю контракт отдельно, и оставляю E2E-тесты на реальном бэкенде.
 > Мок — инструмент для тестов фронта и трудных состояний, а не замена бэкенду.
 
-### Задания — `tests/ui/test_u6_01_route_mocks.py`
+### Задания — `practice/tasks/test_u6_01_route_mocks.py`
 
 ```text
 U6. Урок 1 — перехват сети: page.route и моки.
@@ -8797,7 +8808,7 @@ U6. Урок 1 — перехват сети: page.route и моки.
 
 *Теория: `practice/u6_02_har_clock.md`*
 
-Задания: `tests/ui/test_u6_02_har_clock.py`.
+Задания: `practice/tasks/test_u6_02_har_clock.py`, решение — `tests/ui/test_u6_02_har_clock.py` (создаёшь сам).
 
 План: что такое HAR; запись (`route_from_har(update=True)`, `record_har_path`, codegen `--save-har`);
 воспроизведение, фильтры и `not_found`; когда HAR полезен и чем опасен; `page.clock` — подмена времени
@@ -8984,7 +8995,7 @@ expect(toast).to_be_hidden()
 > состояний и состояния «во время запроса». HAR — когда нужно много реальных ответов сразу или
 > сторонний сервис. Моки и HAR держу актуальными и не даю им заменить E2E.
 
-### Задания — `tests/ui/test_u6_02_har_clock.py`
+### Задания — `practice/tasks/test_u6_02_har_clock.py`
 
 ```text
 U6. Урок 2 — HAR и page.clock.
@@ -9050,7 +9061,7 @@ HAR-файлы пиши в tmp_path или tests/ui/data/har/ (если комм
 
 *Теория: `practice/u6_03_browser_env_interview.md`*
 
-Задания: `tests/ui/test_u6_03_browser_env.py`. Страница: **лаборатория** `http://localhost:8080/app/lab.html`
+Задания: `practice/tasks/test_u6_03_browser_env.py`, решение — `tests/ui/test_u6_03_browser_env.py` (создаёшь сам). Страница: **лаборатория** `http://localhost:8080/app/lab.html`
 (блок «Окружение»; стенд пересобери: `docker compose up -d --build`).
 
 План: какие настройки окружения есть у context; локаль и часовой пояс; геолокация и разрешения;
@@ -9221,7 +9232,7 @@ uv run pytest tests/ui --device "iPhone 13"     # pytest-playwright: устро�
 > HAR — много реальных ответов сразу, сторонние сервисы, воспроизведение данных с прода. Моки и HAR держу
 > актуальными.
 
-### Задания — `tests/ui/test_u6_03_browser_env.py`
+### Задания — `practice/tasks/test_u6_03_browser_env.py`
 
 ```text
 U6. Урок 3 — окружение браузера и собес по модулю U6.
@@ -9288,7 +9299,7 @@ U6. Урок 3 — окружение браузера и собес по мод
 
 *Теория: `practice/u7_01_trace_artifacts.md`*
 
-Задания: `tests/ui/test_u7_01_trace_artifacts.py`.
+Задания: `practice/tasks/test_u7_01_trace_artifacts.py`, решение — `tests/ui/test_u7_01_trace_artifacts.py` (создаёшь сам).
 
 План: какие артефакты даёт pytest-playwright и как их включить; где они лежат (проверено);
 ловушка — context вне фикстур без артефактов; Trace Viewer — что в нём есть и как разбирать падение
@@ -9495,7 +9506,7 @@ Allure сам не открывает trace — в отчёте он будет 
 > Trace почти всегда полезнее: там тот же экран плюс DOM, сеть, консоль и лог. Видео удобно показать не
 > технарям — как воспроизводится баг. Видео тяжелее и требует ffmpeg.
 
-### Задания — `tests/ui/test_u7_01_trace_artifacts.py`
+### Задания — `practice/tasks/test_u7_01_trace_artifacts.py`
 
 ```text
 U7. Урок 1 — Trace Viewer, скриншоты, видео и отчёт.
@@ -9554,7 +9565,7 @@ U7. Урок 1 — Trace Viewer, скриншоты, видео и отчёт.
 
 *Теория: `practice/u7_02_debug_ci_interview.md`*
 
-Задания: `tests/ui/test_u7_02_debug_ci.py`.
+Задания: `practice/tasks/test_u7_02_debug_ci.py`, решение — `tests/ui/test_u7_02_debug_ci.py` (создаёшь сам).
 
 План: инструменты отладки одним списком (что когда); `--headed --slowmo` и почему slowmo прячет гонки;
 `breakpoint()` и `--pdb`; чем CI отличается от твоей машины — таблица; как воспроизвести CI локально
@@ -9686,7 +9697,7 @@ uv run pytest ... -s                                  # нужен, чтобы �
 > Та же команда и окружение, headless, тот же браузер, тот же Docker-образ Playwright, замедление сети и CPU,
 > повторы и параллель. Тогда «иногда в CI» превращается в «стабильно у меня».
 
-### Задания — `tests/ui/test_u7_02_debug_ci.py`
+### Задания — `practice/tasks/test_u7_02_debug_ci.py`
 
 ```text
 U7. Урок 2 — отладка и «в CI падает, локально проходит»; собес по модулю U7.
@@ -9745,7 +9756,7 @@ U7. Урок 2 — отладка и «в CI падает, локально пр
 
 *Теория: `practice/u8_01_visual_regression.md`*
 
-Задания: `tests/ui/test_u8_01_visual.py`, код — `ui_framework/utils/visual.py`.
+Задания: `practice/tasks/test_u8_01_visual.py`, решение — `tests/ui/test_u8_01_visual.py` (создаёшь сам), код — `ui_framework/utils/visual.py`.
 
 План: что ловит визуальный тест и чего не ловит функциональный; **в Python нет `to_have_screenshot`** — строим
 своё сравнение (Pillow + pixelmatch, проверено на стенде); эталоны — где хранить, как обновлять; маски и другие
@@ -9891,7 +9902,7 @@ def assert_screenshot(png: bytes, name: str, *, max_diff_pixels: int = 0, thresh
 > Только осознанно: флаг обновления, новые эталоны — через PR, где ревьюер видит картинки. Генерирую их в Docker-образе
 > CI, чтобы не было расхождений платформы.
 
-### Задания — `tests/ui/test_u8_01_visual.py`
+### Задания — `practice/tasks/test_u8_01_visual.py`
 
 ```text
 U8. Урок 1 — визуальная регрессия.
@@ -9953,7 +9964,7 @@ U8. Урок 1 — визуальная регрессия.
 
 *Теория: `practice/u8_02_a11y_perf_interview.md`*
 
-Задания: `tests/ui/test_u8_02_a11y_perf.py`.
+Задания: `practice/tasks/test_u8_02_a11y_perf.py`, решение — `tests/ui/test_u8_02_a11y_perf.py` (создаёшь сам).
 
 План: доступность (a11y) — что это и кому нужно; axe-core через `axe-playwright-python` (проверено:
 находит проблемы на лаборатории и 0 в кабинете); что автоматическая проверка не найдёт — и как дотестировать
@@ -10129,7 +10140,7 @@ Lighthouse. Lighthouse (полный аудит) запускают отдель
 > Шумит окружение: другая машина, соседние джобы, сеть. Поэтому пороги с запасом, медиана, фиксированный throttling,
 > отдельный прогон и внимание к тренду, а не к одному числу.
 
-### Задания — `tests/ui/test_u8_02_a11y_perf.py`
+### Задания — `practice/tasks/test_u8_02_a11y_perf.py`
 
 ```text
 U8. Урок 2 — доступность и производительность фронта; собес по модулю U8.
@@ -10194,7 +10205,7 @@ U8. Урок 2 — доступность и производительност�
 
 *Теория: `practice/u9_01_parallel_sharding_browsers.md`*
 
-Задания: `tests/ui/test_u9_01_parallel_browsers.py`.
+Задания: `practice/tasks/test_u9_01_parallel_browsers.py`, решение — `tests/ui/test_u9_01_parallel_browsers.py` (создаёшь сам).
 
 План: масштаб прогона — процессы (xdist) и машины (шарды); как шардировать без плагинов (проверено:
 без пересечений и потерь) и с pytest-split по длительности; где предел ускорения; кросс-браузерность —
@@ -10329,7 +10340,7 @@ WebKit Playwright ≠ настоящий Safari на macOS/iOS, но ловит 
 > Общий стенд нагружается, у каждой машины и воркера фиксированная стоимость старта, session-фикстуры
 > выполняются на каждом воркере, а время прогона ограничено самым длинным шардом.
 
-### Задания — `tests/ui/test_u9_01_parallel_browsers.py`
+### Задания — `practice/tasks/test_u9_01_parallel_browsers.py`
 
 ```text
 U9. Урок 1 — параллель, шардирование и кросс-браузерность.
@@ -10381,7 +10392,7 @@ U9. Урок 1 — параллель, шардирование и кросс-б
 
 *Теория: `practice/u9_02_docker_ci_stability.md`*
 
-Задания: `tests/ui/test_u9_02_docker_ci.py`.
+Задания: `practice/tasks/test_u9_02_docker_ci.py`, решение — `tests/ui/test_u9_02_docker_ci.py` (создаёшь сам).
 
 План: зачем тесты в Docker; официальный образ Playwright и запуск наших тестов в нём против стенда
 (проверено на U1.4: WebKit — 9/9, Firefox — 8/9, один тест упал на проверке видимости, его разбор — задание 3); подводные камни (venv, `addopts`, сеть,
@@ -10578,7 +10589,7 @@ uv run pytest ... --reruns 2 --reruns-delay 1 --only-rerun "TimeoutError|503"
 > `localhost` в контейнере — это контейнер, стенд — через host.docker.internal или общую сеть compose.
 > Системного Chrome в образе нет.
 
-### Задания — `tests/ui/test_u9_02_docker_ci.py`
+### Задания — `practice/tasks/test_u9_02_docker_ci.py`
 
 ```text
 U9. Урок 2 — Docker-образ Playwright, CI, артефакты и стабильность; собес по модулю U9.
@@ -10645,7 +10656,7 @@ U9. Урок 2 — Docker-образ Playwright, CI, артефакты и ст�
 
 *Теория: `practice/u10_01_strategy_hybrid.md`*
 
-Задания: `tests/ui/test_u10_01_strategy_hybrid.py`.
+Задания: `practice/tasks/test_u10_01_strategy_hybrid.py`, решение — `tests/ui/test_u10_01_strategy_hybrid.py` (создаёшь сам).
 
 План: пирамида и «трофей» тестов; сколько стоит UI-тест; что автоматизировать в UI, а что в API и ниже;
 как выбрать сценарии для UI на нашей бирже; гибридные тесты API → UI → БД; как говорить о стратегии на собесе.
@@ -10778,7 +10789,7 @@ def test_cancel_order_hybrid(trader_factory, login_in_browser, db):
 > побочных эффектов, которых нет в API, инвариантов вроде «деньги не исчезли» и расследований, когда уровни расходятся.
 > Если то же отдаёт API — проверяю через API, чтобы не завязываться на схему.
 
-### Задания — `tests/ui/test_u10_01_strategy_hybrid.py`
+### Задания — `practice/tasks/test_u10_01_strategy_hybrid.py`
 
 ```text
 U10. Урок 1 — стратегия UI-автоматизации и гибридные тесты.
@@ -10829,7 +10840,7 @@ U10. Урок 1 — стратегия UI-автоматизации и гибр
 
 *Теория: `practice/u10_02_review_selenium.md`*
 
-Задания: `tests/ui/test_u10_02_review_selenium.py`, ревью — `practice/u10_02_review_me.py`.
+Задания: `practice/tasks/test_u10_02_review_selenium.py`, решение — `tests/ui/test_u10_02_review_selenium.py` (создаёшь сам), ревью — `practice/u10_02_review_me.py`.
 
 План: как проводить ревью UI-тестов — порядок, чек-лист, как писать замечания; сводный каталог антипаттернов
 курса; Selenium — WebDriver, ожидания, PageFactory, stale element, Grid; сравнение с Playwright так, как спрашивают
@@ -11003,7 +11014,7 @@ Playwright; отдельный Grid обычно не нужен.
 > web-first проверок, даёт перехват сети и Trace Viewer. Selenium — для легаси-проектов, настоящего Safari, мобильных
 > через Appium и там, где уже есть Grid и экспертиза.
 
-### Задания — `tests/ui/test_u10_02_review_selenium.py`
+### Задания — `practice/tasks/test_u10_02_review_selenium.py`
 
 ```text
 U10. Урок 2 — ревью UI-тестов и Selenium на уровне собеседования.
@@ -11155,7 +11166,7 @@ def test_5_matching(dash, browser):
 
 *Теория: `practice/u10_03_final_interview.md`*
 
-Задания: `tests/ui/test_u10_03_final_livecoding.py`.
+Задания: `practice/tasks/test_u10_03_final_livecoding.py`, решение — `tests/ui/test_u10_03_final_livecoding.py` (создаёшь сам).
 
 План: как устроено собеседование на Senior AQA и что проверяют на каждом этапе; карта всех вопросов курса
 по модулям; 25 главных вопросов с короткими ответами — то, что должно отскакивать от зубов; рассказ о себе
@@ -11268,7 +11279,7 @@ def test_5_matching(dash, browser):
 - Что считается успехом через 3 и 6 месяцев на этой позиции?
 - Как принимается решение «релизим / не релизим» и какую роль играют тесты?
 
-### Задания — `tests/ui/test_u10_03_final_livecoding.py`
+### Задания — `practice/tasks/test_u10_03_final_livecoding.py`
 
 ```text
 U10. Урок 3 — итоговый собес по UI-части и лайвкодинг на время.

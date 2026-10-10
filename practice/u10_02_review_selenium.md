@@ -1,6 +1,6 @@
 # U10. Урок 2 — ревью UI-тестов и Selenium на уровне собеседования
 
-Задания: `tests/ui/test_u10_02_review_selenium.py`, ревью — `practice/u10_02_review_me.py`.
+Задания: `practice/tasks/test_u10_02_review_selenium.py`, решение — `tests/ui/test_u10_02_review_selenium.py` (создаёшь сам), ревью — `practice/u10_02_review_me.py`.
 
 План: как проводить ревью UI-тестов — порядок, чек-лист, как писать замечания; сводный каталог антипаттернов
 курса; Selenium — WebDriver, ожидания, PageFactory, stale element, Grid; сравнение с Playwright так, как спрашивают

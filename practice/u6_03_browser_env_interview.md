@@ -1,6 +1,6 @@
 # U6. Урок 3 — окружение браузера и собес по модулю U6
 
-Задания: `tests/ui/test_u6_03_browser_env.py`. Страница: **лаборатория** `http://localhost:8080/app/lab.html`
+Задания: `practice/tasks/test_u6_03_browser_env.py`, решение — `tests/ui/test_u6_03_browser_env.py` (создаёшь сам). Страница: **лаборатория** `http://localhost:8080/app/lab.html`
 (блок «Окружение»; стенд пересобери: `docker compose up -d --build`).
 
 План: какие настройки окружения есть у context; локаль и часовой пояс; геолокация и разрешения;

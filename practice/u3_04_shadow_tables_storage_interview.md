@@ -1,6 +1,6 @@
 # U3. Урок 4 — Shadow DOM, таблицы, cookies и localStorage; собес по модулю U3
 
-Задания: `tests/ui/test_u3_04_shadow_tables_storage.py`. Страница: лаборатория `/app/lab.html`
+Задания: `practice/tasks/test_u3_04_shadow_tables_storage.py`, решение — `tests/ui/test_u3_04_shadow_tables_storage.py` (создаёшь сам). Страница: лаборатория `/app/lab.html`
 («Тикер (веб-компонент)», «Котировки», баннер cookies).
 
 План: Shadow DOM — что это и как Playwright с ним работает (проверено); динамические таблицы —

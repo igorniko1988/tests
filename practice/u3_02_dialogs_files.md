@@ -1,6 +1,6 @@
 # U3. Урок 2 — диалоги браузера, загрузка и скачивание файлов
 
-Задания: `tests/ui/test_u3_02_dialogs_files.py`. Страница: лаборатория `/app/lab.html`
+Задания: `practice/tasks/test_u3_02_dialogs_files.py`, решение — `tests/ui/test_u3_02_dialogs_files.py` (создаёшь сам). Страница: лаборатория `/app/lab.html`
 (блоки «Диалоги», «Импорт и экспорт»).
 
 План: нативные диалоги `alert` / `confirm` / `prompt` / `beforeunload` и как Playwright с ними

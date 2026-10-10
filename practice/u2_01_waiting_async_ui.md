@@ -1,6 +1,6 @@
 # U2. Урок 1 — web-first assertions и асинхронный UI
 
-Задания: `tests/ui/test_u2_01_waiting_async_ui.py`.
+Задания: `practice/tasks/test_u2_01_waiting_async_ui.py`, решение — `tests/ui/test_u2_01_waiting_async_ui.py` (создаёшь сам).
 
 План: почему `expect` ждёт, а `assert` нет, и какие методы Locator «не ждут»; полный набор
 проверок `expect`; как устроен асинхронный UI нашего стенда (автообновление, тосты, disabled-кнопки)
@@ -190,8 +190,8 @@ deposit(page, "USDT", "100")    # проверка тоста проходит �
 три `place_order` подряд создавали два ордера. Варианты:
 - перед вторым действием дождаться, что тост исчез: `expect(toast).to_be_hidden()`;
 - проверять **бизнес-результат**, а не тост: баланс стал 200;
-- ждать ответ сервера на каждый запрос (`expect_response`) — так сделаны хелперы
-  `deposit` и `place_order` в `tests/ui/helpers.py`.
+- ждать ответ сервера на каждый запрос (`expect_response`) — так стоит переделать свои хелперы
+  `deposit` и `place_order` (задача 4 этого урока).
 
 ### Ловушка 3: проверка «мигающего» состояния
 
@@ -354,12 +354,23 @@ def wait_until(condition, timeout: float = 10, interval: float = 0.5, message: s
 ## 9. Как воспроизвести флейк: медленная сеть
 
 Флейк «иногда падает в CI» локально не ловится — всё быстрое. Замедли сеть, и гонка видна
-каждый раз. В `tests/ui/helpers.py` есть хелпер:
+каждый раз. Хелпер — положи к своим хелперам:
 
 ```python
-from tests.ui.helpers import slow_network
+def slow_network(page: Page, latency_ms: int) -> None:
+    """Добавить задержку к каждому запросу страницы — как медленный CI или мобильная сеть.
 
-slow_network(page, 400)       # +400 мс к каждому запросу (только Chromium, через CDP)
+    Только Chromium: работает через CDP (Network.emulateNetworkConditions).
+    """
+    cdp = page.context.new_cdp_session(page)
+    cdp.send("Network.enable")
+    cdp.send(
+        "Network.emulateNetworkConditions",
+        {"offline": False, "latency": latency_ms, "downloadThroughput": -1, "uploadThroughput": -1},
+    )
+
+
+slow_network(page, 400)       # +400 мс к каждому запросу
 ```
 
 На стенде с задержкой 400 мс сразу после тоста «Баланс пополнен» `text_content()` баланса

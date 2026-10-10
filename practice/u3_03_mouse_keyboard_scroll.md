@@ -1,6 +1,6 @@
 # U3. Урок 3 — мышь, клавиатура, скролл и бесконечные списки
 
-Задания: `tests/ui/test_u3_03_mouse_keyboard_scroll.py`. Страница: лаборатория `/app/lab.html`
+Задания: `practice/tasks/test_u3_03_mouse_keyboard_scroll.py`, решение — `tests/ui/test_u3_03_mouse_keyboard_scroll.py` (создаёшь сам). Страница: лаборатория `/app/lab.html`
 (меню «Ещё», «Избранное», «Котировки», «Лента сделок»).
 
 План: hover и меню по наведению; drag & drop (высокоуровнево и вручную); клавиатура — `press`,

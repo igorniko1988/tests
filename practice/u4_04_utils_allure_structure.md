@@ -1,6 +1,6 @@
 # U4. Урок 4 — утилиты, Allure и структура проекта
 
-Задания: `tests/ui/test_u4_04_utils_allure.py`, код — `ui_framework/utils/`, `ui_framework/data/`,
+Задания: `practice/tasks/test_u4_04_utils_allure.py`, решение — `tests/ui/test_u4_04_utils_allure.py` (создаёшь сам), код — `ui_framework/utils/`, `ui_framework/data/`,
 `ui_framework/fixtures/reporting.py`.
 
 План: что такое слой утилит и что в него класть (и что нет); деньги и даты; генераторы и модели

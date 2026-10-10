@@ -1,6 +1,6 @@
 # U4. Урок 5 — Screenplay, собес по модулю U4 и каркас фреймворка
 
-Задания: `tests/ui/test_u4_05_screenplay_framework.py`, код — `ui_framework/screenplay/`.
+Задания: `practice/tasks/test_u4_05_screenplay_framework.py`, решение — `tests/ui/test_u4_05_screenplay_framework.py` (создаёшь сам), код — `ui_framework/screenplay/`.
 
 План: что такое Screenplay и чем он отличается от Page Object; мини-реализация поверх наших PO;
 когда что выбирать; чек-лист готового каркаса UI-фреймворка; шпаргалка и банк вопросов по модулю U4.

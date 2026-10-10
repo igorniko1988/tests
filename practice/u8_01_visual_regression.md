@@ -1,6 +1,6 @@
 # U8. Урок 1 — визуальная регрессия
 
-Задания: `tests/ui/test_u8_01_visual.py`, код — `ui_framework/utils/visual.py`.
+Задания: `practice/tasks/test_u8_01_visual.py`, решение — `tests/ui/test_u8_01_visual.py` (создаёшь сам), код — `ui_framework/utils/visual.py`.
 
 План: что ловит визуальный тест и чего не ловит функциональный; **в Python нет `to_have_screenshot`** — строим
 своё сравнение (Pillow + pixelmatch, проверено на стенде); эталоны — где хранить, как обновлять; маски и другие

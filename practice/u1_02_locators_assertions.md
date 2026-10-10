@@ -1,6 +1,6 @@
 # U1. Урок 2 — локаторы и проверки подробно
 
-Задания: `tests/ui/test_u1_02_locators_assertions.py`.
+Задания: `practice/tasks/test_u1_02_locators_assertions.py`, решение — `tests/ui/test_u1_02_locators_assertions.py` (создаёшь сам).
 В U1.1 был обзор. Здесь — как Playwright на самом деле находит элементы, все приёмы уточнения
 (цепочки, filter, and_/or_), работа с таблицами и списками и полный набор `expect`.
 

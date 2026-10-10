@@ -1,6 +1,6 @@
 # U4. Урок 1 — Page Object
 
-Задания: `tests/ui/test_u4_01_page_object.py`, код — в `ui_framework/pages/`.
+Задания: `practice/tasks/test_u4_01_page_object.py`, решение — `tests/ui/test_u4_01_page_object.py` (создаёшь сам), код — в `ui_framework/pages/`.
 Ревью: `practice/u4_01_review_me.py`.
 
 План: какую проблему решает Page Object; граница «страница — как, тест — что»; как устроить

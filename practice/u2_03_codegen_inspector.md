@@ -1,6 +1,6 @@
 # U2. Урок 3 — Codegen и Inspector
 
-Задания: `tests/ui/test_u2_03_codegen_inspector.py`.
+Задания: `practice/tasks/test_u2_03_codegen_inspector.py`, решение — `tests/ui/test_u2_03_codegen_inspector.py` (создаёшь сам).
 
 План: как записать сценарий codegen'ом и какие опции нужны на нашем стенде; что он генерирует
 и почему это ещё не тест; как переписать запись в нормальный тест (чек-лист); Inspector —

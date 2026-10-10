@@ -1,6 +1,6 @@
 # U1. Урок 1 — первые тесты на Playwright
 
-Задания: `tests/ui/test_u1_01_first_tests.py` (условия в docstring, код пишешь сам).
+Задания: `practice/tasks/test_u1_01_first_tests.py`, решение — `tests/ui/test_u1_01_first_tests.py` (создаёшь сам) (условия в docstring, код пишешь сам).
 Все примеры ниже — на нашем стенде, их можно сразу запускать.
 
 ---

@@ -1,6 +1,6 @@
 # U5. Урок 3 — storage_state, роли, изоляция и параллельный запуск
 
-Задания: `tests/ui/test_u5_03_storage_state_parallel.py`, код — `ui_framework/fixtures/auth.py`.
+Задания: `practice/tasks/test_u5_03_storage_state_parallel.py`, решение — `tests/ui/test_u5_03_storage_state_parallel.py` (создаёшь сам), код — `ui_framework/fixtures/auth.py`.
 
 План: три уровня «не логиниться в каждом тесте»; логин один раз на сессию, на воркер, на все
 воркеры (filelock); истечение токена; роли; несколько пользователей в тесте; что изолирует context,

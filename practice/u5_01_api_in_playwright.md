@@ -1,6 +1,6 @@
 # U5. Урок 1 — API внутри Playwright
 
-Задания: `tests/ui/test_u5_01_api_in_playwright.py`, код — `ui_framework/api/`.
+Задания: `practice/tasks/test_u5_01_api_in_playwright.py`, решение — `tests/ui/test_u5_01_api_in_playwright.py` (создаёшь сам), код — `ui_framework/api/`.
 
 План: зачем UI-тестам API; `APIRequestContext` — откуда взять и чем отличаются варианты; запросы
 и ответы; авторизация на стенде; тонкий API-клиент; подготовка через API → проверка в UI

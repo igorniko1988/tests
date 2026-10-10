@@ -1,6 +1,6 @@
 # U5. Урок 2 — тестовые данные
 
-Задания: `tests/ui/test_u5_02_test_data.py`, код — `ui_framework/data/`, `tests/ui/data/`.
+Задания: `practice/tasks/test_u5_02_test_data.py`, решение — `tests/ui/test_u5_02_test_data.py` (создаёшь сам), код — `ui_framework/data/`, `tests/ui/data/`.
 
 План: стратегии данных (seed или генерация на тест); Faker и его ловушки; фабрики «пользователь /
 пользователь с балансом / с ордерами»; builder; уникальность при параллельном запуске и префикс

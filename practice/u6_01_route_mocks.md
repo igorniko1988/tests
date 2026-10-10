@@ -1,6 +1,6 @@
 # U6. Урок 1 — перехват сети: page.route и моки
 
-Задания: `tests/ui/test_u6_01_route_mocks.py`, код — `ui_framework/network/`.
+Задания: `practice/tasks/test_u6_01_route_mocks.py`, решение — `tests/ui/test_u6_01_route_mocks.py` (создаёшь сам), код — `ui_framework/network/`.
 
 План: зачем подменять бэкенд в UI-тестах; `page.route` / `context.route` и четыре ответа обработчика
 (`fulfill`, `continue_`, `fallback`, `abort`); сопоставление URL (ловушка с query — проверено);

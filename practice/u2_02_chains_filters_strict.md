@@ -1,6 +1,6 @@
 # U2. Урок 2 — цепочки, фильтры и strict mode
 
-Задания: `tests/ui/test_u2_02_chains_filters_strict.py`.
+Задания: `practice/tasks/test_u2_02_chains_filters_strict.py`, решение — `tests/ui/test_u2_02_chains_filters_strict.py` (создаёшь сам).
 
 Основы локаторов (`get_by_*`, `filter`, `first/nth`, `and_/or_`, строка таблицы → кнопка)
 были в U1.2. Здесь — то, на чём реально ломаются тесты: strict mode и как его разрешать,

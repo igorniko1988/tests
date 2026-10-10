@@ -1,6 +1,6 @@
 # U6. Урок 2 — HAR и page.clock
 
-Задания: `tests/ui/test_u6_02_har_clock.py`.
+Задания: `practice/tasks/test_u6_02_har_clock.py`, решение — `tests/ui/test_u6_02_har_clock.py` (создаёшь сам).
 
 План: что такое HAR; запись (`route_from_har(update=True)`, `record_har_path`, codegen `--save-har`);
 воспроизведение, фильтры и `not_found`; когда HAR полезен и чем опасен; `page.clock` — подмена времени

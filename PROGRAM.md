@@ -44,7 +44,7 @@
 
 ## Часть UI. Playwright (10 модулей)
 
-Все уроки одним документом: `practice/UI_COURSE.md` (собирается `uv run python practice/build_ui_course.py`). Лаборатория для U3/U6/U10: `/app/lab.html`.
+Условия заданий — `practice/tasks/`, решения пишешь в `tests/ui/` (создаёшь сам). Все уроки одним документом: `practice/UI_COURSE.md` (собирается `uv run python practice/build_ui_course.py`). Лаборатория для U3/U6/U10: `/app/lab.html`.
 
 Каждый модуль закрывает типовые вопросы собеседований — они отмечены **Собес:**.
 
@@ -65,11 +65,11 @@
 - [ ] **Собес:** что такое BrowserContext и зачем новый context на каждый тест
 
 **Уроки:**
-- [ ] U1.1 Первые тесты на Playwright — теория `practice/u1_01_first_tests.md`, задания `tests/ui/test_u1_01_first_tests.py`
-- [ ] U1.2 Локаторы и проверки подробно — теория `practice/u1_02_locators_assertions.md`, задания `tests/ui/test_u1_02_locators_assertions.py`
+- [ ] U1.1 Первые тесты на Playwright — теория `practice/u1_01_first_tests.md`, задания `practice/tasks/test_u1_01_first_tests.py`
+- [ ] U1.2 Локаторы и проверки подробно — теория `practice/u1_02_locators_assertions.md`, задания `practice/tasks/test_u1_02_locators_assertions.py`
 - [ ] U1.3 Как устроен Playwright — теория `practice/u1_03_architecture.md`, задания `practice/u1_03_architecture.py`
-- [ ] U1.4 BrowserContext, ожидания и pytest для UI — теория `practice/u1_04_context_pytest.md`, задания `tests/ui/test_u1_04_context_pytest.py`
-- [ ] U1.5 Собеседование по модулю U1 — теория `practice/u1_05_interview.md`, задания `tests/ui/test_u1_05_livecoding.py`
+- [ ] U1.4 BrowserContext, ожидания и pytest для UI — теория `practice/u1_04_context_pytest.md`, задания `practice/tasks/test_u1_04_context_pytest.py`
+- [ ] U1.5 Собеседование по модулю U1 — теория `practice/u1_05_interview.md`, задания `practice/tasks/test_u1_05_livecoding.py`
 
 ### Модуль U2. Ожидания и устойчивые тесты
 - [ ] Auto-wait и actionability: что проверяется перед кликом (видим, стабилен, включён, не перекрыт)
@@ -81,10 +81,10 @@
 - [ ] **Собес:** что делать, если локатор нашёл несколько элементов (strict mode)
 
 **Уроки:**
-- [ ] U2.1 Web-first assertions и асинхронный UI — теория `practice/u2_01_waiting_async_ui.md`, задания `tests/ui/test_u2_01_waiting_async_ui.py`
-- [ ] U2.2 Цепочки, фильтры и strict mode — теория `practice/u2_02_chains_filters_strict.md`, задания `tests/ui/test_u2_02_chains_filters_strict.py`
-- [ ] U2.3 Codegen и Inspector — теория `practice/u2_03_codegen_inspector.md`, задания `tests/ui/test_u2_03_codegen_inspector.py`
-- [ ] U2.4 Флейки и собес по модулю U2 — теория `practice/u2_04_flaky_interview.md`, задания `tests/ui/test_u2_04_flaky.py`
+- [ ] U2.1 Web-first assertions и асинхронный UI — теория `practice/u2_01_waiting_async_ui.md`, задания `practice/tasks/test_u2_01_waiting_async_ui.py`
+- [ ] U2.2 Цепочки, фильтры и strict mode — теория `practice/u2_02_chains_filters_strict.md`, задания `practice/tasks/test_u2_02_chains_filters_strict.py`
+- [ ] U2.3 Codegen и Inspector — теория `practice/u2_03_codegen_inspector.md`, задания `practice/tasks/test_u2_03_codegen_inspector.py`
+- [ ] U2.4 Флейки и собес по модулю U2 — теория `practice/u2_04_flaky_interview.md`, задания `practice/tasks/test_u2_04_flaky.py`
 
 ### Модуль U3. Сложные элементы и сценарии
 - [ ] iframe (`frame_locator`), несколько вкладок и popup (`expect_popup`), новое окно
@@ -96,10 +96,10 @@
 - [ ] **Сценарий:** лайвкодинг — тест таблицы с фильтром и сортировкой
 
 **Уроки:**
-- [ ] U3.1 Вкладки, всплывающие окна и iframe — теория `practice/u3_01_tabs_popups_iframes.md`, задания `tests/ui/test_u3_01_tabs_popups_iframes.py`
-- [ ] U3.2 Диалоги браузера, загрузка и скачивание файлов — теория `practice/u3_02_dialogs_files.md`, задания `tests/ui/test_u3_02_dialogs_files.py`
-- [ ] U3.3 Мышь, клавиатура, скролл и бесконечные списки — теория `practice/u3_03_mouse_keyboard_scroll.md`, задания `tests/ui/test_u3_03_mouse_keyboard_scroll.py`
-- [ ] U3.4 Shadow DOM, таблицы, cookies и localStorage; собес по модулю U3 — теория `practice/u3_04_shadow_tables_storage_interview.md`, задания `tests/ui/test_u3_04_shadow_tables_storage.py`
+- [ ] U3.1 Вкладки, всплывающие окна и iframe — теория `practice/u3_01_tabs_popups_iframes.md`, задания `practice/tasks/test_u3_01_tabs_popups_iframes.py`
+- [ ] U3.2 Диалоги браузера, загрузка и скачивание файлов — теория `practice/u3_02_dialogs_files.md`, задания `practice/tasks/test_u3_02_dialogs_files.py`
+- [ ] U3.3 Мышь, клавиатура, скролл и бесконечные списки — теория `practice/u3_03_mouse_keyboard_scroll.md`, задания `practice/tasks/test_u3_03_mouse_keyboard_scroll.py`
+- [ ] U3.4 Shadow DOM, таблицы, cookies и localStorage; собес по модулю U3 — теория `practice/u3_04_shadow_tables_storage_interview.md`, задания `practice/tasks/test_u3_04_shadow_tables_storage.py`
 
 ### Модуль U4. Page Object и архитектура
 - [ ] Page Object: страница отвечает за «как», тест — за «что»; без проверок внутри PO
@@ -118,11 +118,11 @@
 - [ ] **Артефакт:** каркас UI-фреймворка
 
 **Уроки:**
-- [ ] U4.1 Page Object — теория `practice/u4_01_page_object.md`, задания `tests/ui/test_u4_01_page_object.py`
-- [ ] U4.2 Компоненты — теория `practice/u4_02_components.md`, задания `tests/ui/test_u4_02_components.py`
-- [ ] U4.3 Фикстуры страниц и конфиг окружений — теория `practice/u4_03_fixtures_config.md`, задания `tests/ui/test_u4_03_fixtures_config.py`
-- [ ] U4.4 Утилиты, Allure и структура проекта — теория `practice/u4_04_utils_allure_structure.md`, задания `tests/ui/test_u4_04_utils_allure.py`
-- [ ] U4.5 Screenplay, собес по модулю U4 и каркас фреймворка — теория `practice/u4_05_screenplay_interview.md`, задания `tests/ui/test_u4_05_screenplay_framework.py`
+- [ ] U4.1 Page Object — теория `practice/u4_01_page_object.md`, задания `practice/tasks/test_u4_01_page_object.py`
+- [ ] U4.2 Компоненты — теория `practice/u4_02_components.md`, задания `practice/tasks/test_u4_02_components.py`
+- [ ] U4.3 Фикстуры страниц и конфиг окружений — теория `practice/u4_03_fixtures_config.md`, задания `practice/tasks/test_u4_03_fixtures_config.py`
+- [ ] U4.4 Утилиты, Allure и структура проекта — теория `practice/u4_04_utils_allure_structure.md`, задания `practice/tasks/test_u4_04_utils_allure.py`
+- [ ] U4.5 Screenplay, собес по модулю U4 и каркас фреймворка — теория `practice/u4_05_screenplay_interview.md`, задания `practice/tasks/test_u4_05_screenplay_framework.py`
 
 ### Модуль U5. Данные, авторизация и API внутри Playwright
 - [ ] `APIRequestContext` (фикстура `request`): API-вызовы из Playwright
@@ -137,10 +137,10 @@
 - [ ] **Собес:** как не логиниться в каждом тесте и как готовить данные быстрее, чем через UI
 
 **Уроки:**
-- [ ] U5.1 API внутри Playwright — теория `practice/u5_01_api_in_playwright.md`, задания `tests/ui/test_u5_01_api_in_playwright.py`
-- [ ] U5.2 Тестовые данные — теория `practice/u5_02_test_data.md`, задания `tests/ui/test_u5_02_test_data.py`
-- [ ] U5.3 Storage_state, роли, изоляция и параллельный запуск — теория `practice/u5_03_storage_state_parallel.md`, задания `tests/ui/test_u5_03_storage_state_parallel.py`
-- [ ] U5.4 Собес по модулю U5 — теория `practice/u5_04_interview.md`, задания `tests/ui/test_u5_04_livecoding.py`
+- [ ] U5.1 API внутри Playwright — теория `practice/u5_01_api_in_playwright.md`, задания `practice/tasks/test_u5_01_api_in_playwright.py`
+- [ ] U5.2 Тестовые данные — теория `practice/u5_02_test_data.md`, задания `practice/tasks/test_u5_02_test_data.py`
+- [ ] U5.3 Storage_state, роли, изоляция и параллельный запуск — теория `practice/u5_03_storage_state_parallel.md`, задания `practice/tasks/test_u5_03_storage_state_parallel.py`
+- [ ] U5.4 Собес по модулю U5 — теория `practice/u5_04_interview.md`, задания `practice/tasks/test_u5_04_livecoding.py`
 
 ### Модуль U6. Сеть и окружение браузера
 - [ ] `page.route`: мок ответа, ошибка 500, пустой список, медленный ответ, `route.continue_` / `fulfill` / `abort`
@@ -151,9 +151,9 @@
 - [ ] **Сценарий:** API отдал 500 при создании ордера — UI показывает понятную ошибку
 
 **Уроки:**
-- [ ] U6.1 Перехват сети: page.route и моки — теория `practice/u6_01_route_mocks.md`, задания `tests/ui/test_u6_01_route_mocks.py`
-- [ ] U6.2 HAR и page.clock — теория `practice/u6_02_har_clock.md`, задания `tests/ui/test_u6_02_har_clock.py`
-- [ ] U6.3 Окружение браузера и собес по модулю U6 — теория `practice/u6_03_browser_env_interview.md`, задания `tests/ui/test_u6_03_browser_env.py`
+- [ ] U6.1 Перехват сети: page.route и моки — теория `practice/u6_01_route_mocks.md`, задания `practice/tasks/test_u6_01_route_mocks.py`
+- [ ] U6.2 HAR и page.clock — теория `practice/u6_02_har_clock.md`, задания `practice/tasks/test_u6_02_har_clock.py`
+- [ ] U6.3 Окружение браузера и собес по модулю U6 — теория `practice/u6_03_browser_env_interview.md`, задания `practice/tasks/test_u6_03_browser_env.py`
 
 ### Модуль U7. Отладка и отчёты
 - [ ] Trace Viewer: `--tracing retain-on-failure`, разбор упавшего теста по шагам
@@ -162,8 +162,8 @@
 - [ ] **Собес:** тест упал в CI, локально проходит — твои действия
 
 **Уроки:**
-- [ ] U7.1 Trace Viewer, скриншоты, видео и отчёт — теория `practice/u7_01_trace_artifacts.md`, задания `tests/ui/test_u7_01_trace_artifacts.py`
-- [ ] U7.2 Отладка и «в CI падает, локально проходит»; собес по модулю U7 — теория `practice/u7_02_debug_ci_interview.md`, задания `tests/ui/test_u7_02_debug_ci.py`
+- [ ] U7.1 Trace Viewer, скриншоты, видео и отчёт — теория `practice/u7_01_trace_artifacts.md`, задания `practice/tasks/test_u7_01_trace_artifacts.py`
+- [ ] U7.2 Отладка и «в CI падает, локально проходит»; собес по модулю U7 — теория `practice/u7_02_debug_ci_interview.md`, задания `practice/tasks/test_u7_02_debug_ci.py`
 
 ### Модуль U8. Качество: визуал, доступность, производительность
 - [ ] Визуальная регрессия `to_have_screenshot`: маски динамики, пороги, обновление эталонов
@@ -172,8 +172,8 @@
 - [ ] **Собес:** когда визуальные тесты оправданы и почему они флейкают
 
 **Уроки:**
-- [ ] U8.1 Визуальная регрессия — теория `practice/u8_01_visual_regression.md`, задания `tests/ui/test_u8_01_visual.py`
-- [ ] U8.2 Доступность и производительность фронта; собес по модулю U8 — теория `practice/u8_02_a11y_perf_interview.md`, задания `tests/ui/test_u8_02_a11y_perf.py`
+- [ ] U8.1 Визуальная регрессия — теория `practice/u8_01_visual_regression.md`, задания `practice/tasks/test_u8_01_visual.py`
+- [ ] U8.2 Доступность и производительность фронта; собес по модулю U8 — теория `practice/u8_02_a11y_perf_interview.md`, задания `practice/tasks/test_u8_02_a11y_perf.py`
 
 ### Модуль U9. Масштаб и CI
 - [ ] Параллельный запуск (pytest-xdist), шардирование, изоляция данных между воркерами
@@ -183,8 +183,8 @@
 - [ ] **Собес:** как запускаете UI-тесты в CI, как параллелите, что делаете с флейками
 
 **Уроки:**
-- [ ] U9.1 Параллель, шардирование и кросс-браузерность — теория `practice/u9_01_parallel_sharding_browsers.md`, задания `tests/ui/test_u9_01_parallel_browsers.py`
-- [ ] U9.2 Docker-образ Playwright, CI, артефакты и стабильность; собес по модулю U9 — теория `practice/u9_02_docker_ci_stability.md`, задания `tests/ui/test_u9_02_docker_ci.py`
+- [ ] U9.1 Параллель, шардирование и кросс-браузерность — теория `practice/u9_01_parallel_sharding_browsers.md`, задания `practice/tasks/test_u9_01_parallel_browsers.py`
+- [ ] U9.2 Docker-образ Playwright, CI, артефакты и стабильность; собес по модулю U9 — теория `practice/u9_02_docker_ci_stability.md`, задания `practice/tasks/test_u9_02_docker_ci.py`
 
 ### Модуль U10. Senior и собеседования
 - [ ] Стратегия: пирамида / «трофей» тестов, что автоматизировать в UI, а что в API; стоимость UI-тестов
@@ -195,9 +195,9 @@
 - [ ] **Сценарий:** лайвкодинг UI-задач (логин, форма с валидацией, таблица, модалка) на время
 
 **Уроки:**
-- [ ] U10.1 Стратегия UI-автоматизации и гибридные тесты — теория `practice/u10_01_strategy_hybrid.md`, задания `tests/ui/test_u10_01_strategy_hybrid.py`
-- [ ] U10.2 Ревью UI-тестов и Selenium на уровне собеседования — теория `practice/u10_02_review_selenium.md`, задания `tests/ui/test_u10_02_review_selenium.py`
-- [ ] U10.3 Итоговый собес по UI-части и лайвкодинг — теория `practice/u10_03_final_interview.md`, задания `tests/ui/test_u10_03_final_livecoding.py`
+- [ ] U10.1 Стратегия UI-автоматизации и гибридные тесты — теория `practice/u10_01_strategy_hybrid.md`, задания `practice/tasks/test_u10_01_strategy_hybrid.py`
+- [ ] U10.2 Ревью UI-тестов и Selenium на уровне собеседования — теория `practice/u10_02_review_selenium.md`, задания `practice/tasks/test_u10_02_review_selenium.py`
+- [ ] U10.3 Итоговый собес по UI-части и лайвкодинг — теория `practice/u10_03_final_interview.md`, задания `practice/tasks/test_u10_03_final_livecoding.py`
 
 ---
 

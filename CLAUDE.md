@@ -63,4 +63,5 @@
 - Python 3.13 через `uv` (3.14 не используем: у gevent/grpcio/pact может не быть колёс).
 - Зависимости: группы `service` (только стенд, идут в Docker-образ), `tests`, `dev`.
   `uv sync` ставит всё.
-- Тесты: `uv run pytest`.
+- Тесты: `uv run pytest`. Условия заданий UI — `practice/tasks/`, решения пользователь пишет
+  в `tests/ui/` и `ui_framework/` с нуля (рабочие папки очищены 2026-10-10).

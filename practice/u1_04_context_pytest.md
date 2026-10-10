@@ -1,6 +1,6 @@
 # U1. Урок 4 — BrowserContext, ожидания и pytest для UI
 
-Задания: `tests/ui/test_u1_04_context_pytest.py` и `tests/ui/conftest.py`.
+Задания: `practice/tasks/test_u1_04_context_pytest.py`, решение — `tests/ui/test_u1_04_context_pytest.py` (создаёшь сам) и `tests/ui/conftest.py`.
 
 План: что именно изолирует context и как этим пользоваться (два пользователя, сохранённый логин);
 как Playwright ждёт перед каждым действием; pytest-часть — фикстуры, conftest, parametrize, маркеры

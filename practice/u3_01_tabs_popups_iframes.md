@@ -1,6 +1,6 @@
 # U3. Урок 1 — вкладки, всплывающие окна и iframe
 
-Задания: `tests/ui/test_u3_01_tabs_popups_iframes.py`. Страница: **лаборатория** `/app/lab.html`
+Задания: `practice/tasks/test_u3_01_tabs_popups_iframes.py`, решение — `tests/ui/test_u3_01_tabs_popups_iframes.py` (создаёшь сам). Страница: **лаборатория** `/app/lab.html`
 (блоки «Вкладки и окна», «Виджет курса»; стенд пересобери: `docker compose up -d --build`).
 
 Модуль U3: U3.1 вкладки, окна, iframe → U3.2 диалоги и файлы → U3.3 мышь, клавиатура, скролл →

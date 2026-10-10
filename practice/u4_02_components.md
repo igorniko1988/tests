@@ -1,6 +1,6 @@
 # U4. Урок 2 — компоненты
 
-Задания: `tests/ui/test_u4_02_components.py`, код — в `ui_framework/components/`.
+Задания: `practice/tasks/test_u4_02_components.py`, решение — `tests/ui/test_u4_02_components.py` (создаёшь сам), код — в `ui_framework/components/`.
 
 План: почему PO страницы разрастается и что такое компонент; корневой локатор и поиск
 внутри него; композиция страницы из компонентов; компонент строки таблицы; общий компонент
