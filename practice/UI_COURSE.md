@@ -25,7 +25,7 @@
   - [U3.3 Мышь, клавиатура, скролл и бесконечные списки](#u3-3)
   - [U3.4 Shadow DOM, таблицы, cookies и localStorage; собес по модулю U3](#u3-4)
 - **U4. Page Object и архитектура**
-  - [U4.1 Page Object](#u4-1)
+  - [U4.1 Page Object и Application](#u4-1)
   - [U4.2 Компоненты](#u4-2)
   - [U4.3 Фикстуры состояния и конфиг окружений](#u4-3)
   - [U4.4 Утилиты, Allure и структура проекта](#u4-4)
@@ -5017,7 +5017,7 @@ U3. Урок 4 — Shadow DOM, таблицы, cookies и localStorage; собе
 
 <a id="u4-1"></a>
 
-## U4.1 Page Object
+## U4.1 Page Object и Application
 
 *Теория: `practice/u4_01_page_object.md`*
 
