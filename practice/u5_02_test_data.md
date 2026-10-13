@@ -196,7 +196,7 @@ def load_cases(name: str) -> list:
 
 
 @pytest.mark.parametrize("case", load_cases("invalid_orders.json"))
-def test_invalid_order(dashboard, case): ...
+def test_invalid_order(logged_in_app, case): ...
 ```
 
 CSV — `csv.DictReader`; все значения придут **строками** (для нашего стенда это даже удобно — суммы и так строки).

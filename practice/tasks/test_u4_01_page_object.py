@@ -7,6 +7,7 @@
 
 Правила:
     - в тестах НЕТ page.get_by_* / page.locator — только методы и локаторы из PO;
+    - страницы тест получает через Application (app.auth, app.dashboard), а не создаёт сам;
     - в PO нет бизнес-проверок (раздел 4 теории), разрешены wait_loaded и проверка ответа своего действия;
     - для проверок PO отдаёт Locator, тест делает expect;
     - свои хелперы из прошлых уроков в этом уроке не используем — всё через PO.
@@ -14,7 +15,7 @@
 Задача 1. BasePage (ui_framework/pages/base_page.py).
     Атрибут класса path, __init__(page) с локатором toast, метод open() -> self.
 
-Задача 2. AuthPage (ui_framework/pages/auth_page.py).
+Задача 2. AuthPage (ui_framework/pages/auth.py).
     path = "/app/". Локаторы: root, email, password, login_button, register_button, error.
     Методы: wait_loaded() -> self; fill_credentials(email, password);
     register(email, password) -> DashboardPage; login(email, password) -> DashboardPage;
@@ -30,10 +31,12 @@
         balance_available(asset) -> Locator; balance_locked(asset) -> Locator;
         order_row(order_id) -> Locator; order_status(order_id) -> Locator; cancel_order(order_id).
 
-Задача 4. Фикстуры (tests/ui/conftest.py).
-    auth_page — AuthPage(page); dashboard — зарегистрированный пользователь, DashboardPage.
+Задача 4. Application (ui_framework/application.py) и фикстуры (tests/ui/conftest.py).
+    Application(page): свойства auth и dashboard через cached_property (раздел 6 теории).
+    Фикстуры: app — Application(page); logged_in_app — зарегистрированный пользователь в кабинете,
+    возвращает Application. Других фикстур страниц не делай.
 
-Задача 5. Тесты через PO.
+Задача 5. Тесты через app / logged_in_app.
     а) Регистрация → в шапке email; выход → видна форма входа.
     б) Вход: верные данные → кабинет; parametrize (неверный пароль, несуществующий email) →
        ошибка "Invalid email or password", кабинет скрыт.
@@ -60,6 +63,7 @@
     5. Как не превратить Page Object в свалку?
     6. PO или хелперы-функции?
     7. Как PO в Playwright отличается от PO в Selenium?
+    8. Как тест получает страницы: фикстура на каждую или Application?
 """
 
 # Решение пиши в tests/ui/test_u4_01_page_object.py — файл и папки создаёшь сам.

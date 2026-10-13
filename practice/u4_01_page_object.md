@@ -5,9 +5,10 @@
 
 План: какую проблему решает Page Object; граница «страница — как, тест — что»; как устроить
 PO на нашем стенде (SPA: один URL, два экрана); что возвращают методы; можно ли проверки внутри
-PO; базовая страница; антипаттерны; как PO выглядит на собесе.
+PO; базовая страница; `Application` — одна точка входа ко всем страницам; антипаттерны;
+как PO выглядит на собесе.
 
-Модуль U4 целиком: U4.1 Page Object → U4.2 компоненты → U4.3 фикстуры страниц и конфиг окружений →
+Модуль U4 целиком: U4.1 Page Object и Application → U4.2 компоненты → U4.3 фикстуры состояния и конфиг окружений →
 U4.4 утилиты, Allure-шаги и структура проекта → U4.5 Screenplay, собес и каркас фреймворка.
 
 ---
@@ -60,11 +61,13 @@ def test_deposit(page, user_email):
 Тот же тест с PO:
 
 ```python
-def test_deposit(auth_page, user_email):
-    dashboard = auth_page.open().register(user_email, PASSWORD)
-    dashboard.deposit("USDT", "1000")
-    expect(dashboard.balance_available("USDT")).to_have_text("1000")
+def test_deposit(app, user_email):
+    app.auth.open().register(user_email, PASSWORD)
+    app.dashboard.deposit("USDT", "1000")
+    expect(app.dashboard.balance_available("USDT")).to_have_text("1000")
 ```
+
+`app` — объект `Application`, через него тест получает все страницы (раздел 6).
 
 Поменялась кнопка — правим одну строку в `DashboardPage`. Тест читается как сценарий.
 
@@ -77,6 +80,7 @@ def test_deposit(auth_page, user_email):
 
 ```
 ui_framework/
+  application.py         # Application: одна точка входа ко всем страницам (раздел 6)
   pages/
     base_page.py         # BasePage: page, open(path), общий тост
     auth_page.py         # AuthPage: вход и регистрация
@@ -156,7 +160,8 @@ class AuthPage(BasePage):
 ```
 
 Метод, после которого пользователь попадает на другой экран, **возвращает PO этого экрана**.
-Тест пишет цепочкой: `auth_page.open().login(...).deposit(...)`.
+Тест может писать цепочкой: `app.auth.open().login(...).deposit(...)`. Возврат нужен ещё и как
+синхронизация: `login` ждёт, что кабинет открылся (`wait_loaded`).
 
 Позитивный и негативный вход — разные методы: `login` обещает кабинет и ждёт его,
 `login_expecting_error` остаётся на форме. Один метод `login(..., expect_success=True)` с ветвлением
@@ -249,19 +254,124 @@ class DashboardPage(BasePage):
 
 ---
 
-## 6. Фикстуры для страниц (кратко, подробно — U4.3)
+## 6. Application — одна точка входа
+
+Страниц будет много: вход, кабинет, потом история, настройки, админка. Как отдать их тесту?
+
+**Вариант А — фикстура на каждую страницу:**
 
 ```python
 @pytest.fixture
-def auth_page(page: Page) -> AuthPage:
+def auth_page(page) -> AuthPage:
     return AuthPage(page)
 
 @pytest.fixture
-def dashboard(auth_page: AuthPage, user_email: str) -> DashboardPage:
-    return auth_page.open().register(user_email, PASSWORD)
+def dashboard_page(page) -> DashboardPage:
+    return DashboardPage(page)
+# ... и так на каждую страницу
 ```
 
-Тест просит то, что ему нужно: `dashboard` — уже залогиненный кабинет.
+Фикстура ничего не делает, кроме `return XxxPage(page)`. Тридцать страниц — тридцать одинаковых
+фикстур в conftest. Тест, которому нужны три экрана, перечисляет три аргумента.
+
+**Вариант Б — `Application`**: один класс, который через **композицию** собирает все страницы.
+Тест получает одну фикстуру `app` и ходит в страницы через неё.
+
+```python
+# ui_framework/application.py
+from functools import cached_property
+
+from playwright.sync_api import Page
+
+from ui_framework.pages.auth_page import AuthPage
+from ui_framework.pages.dashboard_page import DashboardPage
+
+
+class Application:
+    def __init__(self, page: Page):
+        self.page = page
+
+    @cached_property
+    def auth(self) -> AuthPage:
+        return AuthPage(self.page)
+
+    @cached_property
+    def dashboard(self) -> DashboardPage:
+        return DashboardPage(self.page)
+```
+
+```python
+# фикстура
+@pytest.fixture
+def app(page: Page) -> Application:
+    return Application(page)
+
+
+# тест
+def test_logout(app, user_email):
+    app.auth.open().register(user_email, PASSWORD)
+    app.dashboard.logout()
+    expect(app.auth.root).to_be_visible()
+```
+
+Мы в курсе используем **вариант Б**.
+
+### Почему `cached_property`, а не атрибуты в `__init__`
+
+`cached_property` создаёт страницу при **первом обращении** и запоминает её. Тест, которому нужен
+только кабинет, не создаёт остальные 29 страниц. С атрибутами в `__init__` (`self.auth = AuthPage(page)`)
+тоже работает: локаторы ленивые, создать PO дёшево. Но если в `__init__` страницы появится
+что-то тяжелее, оно выполнится в каждом тесте для каждой страницы.
+
+### Что даёт Application
+
+- **одна фикстура вместо N**: новая страница — одно свойство в `Application`, фикстура не нужна;
+- **автодополнение**: `app.` — IDE показывает все экраны приложения;
+- **один `page` на всех**: все страницы работают в одной вкладке, нельзя случайно смешать вкладки;
+- **место для общего**: позже сюда естественно встанут общие компоненты (шапка, тост) и API-клиент
+  для подготовки данных (U5): `app.api.create_user()`.
+
+### Где граница: Application раздаёт страницы, фикстуры готовят состояние
+
+Application отвечает на вопрос **«как добраться до страницы»**. Он не логинится, не создаёт
+данные и не содержит сценариев. Состояние перед тестом — дело **фикстур**:
+
+```python
+@pytest.fixture
+def logged_in_app(app: Application, user_email: str) -> Application:
+    app.auth.open().register(user_email, PASSWORD)
+    return app
+
+
+def test_deposit(logged_in_app):
+    logged_in_app.dashboard.deposit("USDT", "1000")
+    expect(logged_in_app.dashboard.balance_available("USDT")).to_have_text("1000")
+```
+
+Тест просит то, что ему нужно: `app` — приложение «с нуля», `logged_in_app` — пользователь уже в
+кабинете. Фикстуры состояния (`logged_in_app` с балансом, с открытым ордером, второй пользователь) —
+тема U4.3.
+
+### Переходы и Application не мешают друг другу
+
+`app.auth.register(...)` возвращает `DashboardPage`, а у `app` есть свой `app.dashboard`. Это
+**разные объекты** одного экрана на одном `page`. PO без состояния (раздел 7), поэтому неважно,
+каким объектом пользоваться. Правило: в цепочке — возвращённый, в остальном тесте — `app.dashboard`.
+
+### Чего не делать с Application
+
+| Плохо | Почему |
+|---|---|
+| `class Application(AuthPage, DashboardPage)` | наследование вместо композиции: все методы и локаторы в одной куче, конфликты имён |
+| `app.register_and_deposit(...)` | сценарии в Application превращают его в God object; сценарии — в фикстурах или хелперах шагов |
+| `app.last_order_id` | состояние, как и в PO, — антипаттерн |
+| страницы знают об Application | `DashboardPage` не импортирует `Application`, зависимости в одну сторону |
+
+### Когда Application начинает мешать
+
+На сотнях страниц и нескольких продуктах один класс снова становится свалкой, а по сигнатуре
+`test_x(app)` не видно, какие экраны трогает тест. Тогда делят по доменам: `app.trading.orders`,
+`app.admin.users` — каждый домен свой маленький Application.
 
 ---
 
@@ -279,6 +389,7 @@ def dashboard(auth_page: AuthPage, user_email: str) -> DashboardPage:
 | **Состояние в PO** | `self.last_order_id` | неявная связь шагов, ломается при повторном использовании |
 | **`sleep` / `wait_for_timeout`** | «чтобы форма успела» | U2.1 |
 | **Наследование ради наследования** | `DashboardPage(AuthPage)` | экраны не являются друг другом; общее — в `BasePage` или компонентах |
+| **Application со сценариями** | `app.register_and_deposit()` | Application раздаёт страницы, сценарии — в фикстурах |
 
 ---
 
@@ -333,3 +444,11 @@ def dashboard(auth_page: AuthPage, user_email: str) -> DashboardPage:
 > В Selenium элементы ищутся сразу, поэтому нужен PageFactory или поиск в каждом методе, и есть
 > stale element. В Playwright локаторы ленивые: объявляю их атрибутами, они ищутся заново при
 > каждом действии. Плюс встроенные ожидания и `expect` — в PO не нужны свои wait-обёртки.
+
+**8. Как тест получает страницы: фикстура на каждую или Application?**
+> Использую Application: класс, который через композицию собирает все страницы на одном `page`,
+> свойства через `cached_property`, чтобы страница создавалась при первом обращении. Тест получает
+> одну фикстуру `app`, новая страница — одно свойство, а не новая фикстура. Application только
+> раздаёт страницы, без сценариев и состояния. Состояние перед тестом — залогинен, есть баланс —
+> готовят фикстуры: `logged_in_app`. Минус — по сигнатуре теста не видно, какие экраны он трогает,
+> и на большом проекте класс разрастается; тогда делю его по доменам.

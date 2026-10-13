@@ -7,7 +7,7 @@
 
 Задача 1. Ядро (actor.py, abilities.py).
     Actor: can(...), ability_to(kind), attempts_to(*tasks), asks_for(question), memory.
-    BrowseTheWeb(page): auth и dashboard — твои PO из U4.1–U4.2.
+    BrowseTheWeb(page): внутри — твой Application из U4.1 (web.app.auth, web.app.dashboard).
 
 Задача 2. Задачи и вопросы (tasks.py, questions.py).
     Tasks: Register(email=None), Deposit(asset, amount), PlaceOrder(side, price, quantity, symbol),
@@ -21,7 +21,7 @@
     Проверь статусы и балансы обоих через asks_for + expect (таймаут — из settings).
 
 Задача 4. Тот же сценарий на PO.
-    Перепиши задачу 3 только через new_dashboard и PO (без screenplay).
+    Перепиши задачу 3 только через new_app и PO (без screenplay).
     В «Ответах»: сравни два теста — строки, читаемость, что пришлось написать дополнительно,
     что проще поменять, если подготовку (регистрацию и пополнение) перенести на API.
 

@@ -80,10 +80,10 @@ def test_cancel_order_hybrid(trader_factory, login_in_browser, db):
     trader = trader_factory(balance={"USDT": "1000"}, orders=[OrderData(price="100", quantity="2")])  # 1. API
     order_id = trader.orders[0]["id"]
 
-    dashboard = login_in_browser(trader)                                                          # 2. UI
-    dashboard.orders.row(order_id).cancel()
-    expect(dashboard.orders.row(order_id).status).to_have_text("CANCELED")
-    expect(dashboard.balances.locked("USDT")).to_have_text("0")
+    app = login_in_browser(trader)                                                                # 2. UI
+    app.dashboard.orders.row(order_id).cancel()
+    expect(app.dashboard.orders.row(order_id).status).to_have_text("CANCELED")
+    expect(app.dashboard.balances.locked("USDT")).to_have_text("0")
 
     assert trader.api.orders()[0]["status"] == "CANCELED"                                         # 3. API
 

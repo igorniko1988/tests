@@ -1,41 +1,56 @@
-# U4. Урок 3 — фикстуры страниц и конфиг окружений
+# U4. Урок 3 — фикстуры состояния и конфиг окружений
 
 Задания: `practice/tasks/test_u4_03_fixtures_config.py`, решение — `tests/ui/test_u4_03_fixtures_config.py` (создаёшь сам), код — `ui_framework/config/`, `ui_framework/fixtures/`.
 
 Основы фикстур (scope, yield, conftest, `browser_context_args`) были в U1.4. Здесь — то, из чего
-собирают фреймворк: фикстуры страниц, фабрики с уборкой, `request` и маркеры с данными,
+собирают фреймворк: фикстуры состояния поверх `Application`, фабрики с уборкой, `request` и маркеры с данными,
 параметризованные фикстуры, фикстуры в пакете фреймворка (`pytest_plugins`), конфиг окружений
 на pydantic-settings, секреты, наборы тестов по маркерам.
 
 ---
 
-## 1. Фикстуры страниц
+## 1. Application + фикстуры состояния
+
+Страницы тест получает через `Application` (U4.1, раздел 6) — фикстур на каждую страницу нет.
+Фикстуры отвечают за другое: **в каком состоянии мир перед тестом**.
 
 ```python
 @pytest.fixture
-def auth_page(page: Page) -> AuthPage:
-    return AuthPage(page)
+def app(page: Page) -> Application:
+    return Application(page)
 
 
 @pytest.fixture
-def dashboard(auth_page: AuthPage, user_email: str, settings: Settings) -> DashboardPage:
-    return auth_page.open().register(user_email, settings.user_password)
+def logged_in_app(app: Application, user_email: str, settings: Settings) -> Application:
+    app.auth.open().register(user_email, settings.user_password.get_secret_value())
+    return app
 ```
 
-Тест просит **состояние**, а не шаги: `dashboard` — «я в кабинете нового пользователя».
-Цепочка фикстур: `page` (плагин) → `auth_page` → `dashboard`. pytest сам выстроит порядок.
+Тест просит **состояние**, а не шаги: `logged_in_app` — «я в кабинете нового пользователя».
+Цепочка фикстур: `page` (плагин) → `app` → `logged_in_app`. pytest сам выстроит порядок.
 
-### Фабрика страниц
+Фикстура со словом «просто вернуть страницу» не нужна — это `app.<страница>`. Фикстура нужна,
+когда она **что-то делает**: логинит, пополняет, создаёт ордер, убирает за собой.
 
-Когда в тесте нужно несколько пользователей (U1.4, `create_user`) — фабрика, возвращающая PO:
+### Фабрика приложений
+
+Когда в тесте нужно несколько пользователей (U1.4, `create_user`) — фабрика. Каждый пользователь —
+свой context, своя вкладка и **свой** `Application`:
 
 ```python
 @pytest.fixture
-def new_dashboard(new_context, settings) -> Callable[[], DashboardPage]:
-    def _create() -> DashboardPage:
-        page = new_context().new_page()
-        return AuthPage(page).open().register(unique_email(), settings.user_password)
+def new_app(new_context, settings) -> Callable[[], Application]:
+    def _create() -> Application:
+        app = Application(new_context().new_page())
+        app.auth.open().register(unique_email(), settings.user_password.get_secret_value())
+        return app
     return _create
+
+
+def test_trade(new_app):
+    seller, buyer = new_app(), new_app()
+    seller.dashboard.order_form.place("SELL", "100", "1")
+    ...
 ```
 
 `new_context` из pytest-playwright сам закроет все созданные context после теста.
@@ -46,7 +61,8 @@ def new_dashboard(new_context, settings) -> Callable[[], DashboardPage]:
 
 ```python
 @pytest.fixture
-def open_order(dashboard):
+def open_order(logged_in_app):
+    dashboard = logged_in_app.dashboard
     dashboard.deposit_form.deposit("USDT", "100")
     order = dashboard.order_form.place("BUY", "1", "1")
     yield order                                        # тест работает здесь
@@ -56,7 +72,7 @@ def open_order(dashboard):
 ```
 
 Порядок: setup фикстур — от зависимостей к зависимым; teardown — **в обратном** порядке.
-`dashboard` (и `page`) ещё живы в teardown `open_order`, потому что `open_order` от них зависит.
+`logged_in_app` (и `page`) ещё живы в teardown `open_order`, потому что `open_order` от них зависит.
 
 Здесь `count()` в `if` — нормально: это не проверка, а ветвление в уборке (U2.1).
 
@@ -64,7 +80,8 @@ def open_order(dashboard):
 
 ```python
 @pytest.fixture
-def order_factory(dashboard):
+def order_factory(logged_in_app):
+    dashboard = logged_in_app.dashboard
     created: list[str] = []
 
     def _create(side="BUY", price="1", quantity="1") -> dict:
@@ -99,21 +116,21 @@ def order_factory(dashboard):
 
 ```python
 @pytest.fixture
-def dashboard(request, auth_page, user_email, settings):
-    dash = auth_page.open().register(user_email, settings.user_password)
+def logged_in_app(request, app, user_email, settings):
+    app.auth.open().register(user_email, settings.user_password.get_secret_value())
     marker = request.node.get_closest_marker("balance")      # @pytest.mark.balance(USDT="1000")
     if marker:
         for asset, amount in marker.kwargs.items():
-            dash.deposit_form.deposit(asset, amount)
-    return dash
+            app.dashboard.deposit_form.deposit(asset, amount)
+    return app
 
 
 @pytest.mark.balance(USDT="1000", ETH="2")
-def test_buy(dashboard): ...
+def test_buy(logged_in_app): ...
 ```
 
-Маркер с данными — способ сказать фикстуре «подготовь вот так», не плодя `dashboard_with_usdt`,
-`dashboard_with_eth`... Маркер `balance` нужно зарегистрировать (`--strict-markers`).
+Маркер с данными — способ сказать фикстуре «подготовь вот так», не плодя `app_with_usdt`,
+`app_with_eth`... Маркер `balance` нужно зарегистрировать (`--strict-markers`).
 
 Полезное в `request`:
 
@@ -135,9 +152,9 @@ def asset(request) -> str:
     return request.param
 
 
-def test_deposit(dashboard, asset):              # запустится 3 раза
-    dashboard.deposit_form.deposit(asset, "1")
-    expect(dashboard.balances.available(asset)).to_have_text("1")
+def test_deposit(logged_in_app, asset):          # запустится 3 раза
+    logged_in_app.dashboard.deposit_form.deposit(asset, "1")
+    expect(logged_in_app.dashboard.balances.available(asset)).to_have_text("1")
 ```
 
 Отличие от `@pytest.mark.parametrize`: параметр живёт в **фикстуре** — любой тест, который её
@@ -147,14 +164,14 @@ def test_deposit(dashboard, asset):              # запустится 3 раз
 
 ```python
 @pytest.fixture
-def funded_dashboard(request, dashboard):
+def funded_app(request, logged_in_app):
     for asset, amount in request.param.items():
-        dashboard.deposit_form.deposit(asset, amount)
-    return dashboard
+        logged_in_app.dashboard.deposit_form.deposit(asset, amount)
+    return logged_in_app
 
 
-@pytest.mark.parametrize("funded_dashboard", [{"USDT": "1000"}, {"ETH": "5"}], indirect=True)
-def test_something(funded_dashboard): ...
+@pytest.mark.parametrize("funded_app", [{"USDT": "1000"}, {"ETH": "5"}], indirect=True)
+def test_something(funded_app): ...
 ```
 
 ---
@@ -191,7 +208,7 @@ tests/
     conftest.py
 ui_framework/
   fixtures/
-    pages.py               # фикстуры страниц: auth_page, dashboard, new_dashboard
+    app.py                 # app, logged_in_app, new_app
     data.py                # user_email, фабрики данных
 ```
 
@@ -199,7 +216,7 @@ ui_framework/
 в другом репозитории. Подключение — в корневом `tests/conftest.py`:
 
 ```python
-pytest_plugins = ["ui_framework.fixtures.pages", "ui_framework.fixtures.data"]
+pytest_plugins = ["ui_framework.fixtures.app", "ui_framework.fixtures.data"]
 ```
 
 Правила:
@@ -314,7 +331,7 @@ markers = [
     "smoke: быстрые критичные проверки, на каждый PR",
     "regression: полный набор, ночью",
     "slow: дольше 10 секунд",
-    "balance(**assets): начальный баланс для фикстуры dashboard",
+    "balance(**assets): начальный баланс для фикстуры logged_in_app",
 ]
 ```
 
@@ -339,7 +356,8 @@ uv run pytest -m "regression and not slow"
 | autouse-фикстура логинится | все тесты медленнее, состояние неочевидно |
 | уборка падает, если «уже убрано» | ERROR at teardown на зелёном тесте |
 | `pytest_plugins` во вложенном conftest | ошибка сборки |
-| фикстура `dashboard_with_usdt_1000_and_eth_2` | взрыв числа фикстур — маркер с данными или indirect |
+| фикстура `app_with_usdt_1000_and_eth_2` | взрыв числа фикстур — маркер с данными или indirect |
+| фикстура на каждую страницу (`return XxxPage(page)`) | дубль Application; фикстуры — для состояния |
 | `Settings()` создаётся в каждом тесте | лишняя работа; session-фикстура |
 
 ---
@@ -379,6 +397,6 @@ uv run pytest -m "regression and not slow"
 > комбинацию данных.
 
 **7. Где лежат фикстуры в твоём фреймворке?**
-> Фикстуры фреймворка — страниц, данных, клиентов — в пакете фреймворка (`fixtures/`), подключаются
+> Фикстуры фреймворка — `app` и состояния, данных, клиентов — в пакете фреймворка (`fixtures/`), подключаются
 > через `pytest_plugins` в корневом conftest. Специфичное для набора тестов — в conftest этой папки.
 > Так фреймворк можно переиспользовать, а conftest тестов остаётся маленьким.

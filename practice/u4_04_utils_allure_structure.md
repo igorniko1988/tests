@@ -214,10 +214,10 @@ class DepositForm(BaseComponent):
 ```
 
 ```python
-def test_deposit(dashboard):
-    dashboard.deposit_form.deposit("USDT", "1000")
+def test_deposit(logged_in_app):
+    logged_in_app.dashboard.deposit_form.deposit("USDT", "1000")
     with allure.step("Проверить баланс"):
-        expect(dashboard.balances.available("USDT")).to_have_text("1000")
+        expect(logged_in_app.dashboard.balances.available("USDT")).to_have_text("1000")
 ```
 
 - декоратор на методах PO / компонентов — шаги появляются во **всех** тестах автоматически;
@@ -296,9 +296,10 @@ def pytest_sessionstart(session):
 ui_framework/
   config/
     settings.py          # Settings: окружения, таймауты, секреты (U4.3)
+  application.py         # Application: раздаёт страницы (U4.1)
   pages/                 # экраны: BasePage, AuthPage, DashboardPage (U4.1)
   components/            # формы, таблицы, тост, шапка (U4.2)
-  fixtures/              # pytest-плагины: pages.py, data.py, reporting.py (U4.3–U4.4)
+  fixtures/              # pytest-плагины: app.py, data.py, reporting.py (U4.3–U4.4)
   data/
     models.py            # OrderData и другие модели тестовых данных
     generators.py        # unique_email, isolated_price
@@ -318,7 +319,7 @@ tests/
 
 Почему так:
 - **фреймворк отдельно от тестов** — пакет можно переиспользовать и версионировать;
-- **зависимости в одну сторону**: tests → fixtures → pages → components → utils/data.
+- **зависимости в одну сторону**: tests → fixtures → application → pages → components → utils/data.
   `utils` не импортирует `pages`, компоненты не импортируют страницы (U4.2);
 - **конфиг в одном месте** — окружения переключаются без правки кода;
 - **данные отдельно от логики** — модели и генераторы переиспользуются в API-тестах.

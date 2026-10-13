@@ -19,7 +19,7 @@
                после теста отменяет все открытые ордера (NEW и PARTIALLY_FILLED) всех созданных пользователей.
 
 Задача 3. Браузер, залогиненный токеном.
-    Функция или фикстура login_in_browser(email, client) -> DashboardPage:
+    Функция или фикстура login_in_browser(email, client) -> Application:
     новый context со storage_state (localStorage: token, email), открыть кабинет, wait_loaded.
     Тест: пользователь из api_user → в шапке его email, форма входа не показывалась.
 

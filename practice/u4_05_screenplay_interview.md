@@ -88,8 +88,7 @@ class Actor:
 class BrowseTheWeb:
     def __init__(self, page: Page):
         self.page = page
-        self.auth = AuthPage(page)
-        self.dashboard = DashboardPage(page)
+        self.app = Application(page)          # способность «пользоваться сайтом» = наш Application (U4.1)
 ```
 
 ```python
@@ -101,7 +100,7 @@ class Register:
     def perform_as(self, actor: Actor) -> None:
         web = actor.ability_to(BrowseTheWeb)
         email = self.email or unique_email(actor.name)
-        web.auth.open().register(email, PASSWORD)
+        web.app.auth.open().register(email, PASSWORD)
         actor.memory["email"] = email
 
 
@@ -111,7 +110,7 @@ class PlaceOrder:
 
     def perform_as(self, actor: Actor) -> None:
         web = actor.ability_to(BrowseTheWeb)
-        created = web.dashboard.order_form.place(**asdict(self.order))
+        created = web.app.dashboard.order_form.place(**asdict(self.order))
         actor.memory["last_order_id"] = created["id"]
 ```
 
@@ -122,13 +121,13 @@ class AvailableBalance:
         self.asset = asset
 
     def answered_by(self, actor: Actor) -> Locator:
-        return actor.ability_to(BrowseTheWeb).dashboard.balances.available(self.asset)
+        return actor.ability_to(BrowseTheWeb).app.dashboard.balances.available(self.asset)
 
 
 class LastOrderStatus:
     def answered_by(self, actor: Actor) -> Locator:
         order_id = actor.memory["last_order_id"]
-        return actor.ability_to(BrowseTheWeb).dashboard.orders.row(order_id).status
+        return actor.ability_to(BrowseTheWeb).app.dashboard.orders.row(order_id).status
 ```
 
 Question возвращает **Locator** — проверку делает тест через `expect` (как в PO, U4.1).
@@ -173,7 +172,7 @@ alice.attempts_to(PlaceOrder("BUY", "100", "1"))                     # пров�
 делают гибрид: PO и компоненты внизу, поверх — слой бизнес-шагов (по сути tasks), а тесты
 используют шаги.
 
-Наш фреймворк уже «гибридный»: фикстуры (`dashboard`, `new_dashboard`) и хелперы сценариев —
+Наш фреймворк уже «гибридный»: фикстуры состояния (`logged_in_app`, `new_app`) и хелперы сценариев —
 это и есть слой задач, только без классов.
 
 ---
@@ -199,7 +198,8 @@ alice.attempts_to(PlaceOrder("BUY", "100", "1"))                     # пров�
 - [ ] в тестах нет `page.get_by_*` / `page.locator`;
 - [ ] в PO нет бизнес-проверок; методы для проверок отдают Locator;
 - [ ] компоненты ищут только внутри root;
-- [ ] переходы между экранами возвращают PO.
+- [ ] переходы между экранами возвращают PO;
+- [ ] страницы тест получает через `Application`; в нём нет сценариев и состояния.
 
 **Данные и стабильность**
 - [ ] уникальные данные на тест; цены не пересекаются с чужими ордерами;
@@ -220,11 +220,12 @@ alice.attempts_to(PlaceOrder("BUY", "100", "1"))                     # пров�
 
 - **PO (U4.1)**: класс на экран; «как» в PO, «что» в тесте; локаторы атрибутами (ленивые);
   переходы возвращают PO; проверки — Locator для `expect`; в PO только синхронизация и проверка
-  своего действия; отдельные методы для негативных сценариев.
+  своего действия; отдельные методы для негативных сценариев. `Application` — композиция страниц
+  на одном `page` через `cached_property`, одна фикстура `app` вместо фикстуры на каждую страницу.
 - **Компоненты (U4.2)**: root-локатор, поиск только внутри; страница = композиция; строка таблицы —
   компонент; общая `Table` с колонкой по заголовку; компоненты не знают о страницах; модалка —
   компонент, метод открытия возвращает его.
-- **Фикстуры и конфиг (U4.3)**: фикстуры страниц и фабрики; `yield`-уборка в обратном порядке;
+- **Фикстуры и конфиг (U4.3)**: фикстуры состояния (`logged_in_app`) и фабрики (`new_app`); `yield`-уборка в обратном порядке;
   `request` и маркеры с данными; параметризованные фикстуры и `indirect`; autouse — только настройка;
   фикстуры в пакете через `pytest_plugins`; pydantic-settings, `ENV`, env-файлы, приоритет источников,
   `SecretStr`; перекрытие `base_url`.
@@ -261,7 +262,7 @@ alice.attempts_to(PlaceOrder("BUY", "100", "1"))                     # пров�
 
 **4. Как добавить в фреймворк новую страницу?**
 > Если есть повторяющиеся блоки — сначала компоненты с root. Потом PO страницы: path, root, компоненты,
-> переходы, `wait_loaded`. Фикстура страницы в `fixtures/pages.py`. Шаги Allure на публичных методах.
+> переходы, `wait_loaded`. Свойство в `Application` — отдельная фикстура не нужна. Шаги Allure на публичных методах.
 > Тест — только через PO. Если страница открывается из другой — метод перехода возвращает новый PO.
 
 **5. Как поймёшь, что Page Object стал плохим?**

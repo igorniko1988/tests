@@ -1,7 +1,7 @@
-"""U4. Урок 3 — фикстуры страниц и конфиг окружений.
+"""U4. Урок 3 — фикстуры состояния и конфиг окружений.
 
 Теория: practice/u4_03_fixtures_config.md
-Код: ui_framework/config/settings.py, ui_framework/fixtures/{pages,data}.py, tests/conftest.py (создать).
+Код: ui_framework/config/settings.py, ui_framework/fixtures/{app,data}.py, tests/conftest.py (создать).
 Запуск:
     uv run pytest tests/ui/test_u4_03_fixtures_config.py -v
     ENV=stage uv run pytest tests/ui/test_u4_03_fixtures_config.py -m smoke -v   # stage: up -d --build
@@ -20,10 +20,10 @@
     - pytest_report_header: env и base_url в шапке прогона;
     - убери base_url из pyproject.toml и проверь, что тесты U1.4 и U4.1 по-прежнему идут на :8080.
 
-Задача 3. Фикстуры данных и страниц.
+Задача 3. Фикстуры данных и приложения.
     data.py: unique_email() (функция) и фикстура user_email.
-    pages.py: auth_page, dashboard (пароль — из settings), new_dashboard (фабрика: новый context → DashboardPage).
-    Перенеси сюда фикстуры из tests/ui/conftest.py, которые относятся к PO (U4.1–U4.2), чтобы не было
+    app.py: app, logged_in_app (пароль — из settings), new_app (фабрика: новый context → залогиненный Application).
+    Перенеси сюда app и logged_in_app из tests/ui/conftest.py (U4.1), чтобы не было
     двух источников. Фикстуры U1.4 (logged_in_page, create_user) оставь — на них опираются старые уроки.
 
 Задача 4. autouse.
@@ -31,7 +31,7 @@
     Где ей место: tests/ui/conftest.py или ui_framework/fixtures? Объясни в «Ответах».
 
 Задача 5. Маркер с данными.
-    Зарегистрируй маркер balance. dashboard читает его и пополняет счёт:
+    Зарегистрируй маркер balance. logged_in_app читает его и пополняет счёт:
         @pytest.mark.balance(USDT="1000", ETH="2")
     Тест: доступно USDT 1000 и ETH 2, BTC 0.
 
@@ -43,10 +43,10 @@
 
 Задача 7. Параметризация.
     а) Параметризованная фикстура asset (USDT, BTC, ETH) с ids; тест пополнения на 1 — 3 прогона.
-    б) funded_dashboard через indirect=True: два набора — {"USDT": "1000"} и {"ETH": "5", "BTC": "1"};
+    б) funded_app через indirect=True: два набора — {"USDT": "1000"} и {"ETH": "5", "BTC": "1"};
        проверь доступные балансы из request.param (один тест, проверки в цикле по словарю).
 
-Задача 8. Два пользователя через new_dashboard.
+Задача 8. Два пользователя через new_app.
     Продавец SELL ETH-USDT, покупатель BUY по той же цене (вспомни U1.4: цена вне чужих ордеров),
     оба ордера FILLED (таймаут — settings.matching_timeout_ms), балансы обоих после сделки.
 

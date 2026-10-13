@@ -27,7 +27,7 @@
 - **U4. Page Object и архитектура**
   - [U4.1 Page Object](#u4-1)
   - [U4.2 Компоненты](#u4-2)
-  - [U4.3 Фикстуры страниц и конфиг окружений](#u4-3)
+  - [U4.3 Фикстуры состояния и конфиг окружений](#u4-3)
   - [U4.4 Утилиты, Allure и структура проекта](#u4-4)
   - [U4.5 Screenplay, собес по модулю U4 и каркас фреймворка](#u4-5)
 - **U5. Данные, авторизация и API внутри Playwright**
@@ -5026,9 +5026,10 @@ U3. Урок 4 — Shadow DOM, таблицы, cookies и localStorage; собе
 
 План: какую проблему решает Page Object; граница «страница — как, тест — что»; как устроить
 PO на нашем стенде (SPA: один URL, два экрана); что возвращают методы; можно ли проверки внутри
-PO; базовая страница; антипаттерны; как PO выглядит на собесе.
+PO; базовая страница; `Application` — одна точка входа ко всем страницам; антипаттерны;
+как PO выглядит на собесе.
 
-Модуль U4 целиком: U4.1 Page Object → U4.2 компоненты → U4.3 фикстуры страниц и конфиг окружений →
+Модуль U4 целиком: U4.1 Page Object и Application → U4.2 компоненты → U4.3 фикстуры состояния и конфиг окружений →
 U4.4 утилиты, Allure-шаги и структура проекта → U4.5 Screenplay, собес и каркас фреймворка.
 
 ---
@@ -5081,11 +5082,13 @@ def test_deposit(page, user_email):
 Тот же тест с PO:
 
 ```python
-def test_deposit(auth_page, user_email):
-    dashboard = auth_page.open().register(user_email, PASSWORD)
-    dashboard.deposit("USDT", "1000")
-    expect(dashboard.balance_available("USDT")).to_have_text("1000")
+def test_deposit(app, user_email):
+    app.auth.open().register(user_email, PASSWORD)
+    app.dashboard.deposit("USDT", "1000")
+    expect(app.dashboard.balance_available("USDT")).to_have_text("1000")
 ```
+
+`app` — объект `Application`, через него тест получает все страницы (раздел 6).
 
 Поменялась кнопка — правим одну строку в `DashboardPage`. Тест читается как сценарий.
 
@@ -5098,6 +5101,7 @@ def test_deposit(auth_page, user_email):
 
 ```
 ui_framework/
+  application.py         # Application: одна точка входа ко всем страницам (раздел 6)
   pages/
     base_page.py         # BasePage: page, open(path), общий тост
     auth_page.py         # AuthPage: вход и регистрация
@@ -5177,7 +5181,8 @@ class AuthPage(BasePage):
 ```
 
 Метод, после которого пользователь попадает на другой экран, **возвращает PO этого экрана**.
-Тест пишет цепочкой: `auth_page.open().login(...).deposit(...)`.
+Тест может писать цепочкой: `app.auth.open().login(...).deposit(...)`. Возврат нужен ещё и как
+синхронизация: `login` ждёт, что кабинет открылся (`wait_loaded`).
 
 Позитивный и негативный вход — разные методы: `login` обещает кабинет и ждёт его,
 `login_expecting_error` остаётся на форме. Один метод `login(..., expect_success=True)` с ветвлением
@@ -5270,19 +5275,124 @@ class DashboardPage(BasePage):
 
 ---
 
-#### 6. Фикстуры для страниц (кратко, подробно — U4.3)
+#### 6. Application — одна точка входа
+
+Страниц будет много: вход, кабинет, потом история, настройки, админка. Как отдать их тесту?
+
+**Вариант А — фикстура на каждую страницу:**
 
 ```python
 @pytest.fixture
-def auth_page(page: Page) -> AuthPage:
+def auth_page(page) -> AuthPage:
     return AuthPage(page)
 
 @pytest.fixture
-def dashboard(auth_page: AuthPage, user_email: str) -> DashboardPage:
-    return auth_page.open().register(user_email, PASSWORD)
+def dashboard_page(page) -> DashboardPage:
+    return DashboardPage(page)
+# ... и так на каждую страницу
 ```
 
-Тест просит то, что ему нужно: `dashboard` — уже залогиненный кабинет.
+Фикстура ничего не делает, кроме `return XxxPage(page)`. Тридцать страниц — тридцать одинаковых
+фикстур в conftest. Тест, которому нужны три экрана, перечисляет три аргумента.
+
+**Вариант Б — `Application`**: один класс, который через **композицию** собирает все страницы.
+Тест получает одну фикстуру `app` и ходит в страницы через неё.
+
+```python
+# ui_framework/application.py
+from functools import cached_property
+
+from playwright.sync_api import Page
+
+from ui_framework.pages.auth_page import AuthPage
+from ui_framework.pages.dashboard_page import DashboardPage
+
+
+class Application:
+    def __init__(self, page: Page):
+        self.page = page
+
+    @cached_property
+    def auth(self) -> AuthPage:
+        return AuthPage(self.page)
+
+    @cached_property
+    def dashboard(self) -> DashboardPage:
+        return DashboardPage(self.page)
+```
+
+```python
+# фикстура
+@pytest.fixture
+def app(page: Page) -> Application:
+    return Application(page)
+
+
+# тест
+def test_logout(app, user_email):
+    app.auth.open().register(user_email, PASSWORD)
+    app.dashboard.logout()
+    expect(app.auth.root).to_be_visible()
+```
+
+Мы в курсе используем **вариант Б**.
+
+##### Почему `cached_property`, а не атрибуты в `__init__`
+
+`cached_property` создаёт страницу при **первом обращении** и запоминает её. Тест, которому нужен
+только кабинет, не создаёт остальные 29 страниц. С атрибутами в `__init__` (`self.auth = AuthPage(page)`)
+тоже работает: локаторы ленивые, создать PO дёшево. Но если в `__init__` страницы появится
+что-то тяжелее, оно выполнится в каждом тесте для каждой страницы.
+
+##### Что даёт Application
+
+- **одна фикстура вместо N**: новая страница — одно свойство в `Application`, фикстура не нужна;
+- **автодополнение**: `app.` — IDE показывает все экраны приложения;
+- **один `page` на всех**: все страницы работают в одной вкладке, нельзя случайно смешать вкладки;
+- **место для общего**: позже сюда естественно встанут общие компоненты (шапка, тост) и API-клиент
+  для подготовки данных (U5): `app.api.create_user()`.
+
+##### Где граница: Application раздаёт страницы, фикстуры готовят состояние
+
+Application отвечает на вопрос **«как добраться до страницы»**. Он не логинится, не создаёт
+данные и не содержит сценариев. Состояние перед тестом — дело **фикстур**:
+
+```python
+@pytest.fixture
+def logged_in_app(app: Application, user_email: str) -> Application:
+    app.auth.open().register(user_email, PASSWORD)
+    return app
+
+
+def test_deposit(logged_in_app):
+    logged_in_app.dashboard.deposit("USDT", "1000")
+    expect(logged_in_app.dashboard.balance_available("USDT")).to_have_text("1000")
+```
+
+Тест просит то, что ему нужно: `app` — приложение «с нуля», `logged_in_app` — пользователь уже в
+кабинете. Фикстуры состояния (`logged_in_app` с балансом, с открытым ордером, второй пользователь) —
+тема U4.3.
+
+##### Переходы и Application не мешают друг другу
+
+`app.auth.register(...)` возвращает `DashboardPage`, а у `app` есть свой `app.dashboard`. Это
+**разные объекты** одного экрана на одном `page`. PO без состояния (раздел 7), поэтому неважно,
+каким объектом пользоваться. Правило: в цепочке — возвращённый, в остальном тесте — `app.dashboard`.
+
+##### Чего не делать с Application
+
+| Плохо | Почему |
+|---|---|
+| `class Application(AuthPage, DashboardPage)` | наследование вместо композиции: все методы и локаторы в одной куче, конфликты имён |
+| `app.register_and_deposit(...)` | сценарии в Application превращают его в God object; сценарии — в фикстурах или хелперах шагов |
+| `app.last_order_id` | состояние, как и в PO, — антипаттерн |
+| страницы знают об Application | `DashboardPage` не импортирует `Application`, зависимости в одну сторону |
+
+##### Когда Application начинает мешать
+
+На сотнях страниц и нескольких продуктах один класс снова становится свалкой, а по сигнатуре
+`test_x(app)` не видно, какие экраны трогает тест. Тогда делят по доменам: `app.trading.orders`,
+`app.admin.users` — каждый домен свой маленький Application.
 
 ---
 
@@ -5300,6 +5410,7 @@ def dashboard(auth_page: AuthPage, user_email: str) -> DashboardPage:
 | **Состояние в PO** | `self.last_order_id` | неявная связь шагов, ломается при повторном использовании |
 | **`sleep` / `wait_for_timeout`** | «чтобы форма успела» | U2.1 |
 | **Наследование ради наследования** | `DashboardPage(AuthPage)` | экраны не являются друг другом; общее — в `BasePage` или компонентах |
+| **Application со сценариями** | `app.register_and_deposit()` | Application раздаёт страницы, сценарии — в фикстурах |
 
 ---
 
@@ -5355,6 +5466,14 @@ def dashboard(auth_page: AuthPage, user_email: str) -> DashboardPage:
 > stale element. В Playwright локаторы ленивые: объявляю их атрибутами, они ищутся заново при
 > каждом действии. Плюс встроенные ожидания и `expect` — в PO не нужны свои wait-обёртки.
 
+**8. Как тест получает страницы: фикстура на каждую или Application?**
+> Использую Application: класс, который через композицию собирает все страницы на одном `page`,
+> свойства через `cached_property`, чтобы страница создавалась при первом обращении. Тест получает
+> одну фикстуру `app`, новая страница — одно свойство, а не новая фикстура. Application только
+> раздаёт страницы, без сценариев и состояния. Состояние перед тестом — залогинен, есть баланс —
+> готовят фикстуры: `logged_in_app`. Минус — по сигнатуре теста не видно, какие экраны он трогает,
+> и на большом проекте класс разрастается; тогда делю его по доменам.
+
 ### Задания — `practice/tasks/test_u4_01_page_object.py`
 
 ```text
@@ -5367,6 +5486,7 @@ U4. Урок 1 — Page Object.
 
 Правила:
     - в тестах НЕТ page.get_by_* / page.locator — только методы и локаторы из PO;
+    - страницы тест получает через Application (app.auth, app.dashboard), а не создаёт сам;
     - в PO нет бизнес-проверок (раздел 4 теории), разрешены wait_loaded и проверка ответа своего действия;
     - для проверок PO отдаёт Locator, тест делает expect;
     - свои хелперы из прошлых уроков в этом уроке не используем — всё через PO.
@@ -5374,7 +5494,7 @@ U4. Урок 1 — Page Object.
 Задача 1. BasePage (ui_framework/pages/base_page.py).
     Атрибут класса path, __init__(page) с локатором toast, метод open() -> self.
 
-Задача 2. AuthPage (ui_framework/pages/auth_page.py).
+Задача 2. AuthPage (ui_framework/pages/auth.py).
     path = "/app/". Локаторы: root, email, password, login_button, register_button, error.
     Методы: wait_loaded() -> self; fill_credentials(email, password);
     register(email, password) -> DashboardPage; login(email, password) -> DashboardPage;
@@ -5390,10 +5510,12 @@ U4. Урок 1 — Page Object.
         balance_available(asset) -> Locator; balance_locked(asset) -> Locator;
         order_row(order_id) -> Locator; order_status(order_id) -> Locator; cancel_order(order_id).
 
-Задача 4. Фикстуры (tests/ui/conftest.py).
-    auth_page — AuthPage(page); dashboard — зарегистрированный пользователь, DashboardPage.
+Задача 4. Application (ui_framework/application.py) и фикстуры (tests/ui/conftest.py).
+    Application(page): свойства auth и dashboard через cached_property (раздел 6 теории).
+    Фикстуры: app — Application(page); logged_in_app — зарегистрированный пользователь в кабинете,
+    возвращает Application. Других фикстур страниц не делай.
 
-Задача 5. Тесты через PO.
+Задача 5. Тесты через app / logged_in_app.
     а) Регистрация → в шапке email; выход → видна форма входа.
     б) Вход: верные данные → кабинет; parametrize (неверный пароль, несуществующий email) →
        ошибка "Invalid email or password", кабинет скрыт.
@@ -5420,6 +5542,7 @@ U4. Урок 1 — Page Object.
     5. Как не превратить Page Object в свалку?
     6. PO или хелперы-функции?
     7. Как PO в Playwright отличается от PO в Selenium?
+    8. Как тест получает страницы: фикстура на каждую или Application?
 ```
 
 ### Файл для ревью — `practice/u4_01_review_me.py`
@@ -5503,6 +5626,46 @@ def test_order_flow(page: Page):
 
 # Ответы
 """
+1. стр. 17, class ExchangePage — God object: вход, пополнение, ордера в одном классе на всё
+   приложение. Разбить по экранам: AuthPage, DashboardPage (+ компоненты в U4.2).
+2. стр. 18–20 — селекторы строками-константами и page.click(...): теряем get_by_role, strict mode,
+   цепочки. Локаторы — атрибутами Locator в __init__.
+3. стр. 19 — "text=Зарегистрироваться": поиск по подстроке текста, хрупкий и не по роли.
+   get_by_role("button", name="Зарегистрироваться").
+4. стр. 20 — "#deposit-form > button": завязка на вложенность DOM. Внутри формы get_by_role.
+5. стр. 13–14, 31–32 — тестовые данные (EMAIL, PASSWORD) зашиты в PO, login() без аргументов —
+   PO знает про конкретный тест, войти другим пользователем нельзя. login(email, password).
+6. стр. 24, 51 — состояние в PO (self.last_order_price): неявная связь шагов, никем не читается.
+   Убрать; нужное следующим шагам — возвращать из метода (id ордера из ответа).
+7. стр. 27 — абсолютный URL в goto: не переключить окружение. Относительный путь + base_url.
+8. стр. 28 — wait_for_load_state("networkidle"): у нас SPA с опросом ордеров раз в 2 с — может
+   не наступить, и это не признак готовности. Ждать конкретный элемент экрана (wait_loaded).
+   open() ничего не возвращает — не построить цепочку; вернуть self.
+9. стр. 30 — метод на клик click_register_button(): смысла не добавляет. register(email, password)
+   -> DashboardPage.
+10. стр. 31–32 — data-testid=email-input/password-input существуют, но get_by_label("Email")
+    проверяет ещё и доступность формы. (Не баг, но приоритет локаторов.)
+11. стр. 36 — time.sleep(2): медленно и всё равно флейк. Ждать кабинет: expect(root).to_be_visible(),
+    login() возвращает DashboardPage.
+12. стр. 38–42 — deposit_and_check: метод на тест + бизнес-проверка внутри PO. Негативный тест
+    пополнения с ним не написать. Разделить: deposit() (ждёт 2xx ответа) и проверка в тесте.
+    Ещё: to_have_text(amount) — баланс мог быть ненулевым до пополнения, ожидание неверное.
+13. стр. 42, 45 — f"[data-asset={asset}] ..." дублируется — вынести balance_available(asset)
+    -> Locator; селектор без привязки к balance-row может совпасть с чем-то ещё.
+14. стр. 44–45 — get_balance() -> str через text_content(): проверка «в моменте», стр. 72
+    assert == "900" — флейк (балансы перезагружаются асинхронно). Вернуть Locator, в тесте expect.
+15. стр. 47–51 — place_order не выбирает пару и сторону (надеется на значения по умолчанию),
+    не ждёт ответа сервера и не возвращает id созданного ордера.
+16. стр. 53–54 — cancel_last_order: .first — «первый попавшийся», а не нужный ордер. Порядок строк —
+    деталь реализации. cancel_order(order_id) по data-id строки.
+17. стр. 56–57 — is_order_cancelled() -> bool: проверка в моменте (U2.1) и снова .first.
+    order_status(order_id) -> Locator, в тесте expect(...).to_have_text("CANCELED").
+18. стр. 59–63 — try/except Exception: pass глушит любую ошибку, timeout=1000 — магическое число.
+    Если выйти не удалось, тест должен упасть. logout() -> AuthPage с wait_loaded.
+19. стр. 66–74 — тест: пользователь trader@test.com общий для всех прогонов — после первого прогона
+    баланс уже не 1000, параллельный запуск ломается; нет регистрации уникального пользователя
+    и teardown (открытые ордера в общем стакане).
+20. Нет аннотаций типов у аргументов и возвращаемых значений — IDE не подскажет, что вернёт метод.
 """
 ```
 
@@ -5749,6 +5912,9 @@ dashboard.deposit("USDT", "1000")                 # фасад: страница
 
 Рекомендация: фасадные методы — только для **сценариев**, где участвуют несколько компонентов
 или переход («войти», «выйти»). Действия внутри одного блока — через компонент.
+
+Не путать с `Application` из U4.1: тот тоже фасад, но уровнем выше — он раздаёт **страницы**
+(`app.dashboard`), а не повторяет их методы. Цепочка: `app.dashboard.deposit_form.deposit(...)`.
 В задании 6 ты решишь, оставлять ли `dashboard.deposit()` из U4.1, и объяснишь выбор.
 
 ---
@@ -5866,46 +6032,61 @@ U4. Урок 2 — компоненты.
 
 <a id="u4-3"></a>
 
-## U4.3 Фикстуры страниц и конфиг окружений
+## U4.3 Фикстуры состояния и конфиг окружений
 
 *Теория: `practice/u4_03_fixtures_config.md`*
 
 Задания: `practice/tasks/test_u4_03_fixtures_config.py`, решение — `tests/ui/test_u4_03_fixtures_config.py` (создаёшь сам), код — `ui_framework/config/`, `ui_framework/fixtures/`.
 
 Основы фикстур (scope, yield, conftest, `browser_context_args`) были в U1.4. Здесь — то, из чего
-собирают фреймворк: фикстуры страниц, фабрики с уборкой, `request` и маркеры с данными,
+собирают фреймворк: фикстуры состояния поверх `Application`, фабрики с уборкой, `request` и маркеры с данными,
 параметризованные фикстуры, фикстуры в пакете фреймворка (`pytest_plugins`), конфиг окружений
 на pydantic-settings, секреты, наборы тестов по маркерам.
 
 ---
 
-#### 1. Фикстуры страниц
+#### 1. Application + фикстуры состояния
+
+Страницы тест получает через `Application` (U4.1, раздел 6) — фикстур на каждую страницу нет.
+Фикстуры отвечают за другое: **в каком состоянии мир перед тестом**.
 
 ```python
 @pytest.fixture
-def auth_page(page: Page) -> AuthPage:
-    return AuthPage(page)
+def app(page: Page) -> Application:
+    return Application(page)
 
 
 @pytest.fixture
-def dashboard(auth_page: AuthPage, user_email: str, settings: Settings) -> DashboardPage:
-    return auth_page.open().register(user_email, settings.user_password)
+def logged_in_app(app: Application, user_email: str, settings: Settings) -> Application:
+    app.auth.open().register(user_email, settings.user_password.get_secret_value())
+    return app
 ```
 
-Тест просит **состояние**, а не шаги: `dashboard` — «я в кабинете нового пользователя».
-Цепочка фикстур: `page` (плагин) → `auth_page` → `dashboard`. pytest сам выстроит порядок.
+Тест просит **состояние**, а не шаги: `logged_in_app` — «я в кабинете нового пользователя».
+Цепочка фикстур: `page` (плагин) → `app` → `logged_in_app`. pytest сам выстроит порядок.
 
-##### Фабрика страниц
+Фикстура со словом «просто вернуть страницу» не нужна — это `app.<страница>`. Фикстура нужна,
+когда она **что-то делает**: логинит, пополняет, создаёт ордер, убирает за собой.
 
-Когда в тесте нужно несколько пользователей (U1.4, `create_user`) — фабрика, возвращающая PO:
+##### Фабрика приложений
+
+Когда в тесте нужно несколько пользователей (U1.4, `create_user`) — фабрика. Каждый пользователь —
+свой context, своя вкладка и **свой** `Application`:
 
 ```python
 @pytest.fixture
-def new_dashboard(new_context, settings) -> Callable[[], DashboardPage]:
-    def _create() -> DashboardPage:
-        page = new_context().new_page()
-        return AuthPage(page).open().register(unique_email(), settings.user_password)
+def new_app(new_context, settings) -> Callable[[], Application]:
+    def _create() -> Application:
+        app = Application(new_context().new_page())
+        app.auth.open().register(unique_email(), settings.user_password.get_secret_value())
+        return app
     return _create
+
+
+def test_trade(new_app):
+    seller, buyer = new_app(), new_app()
+    seller.dashboard.order_form.place("SELL", "100", "1")
+    ...
 ```
 
 `new_context` из pytest-playwright сам закроет все созданные context после теста.
@@ -5916,7 +6097,8 @@ def new_dashboard(new_context, settings) -> Callable[[], DashboardPage]:
 
 ```python
 @pytest.fixture
-def open_order(dashboard):
+def open_order(logged_in_app):
+    dashboard = logged_in_app.dashboard
     dashboard.deposit_form.deposit("USDT", "100")
     order = dashboard.order_form.place("BUY", "1", "1")
     yield order                                        # тест работает здесь
@@ -5926,7 +6108,7 @@ def open_order(dashboard):
 ```
 
 Порядок: setup фикстур — от зависимостей к зависимым; teardown — **в обратном** порядке.
-`dashboard` (и `page`) ещё живы в teardown `open_order`, потому что `open_order` от них зависит.
+`logged_in_app` (и `page`) ещё живы в teardown `open_order`, потому что `open_order` от них зависит.
 
 Здесь `count()` в `if` — нормально: это не проверка, а ветвление в уборке (U2.1).
 
@@ -5934,7 +6116,8 @@ def open_order(dashboard):
 
 ```python
 @pytest.fixture
-def order_factory(dashboard):
+def order_factory(logged_in_app):
+    dashboard = logged_in_app.dashboard
     created: list[str] = []
 
     def _create(side="BUY", price="1", quantity="1") -> dict:
@@ -5969,21 +6152,21 @@ def order_factory(dashboard):
 
 ```python
 @pytest.fixture
-def dashboard(request, auth_page, user_email, settings):
-    dash = auth_page.open().register(user_email, settings.user_password)
+def logged_in_app(request, app, user_email, settings):
+    app.auth.open().register(user_email, settings.user_password.get_secret_value())
     marker = request.node.get_closest_marker("balance")      # @pytest.mark.balance(USDT="1000")
     if marker:
         for asset, amount in marker.kwargs.items():
-            dash.deposit_form.deposit(asset, amount)
-    return dash
+            app.dashboard.deposit_form.deposit(asset, amount)
+    return app
 
 
 @pytest.mark.balance(USDT="1000", ETH="2")
-def test_buy(dashboard): ...
+def test_buy(logged_in_app): ...
 ```
 
-Маркер с данными — способ сказать фикстуре «подготовь вот так», не плодя `dashboard_with_usdt`,
-`dashboard_with_eth`... Маркер `balance` нужно зарегистрировать (`--strict-markers`).
+Маркер с данными — способ сказать фикстуре «подготовь вот так», не плодя `app_with_usdt`,
+`app_with_eth`... Маркер `balance` нужно зарегистрировать (`--strict-markers`).
 
 Полезное в `request`:
 
@@ -6005,9 +6188,9 @@ def asset(request) -> str:
     return request.param
 
 
-def test_deposit(dashboard, asset):              # запустится 3 раза
-    dashboard.deposit_form.deposit(asset, "1")
-    expect(dashboard.balances.available(asset)).to_have_text("1")
+def test_deposit(logged_in_app, asset):          # запустится 3 раза
+    logged_in_app.dashboard.deposit_form.deposit(asset, "1")
+    expect(logged_in_app.dashboard.balances.available(asset)).to_have_text("1")
 ```
 
 Отличие от `@pytest.mark.parametrize`: параметр живёт в **фикстуре** — любой тест, который её
@@ -6017,14 +6200,14 @@ def test_deposit(dashboard, asset):              # запустится 3 раз
 
 ```python
 @pytest.fixture
-def funded_dashboard(request, dashboard):
+def funded_app(request, logged_in_app):
     for asset, amount in request.param.items():
-        dashboard.deposit_form.deposit(asset, amount)
-    return dashboard
+        logged_in_app.dashboard.deposit_form.deposit(asset, amount)
+    return logged_in_app
 
 
-@pytest.mark.parametrize("funded_dashboard", [{"USDT": "1000"}, {"ETH": "5"}], indirect=True)
-def test_something(funded_dashboard): ...
+@pytest.mark.parametrize("funded_app", [{"USDT": "1000"}, {"ETH": "5"}], indirect=True)
+def test_something(funded_app): ...
 ```
 
 ---
@@ -6061,7 +6244,7 @@ tests/
     conftest.py
 ui_framework/
   fixtures/
-    pages.py               # фикстуры страниц: auth_page, dashboard, new_dashboard
+    app.py                 # app, logged_in_app, new_app
     data.py                # user_email, фабрики данных
 ```
 
@@ -6069,7 +6252,7 @@ ui_framework/
 в другом репозитории. Подключение — в корневом `tests/conftest.py`:
 
 ```python
-pytest_plugins = ["ui_framework.fixtures.pages", "ui_framework.fixtures.data"]
+pytest_plugins = ["ui_framework.fixtures.app", "ui_framework.fixtures.data"]
 ```
 
 Правила:
@@ -6184,7 +6367,7 @@ markers = [
     "smoke: быстрые критичные проверки, на каждый PR",
     "regression: полный набор, ночью",
     "slow: дольше 10 секунд",
-    "balance(**assets): начальный баланс для фикстуры dashboard",
+    "balance(**assets): начальный баланс для фикстуры logged_in_app",
 ]
 ```
 
@@ -6209,7 +6392,8 @@ uv run pytest -m "regression and not slow"
 | autouse-фикстура логинится | все тесты медленнее, состояние неочевидно |
 | уборка падает, если «уже убрано» | ERROR at teardown на зелёном тесте |
 | `pytest_plugins` во вложенном conftest | ошибка сборки |
-| фикстура `dashboard_with_usdt_1000_and_eth_2` | взрыв числа фикстур — маркер с данными или indirect |
+| фикстура `app_with_usdt_1000_and_eth_2` | взрыв числа фикстур — маркер с данными или indirect |
+| фикстура на каждую страницу (`return XxxPage(page)`) | дубль Application; фикстуры — для состояния |
 | `Settings()` создаётся в каждом тесте | лишняя работа; session-фикстура |
 
 ---
@@ -6249,17 +6433,17 @@ uv run pytest -m "regression and not slow"
 > комбинацию данных.
 
 **7. Где лежат фикстуры в твоём фреймворке?**
-> Фикстуры фреймворка — страниц, данных, клиентов — в пакете фреймворка (`fixtures/`), подключаются
+> Фикстуры фреймворка — `app` и состояния, данных, клиентов — в пакете фреймворка (`fixtures/`), подключаются
 > через `pytest_plugins` в корневом conftest. Специфичное для набора тестов — в conftest этой папки.
 > Так фреймворк можно переиспользовать, а conftest тестов остаётся маленьким.
 
 ### Задания — `practice/tasks/test_u4_03_fixtures_config.py`
 
 ```text
-U4. Урок 3 — фикстуры страниц и конфиг окружений.
+U4. Урок 3 — фикстуры состояния и конфиг окружений.
 
 Теория: practice/u4_03_fixtures_config.md
-Код: ui_framework/config/settings.py, ui_framework/fixtures/{pages,data}.py, tests/conftest.py (создать).
+Код: ui_framework/config/settings.py, ui_framework/fixtures/{app,data}.py, tests/conftest.py (создать).
 Запуск:
     uv run pytest tests/ui/test_u4_03_fixtures_config.py -v
     ENV=stage uv run pytest tests/ui/test_u4_03_fixtures_config.py -m smoke -v   # stage: up -d --build
@@ -6278,10 +6462,10 @@ U4. Урок 3 — фикстуры страниц и конфиг окруже�
     - pytest_report_header: env и base_url в шапке прогона;
     - убери base_url из pyproject.toml и проверь, что тесты U1.4 и U4.1 по-прежнему идут на :8080.
 
-Задача 3. Фикстуры данных и страниц.
+Задача 3. Фикстуры данных и приложения.
     data.py: unique_email() (функция) и фикстура user_email.
-    pages.py: auth_page, dashboard (пароль — из settings), new_dashboard (фабрика: новый context → DashboardPage).
-    Перенеси сюда фикстуры из tests/ui/conftest.py, которые относятся к PO (U4.1–U4.2), чтобы не было
+    app.py: app, logged_in_app (пароль — из settings), new_app (фабрика: новый context → залогиненный Application).
+    Перенеси сюда app и logged_in_app из tests/ui/conftest.py (U4.1), чтобы не было
     двух источников. Фикстуры U1.4 (logged_in_page, create_user) оставь — на них опираются старые уроки.
 
 Задача 4. autouse.
@@ -6289,7 +6473,7 @@ U4. Урок 3 — фикстуры страниц и конфиг окруже�
     Где ей место: tests/ui/conftest.py или ui_framework/fixtures? Объясни в «Ответах».
 
 Задача 5. Маркер с данными.
-    Зарегистрируй маркер balance. dashboard читает его и пополняет счёт:
+    Зарегистрируй маркер balance. logged_in_app читает его и пополняет счёт:
         @pytest.mark.balance(USDT="1000", ETH="2")
     Тест: доступно USDT 1000 и ETH 2, BTC 0.
 
@@ -6301,10 +6485,10 @@ U4. Урок 3 — фикстуры страниц и конфиг окруже�
 
 Задача 7. Параметризация.
     а) Параметризованная фикстура asset (USDT, BTC, ETH) с ids; тест пополнения на 1 — 3 прогона.
-    б) funded_dashboard через indirect=True: два набора — {"USDT": "1000"} и {"ETH": "5", "BTC": "1"};
+    б) funded_app через indirect=True: два набора — {"USDT": "1000"} и {"ETH": "5", "BTC": "1"};
        проверь доступные балансы из request.param (один тест, проверки в цикле по словарю).
 
-Задача 8. Два пользователя через new_dashboard.
+Задача 8. Два пользователя через new_app.
     Продавец SELL ETH-USDT, покупатель BUY по той же цене (вспомни U1.4: цена вне чужих ордеров),
     оба ордера FILLED (таймаут — settings.matching_timeout_ms), балансы обоих после сделки.
 
@@ -6543,10 +6727,10 @@ class DepositForm(BaseComponent):
 ```
 
 ```python
-def test_deposit(dashboard):
-    dashboard.deposit_form.deposit("USDT", "1000")
+def test_deposit(logged_in_app):
+    logged_in_app.dashboard.deposit_form.deposit("USDT", "1000")
     with allure.step("Проверить баланс"):
-        expect(dashboard.balances.available("USDT")).to_have_text("1000")
+        expect(logged_in_app.dashboard.balances.available("USDT")).to_have_text("1000")
 ```
 
 - декоратор на методах PO / компонентов — шаги появляются во **всех** тестах автоматически;
@@ -6625,9 +6809,10 @@ def pytest_sessionstart(session):
 ui_framework/
   config/
     settings.py          # Settings: окружения, таймауты, секреты (U4.3)
+  application.py         # Application: раздаёт страницы (U4.1)
   pages/                 # экраны: BasePage, AuthPage, DashboardPage (U4.1)
   components/            # формы, таблицы, тост, шапка (U4.2)
-  fixtures/              # pytest-плагины: pages.py, data.py, reporting.py (U4.3–U4.4)
+  fixtures/              # pytest-плагины: app.py, data.py, reporting.py (U4.3–U4.4)
   data/
     models.py            # OrderData и другие модели тестовых данных
     generators.py        # unique_email, isolated_price
@@ -6647,7 +6832,7 @@ tests/
 
 Почему так:
 - **фреймворк отдельно от тестов** — пакет можно переиспользовать и версионировать;
-- **зависимости в одну сторону**: tests → fixtures → pages → components → utils/data.
+- **зависимости в одну сторону**: tests → fixtures → application → pages → components → utils/data.
   `utils` не импортирует `pages`, компоненты не импортируют страницы (U4.2);
 - **конфиг в одном месте** — окружения переключаются без правки кода;
 - **данные отдельно от логики** — модели и генераторы переиспользуются в API-тестах.
@@ -6854,8 +7039,7 @@ class Actor:
 class BrowseTheWeb:
     def __init__(self, page: Page):
         self.page = page
-        self.auth = AuthPage(page)
-        self.dashboard = DashboardPage(page)
+        self.app = Application(page)          # способность «пользоваться сайтом» = наш Application (U4.1)
 ```
 
 ```python
@@ -6867,7 +7051,7 @@ class Register:
     def perform_as(self, actor: Actor) -> None:
         web = actor.ability_to(BrowseTheWeb)
         email = self.email or unique_email(actor.name)
-        web.auth.open().register(email, PASSWORD)
+        web.app.auth.open().register(email, PASSWORD)
         actor.memory["email"] = email
 
 
@@ -6877,7 +7061,7 @@ class PlaceOrder:
 
     def perform_as(self, actor: Actor) -> None:
         web = actor.ability_to(BrowseTheWeb)
-        created = web.dashboard.order_form.place(**asdict(self.order))
+        created = web.app.dashboard.order_form.place(**asdict(self.order))
         actor.memory["last_order_id"] = created["id"]
 ```
 
@@ -6888,13 +7072,13 @@ class AvailableBalance:
         self.asset = asset
 
     def answered_by(self, actor: Actor) -> Locator:
-        return actor.ability_to(BrowseTheWeb).dashboard.balances.available(self.asset)
+        return actor.ability_to(BrowseTheWeb).app.dashboard.balances.available(self.asset)
 
 
 class LastOrderStatus:
     def answered_by(self, actor: Actor) -> Locator:
         order_id = actor.memory["last_order_id"]
-        return actor.ability_to(BrowseTheWeb).dashboard.orders.row(order_id).status
+        return actor.ability_to(BrowseTheWeb).app.dashboard.orders.row(order_id).status
 ```
 
 Question возвращает **Locator** — проверку делает тест через `expect` (как в PO, U4.1).
@@ -6939,7 +7123,7 @@ alice.attempts_to(PlaceOrder("BUY", "100", "1"))                     # пров�
 делают гибрид: PO и компоненты внизу, поверх — слой бизнес-шагов (по сути tasks), а тесты
 используют шаги.
 
-Наш фреймворк уже «гибридный»: фикстуры (`dashboard`, `new_dashboard`) и хелперы сценариев —
+Наш фреймворк уже «гибридный»: фикстуры состояния (`logged_in_app`, `new_app`) и хелперы сценариев —
 это и есть слой задач, только без классов.
 
 ---
@@ -6965,7 +7149,8 @@ alice.attempts_to(PlaceOrder("BUY", "100", "1"))                     # пров�
 - [ ] в тестах нет `page.get_by_*` / `page.locator`;
 - [ ] в PO нет бизнес-проверок; методы для проверок отдают Locator;
 - [ ] компоненты ищут только внутри root;
-- [ ] переходы между экранами возвращают PO.
+- [ ] переходы между экранами возвращают PO;
+- [ ] страницы тест получает через `Application`; в нём нет сценариев и состояния.
 
 **Данные и стабильность**
 - [ ] уникальные данные на тест; цены не пересекаются с чужими ордерами;
@@ -6986,11 +7171,12 @@ alice.attempts_to(PlaceOrder("BUY", "100", "1"))                     # пров�
 
 - **PO (U4.1)**: класс на экран; «как» в PO, «что» в тесте; локаторы атрибутами (ленивые);
   переходы возвращают PO; проверки — Locator для `expect`; в PO только синхронизация и проверка
-  своего действия; отдельные методы для негативных сценариев.
+  своего действия; отдельные методы для негативных сценариев. `Application` — композиция страниц
+  на одном `page` через `cached_property`, одна фикстура `app` вместо фикстуры на каждую страницу.
 - **Компоненты (U4.2)**: root-локатор, поиск только внутри; страница = композиция; строка таблицы —
   компонент; общая `Table` с колонкой по заголовку; компоненты не знают о страницах; модалка —
   компонент, метод открытия возвращает его.
-- **Фикстуры и конфиг (U4.3)**: фикстуры страниц и фабрики; `yield`-уборка в обратном порядке;
+- **Фикстуры и конфиг (U4.3)**: фикстуры состояния (`logged_in_app`) и фабрики (`new_app`); `yield`-уборка в обратном порядке;
   `request` и маркеры с данными; параметризованные фикстуры и `indirect`; autouse — только настройка;
   фикстуры в пакете через `pytest_plugins`; pydantic-settings, `ENV`, env-файлы, приоритет источников,
   `SecretStr`; перекрытие `base_url`.
@@ -7027,7 +7213,7 @@ alice.attempts_to(PlaceOrder("BUY", "100", "1"))                     # пров�
 
 **4. Как добавить в фреймворк новую страницу?**
 > Если есть повторяющиеся блоки — сначала компоненты с root. Потом PO страницы: path, root, компоненты,
-> переходы, `wait_loaded`. Фикстура страницы в `fixtures/pages.py`. Шаги Allure на публичных методах.
+> переходы, `wait_loaded`. Свойство в `Application` — отдельная фикстура не нужна. Шаги Allure на публичных методах.
 > Тест — только через PO. Если страница открывается из другой — метод перехода возвращает новый PO.
 
 **5. Как поймёшь, что Page Object стал плохим?**
@@ -7047,7 +7233,7 @@ U4. Урок 5 — Screenplay, собес по модулю U4 и каркас �
 
 Задача 1. Ядро (actor.py, abilities.py).
     Actor: can(...), ability_to(kind), attempts_to(*tasks), asks_for(question), memory.
-    BrowseTheWeb(page): auth и dashboard — твои PO из U4.1–U4.2.
+    BrowseTheWeb(page): внутри — твой Application из U4.1 (web.app.auth, web.app.dashboard).
 
 Задача 2. Задачи и вопросы (tasks.py, questions.py).
     Tasks: Register(email=None), Deposit(asset, amount), PlaceOrder(side, price, quantity, symbol),
@@ -7061,7 +7247,7 @@ U4. Урок 5 — Screenplay, собес по модулю U4 и каркас �
     Проверь статусы и балансы обоих через asks_for + expect (таймаут — из settings).
 
 Задача 4. Тот же сценарий на PO.
-    Перепиши задачу 3 только через new_dashboard и PO (без screenplay).
+    Перепиши задачу 3 только через new_app и PO (без screenplay).
     В «Ответах»: сравни два теста — строки, читаемость, что пришлось написать дополнительно,
     что проще поменять, если подготовку (регистрацию и пополнение) перенести на API.
 
@@ -7258,7 +7444,8 @@ def logged_in_context(new_context, base_url, token, email):
 
 
 page = logged_in_context(new_context, base_url, api.token, email).new_page()
-DashboardPage(page).open().wait_loaded()                     # сразу кабинет, без формы входа
+app = Application(page)
+app.dashboard.open().wait_loaded()                           # сразу кабинет, без формы входа
 ```
 
 `storage_state` — тот же формат, что `context.storage_state()` возвращает (U1.4). Можно собрать его
@@ -7296,7 +7483,7 @@ UI опрашивает сервер раз в 2 с (U2.1). Отменил ор�
 - отличить баг фронта от бэка: сервер сохранил верно, а UI показывает не то.
 
 ```python
-order = dashboard.order_form.place("BUY", "100.50", "0.5")
+order = app.dashboard.order_form.place("BUY", "100.50", "0.5")
 saved = api.orders()[0]
 assert saved["price"] == "100.5"               # сервер нормализует (U4.4)
 ```
@@ -7423,7 +7610,7 @@ U5. Урок 1 — API внутри Playwright.
                после теста отменяет все открытые ордера (NEW и PARTIALLY_FILLED) всех созданных пользователей.
 
 Задача 3. Браузер, залогиненный токеном.
-    Функция или фикстура login_in_browser(email, client) -> DashboardPage:
+    Функция или фикстура login_in_browser(email, client) -> Application:
     новый context со storage_state (localStorage: token, email), открыть кабинет, wait_loaded.
     Тест: пользователь из api_user → в шапке его email, форма входа не показывалась.
 
@@ -7667,7 +7854,7 @@ def load_cases(name: str) -> list:
 
 
 @pytest.mark.parametrize("case", load_cases("invalid_orders.json"))
-def test_invalid_order(dashboard, case): ...
+def test_invalid_order(logged_in_app, case): ...
 ```
 
 CSV — `csv.DictReader`; все значения придут **строками** (для нашего стенда это даже удобно — суммы и так строки).
@@ -7884,9 +8071,10 @@ def trader_state(api_context, settings) -> dict:
 
 
 @pytest.fixture
-def trader_page(new_context, trader_state) -> DashboardPage:
-    page = new_context(storage_state=trader_state).new_page()   # context НОВЫЙ, общий только токен
-    return DashboardPage(page).open().wait_loaded()
+def trader_app(new_context, trader_state) -> Application:
+    app = Application(new_context(storage_state=trader_state).new_page())   # context НОВЫЙ, общий только токен
+    app.dashboard.open().wait_loaded()
+    return app
 ```
 
 Session-фикстура не может взять `page` или `new_context` (function-scope, `ScopeMismatch`, U1.4) —
@@ -7955,16 +8143,17 @@ ROLES = {
 
 
 @pytest.fixture
-def page_as(new_context, role_states):
-    def _open(role: str) -> DashboardPage:
-        page = new_context(storage_state=role_states[role]).new_page()
-        return DashboardPage(page).open().wait_loaded()
+def app_as(new_context, role_states):
+    def _open(role: str) -> Application:
+        app = Application(new_context(storage_state=role_states[role]).new_page())
+        app.dashboard.open().wait_loaded()
+        return app
     return _open
 
 
-def test_two_roles(page_as):
-    trader = page_as("trader")
-    newbie = page_as("newbie")
+def test_two_roles(app_as):
+    trader = app_as("trader")
+    newbie = app_as("newbie")
 ```
 
 Или маркером: `@pytest.mark.role("admin")` → фикстура читает `request.node.get_closest_marker("role")`
@@ -8072,7 +8261,7 @@ def isolated_price(low: int = 300, high: int = 499) -> str:
 > проверяется. Для read-only тестов — заранее подготовленный seed. Уборка тоже через API.
 
 **3. Как работать с ролями?**
-> State на каждую роль, получается через API один раз. Фикстура-фабрика `page_as(role)` или маркер
+> State на каждую роль, получается через API один раз. Фикстура-фабрика `app_as(role)` или маркер
 > `role` на тесте. Файлы state — вне git. Несколько ролей в одном тесте — несколько context.
 
 **4. Чем рискуешь, когда тесты делят одного пользователя?**
@@ -8112,17 +8301,17 @@ U5. Урок 3 — storage_state, роли, изоляция и параллел
     trader_state (session): seed-пользователь (ensure_user из U5.2), токен — через FileLock,
     чтобы при -n 4 логин был один. Запиши каждый реальный логин в лог-файл рядом со state
     (имя воркера, worker_id) — так проверишь, сколько было логинов.
-    trader_page (function): новый context с trader_state → DashboardPage.
-    Три read-only теста под trader_page. Прогони с -n 3: сколько строк в логе логинов?
+    trader_app (function): новый context с trader_state → Application, кабинет открыт.
+    Три read-only теста под trader_app. Прогони с -n 3: сколько строк в логе логинов?
     Если state протух (token_expires_in < 60) — перелогиниться.
 
 Задача 3. Роли.
-    page_as(role) — роли "trader" (seed, read-only) и "newbie" (новый пользователь через api_user).
+    app_as(role) — роли "trader" (seed, read-only) и "newbie" (новый пользователь через api_user).
     Тест: под trader доступно USDT == seed-баланс, под newbie — 0; оба в одном тесте, разные context.
-    Вариант с маркером @pytest.mark.role("newbie") для фикстуры role_page — зарегистрируй маркер.
+    Вариант с маркером @pytest.mark.role("newbie") для фикстуры role_app — зарегистрируй маркер.
 
 Задача 4. Что не изолирует context.
-    Два теста под trader_page: первый создаёт и сразу отменяет ордер (уборка за собой обязательна),
+    Два теста под trader_app: первый создаёт и сразу отменяет ордер (уборка за собой обязательна),
     второй проверяет «у seed-пользователя 0 открытых ордеров». Запусти их вместе с -n 2 несколько раз
     (--count 5 из U2.4). Что видишь? Объясни в «Ответах» и почисти: что должно быть в тестах под общим
     пользователем, а что — нет. Убери нарушающий тест в xdist_group или переделай на своего пользователя.
@@ -10736,10 +10925,10 @@ def test_cancel_order_hybrid(trader_factory, login_in_browser, db):
     trader = trader_factory(balance={"USDT": "1000"}, orders=[OrderData(price="100", quantity="2")])  # 1. API
     order_id = trader.orders[0]["id"]
 
-    dashboard = login_in_browser(trader)                                                          # 2. UI
-    dashboard.orders.row(order_id).cancel()
-    expect(dashboard.orders.row(order_id).status).to_have_text("CANCELED")
-    expect(dashboard.balances.locked("USDT")).to_have_text("0")
+    app = login_in_browser(trader)                                                                # 2. UI
+    app.dashboard.orders.row(order_id).cancel()
+    expect(app.dashboard.orders.row(order_id).status).to_have_text("CANCELED")
+    expect(app.dashboard.balances.locked("USDT")).to_have_text("0")
 
     assert trader.api.orders()[0]["status"] == "CANCELED"                                         # 3. API
 

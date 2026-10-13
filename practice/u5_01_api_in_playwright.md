@@ -160,7 +160,8 @@ def logged_in_context(new_context, base_url, token, email):
 
 
 page = logged_in_context(new_context, base_url, api.token, email).new_page()
-DashboardPage(page).open().wait_loaded()                     # сразу кабинет, без формы входа
+app = Application(page)
+app.dashboard.open().wait_loaded()                           # сразу кабинет, без формы входа
 ```
 
 `storage_state` — тот же формат, что `context.storage_state()` возвращает (U1.4). Можно собрать его
@@ -198,7 +199,7 @@ UI опрашивает сервер раз в 2 с (U2.1). Отменил ор�
 - отличить баг фронта от бэка: сервер сохранил верно, а UI показывает не то.
 
 ```python
-order = dashboard.order_form.place("BUY", "100.50", "0.5")
+order = app.dashboard.order_form.place("BUY", "100.50", "0.5")
 saved = api.orders()[0]
 assert saved["price"] == "100.5"               # сервер нормализует (U4.4)
 ```

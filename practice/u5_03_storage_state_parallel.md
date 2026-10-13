@@ -35,9 +35,10 @@ def trader_state(api_context, settings) -> dict:
 
 
 @pytest.fixture
-def trader_page(new_context, trader_state) -> DashboardPage:
-    page = new_context(storage_state=trader_state).new_page()   # context НОВЫЙ, общий только токен
-    return DashboardPage(page).open().wait_loaded()
+def trader_app(new_context, trader_state) -> Application:
+    app = Application(new_context(storage_state=trader_state).new_page())   # context НОВЫЙ, общий только токен
+    app.dashboard.open().wait_loaded()
+    return app
 ```
 
 Session-фикстура не может взять `page` или `new_context` (function-scope, `ScopeMismatch`, U1.4) —
@@ -106,16 +107,17 @@ ROLES = {
 
 
 @pytest.fixture
-def page_as(new_context, role_states):
-    def _open(role: str) -> DashboardPage:
-        page = new_context(storage_state=role_states[role]).new_page()
-        return DashboardPage(page).open().wait_loaded()
+def app_as(new_context, role_states):
+    def _open(role: str) -> Application:
+        app = Application(new_context(storage_state=role_states[role]).new_page())
+        app.dashboard.open().wait_loaded()
+        return app
     return _open
 
 
-def test_two_roles(page_as):
-    trader = page_as("trader")
-    newbie = page_as("newbie")
+def test_two_roles(app_as):
+    trader = app_as("trader")
+    newbie = app_as("newbie")
 ```
 
 Или маркером: `@pytest.mark.role("admin")` → фикстура читает `request.node.get_closest_marker("role")`
@@ -223,7 +225,7 @@ def isolated_price(low: int = 300, high: int = 499) -> str:
 > проверяется. Для read-only тестов — заранее подготовленный seed. Уборка тоже через API.
 
 **3. Как работать с ролями?**
-> State на каждую роль, получается через API один раз. Фикстура-фабрика `page_as(role)` или маркер
+> State на каждую роль, получается через API один раз. Фикстура-фабрика `app_as(role)` или маркер
 > `role` на тесте. Файлы state — вне git. Несколько ролей в одном тесте — несколько context.
 
 **4. Чем рискуешь, когда тесты делят одного пользователя?**
