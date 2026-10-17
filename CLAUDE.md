@@ -62,11 +62,6 @@
 
 - Запуск: `docker compose up -d --build` → http://localhost:8080 (веб-интерфейс на `/app/`,
   Swagger на `/docs`). Фронтенд — ванильный JS в `exchange/web/`, у элементов есть `data-testid`.
-- Лаборатория `/app/lab.html` — статическая страница для уроков UI (вкладки, iframe, диалоги, файлы,
-  drag & drop, Shadow DOM, модалка, окружение браузера); бэкенд не нужен. Статика вшита в образ —
-  после правок `exchange/web/` нужен `--build`.
-- macOS 12: Playwright не ставит свои Chromium/Firefox/WebKit и ffmpeg — локально только системный Chrome
-  (`--browser-channel chrome`), остальные браузеры и видео — в образе `mcr.microsoft.com/playwright/python:v1.63.0-noble`.
 - Локально без Docker-сервиса: `docker compose up -d db`, затем
   `uv run uvicorn exchange.main:app --reload --port 8000`.
 - Стек: FastAPI, SQLAlchemy 2 (async) + Postgres, JWT (PyJWT). Суммы — Decimal, в API строкой.
