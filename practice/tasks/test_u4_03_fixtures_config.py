@@ -10,7 +10,7 @@
     Поля: env, base_url, user_password (SecretStr), expect_timeout_ms, action_timeout_ms, matching_timeout_ms.
     Выбор окружения переменной ENV (local | docker | stage, по умолчанию docker),
     файлы envs/ui.<env>.env (в git) и envs/ui.<env>.local.env (не в git — проверь .gitignore).
-    Создай envs/ui.local.env, envs/ui.docker.env, envs/ui.stage.env с адресами из таблицы теории;
+    Создай envs/docker.env, envs/local.env, envs/stage.env с адресами из таблицы теории;
     на stage таймауты больше.
 
 Задача 2. Связать с pytest (tests/conftest.py — корневой, создать).
