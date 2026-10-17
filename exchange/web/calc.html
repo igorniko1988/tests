@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="ru">
+<head><meta charset="utf-8"><title>Калькулятор</title><link rel="stylesheet" href="styles.css"></head>
+<body>
+  <main class="card narrow">
+    <h1>Калькулятор позиции</h1>
+    <label>Цена <input data-testid="calc-price"></label>
+    <label>Количество <input data-testid="calc-quantity"></label>
+    <button type="button" data-testid="calc-submit">Рассчитать и закрыть</button>
+  </main>
+  <script>
+    document.querySelector('[data-testid="calc-submit"]').addEventListener("click", () => {
+      const price = Number(document.querySelector('[data-testid="calc-price"]').value) || 0;
+      const qty = Number(document.querySelector('[data-testid="calc-quantity"]').value) || 0;
+      if (window.opener) window.opener.postMessage({ type: "calc-result", value: (price * qty).toFixed(2) }, "*");
+      window.close();
+    });
+  </script>
+</body>
+</html>

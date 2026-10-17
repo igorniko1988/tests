@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mini Exchange — лаборатория</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="lab.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>Лаборатория</h1>
+    <span class="clock" data-testid="lab-clock"></span>
+    <nav class="menu" data-testid="more-menu">
+      <button type="button" class="secondary" aria-haspopup="true" aria-expanded="false">Ещё ▾</button>
+      <ul role="menu">
+        <li role="menuitem"><a href="index.html">Кабинет</a></li>
+        <li role="menuitem"><a href="report.html?asset=USDT" target="_blank">Отчёт USDT</a></li>
+        <li role="menuitem"><a href="/docs" target="_blank">API (Swagger)</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- Баннер cookies: показывается, пока нет cookie consent=1 -->
+  <div class="banner" data-testid="cookie-banner" hidden>
+    Мы используем cookies.
+    <button type="button" data-testid="cookie-accept">Принять</button>
+  </div>
+
+  <main class="lab">
+    <!-- 1. Вкладки и окна -->
+    <section class="card" data-testid="windows">
+      <h2>Вкладки и окна</h2>
+      <a href="report.html?asset=BTC" target="_blank" data-testid="report-link">Открыть отчёт BTC</a>
+      <button type="button" data-testid="popup-button">Открыть калькулятор</button>
+      <p>Результат из калькулятора: <output data-testid="popup-result">—</output></p>
+    </section>
+
+    <!-- 2. iframe -->
+    <section class="card">
+      <h2>Виджет курса</h2>
+      <iframe src="widget.html" title="Курс ETH" data-testid="rate-widget" width="320" height="170"></iframe>
+      <p>Получено из виджета: <output data-testid="widget-message">—</output></p>
+    </section>
+
+    <!-- 3. Диалоги браузера -->
+    <section class="card" data-testid="dialogs">
+      <h2>Диалоги</h2>
+      <div class="row">
+        <button type="button" data-testid="alert-button">Инфо</button>
+        <button type="button" data-testid="confirm-button">Очистить избранное</button>
+        <button type="button" data-testid="prompt-button">Переименовать портфель</button>
+      </div>
+      <p>Портфель: <strong data-testid="portfolio-name">Основной</strong></p>
+      <p data-testid="dialog-result">—</p>
+    </section>
+
+    <!-- 4. Файлы -->
+    <section class="card" data-testid="files">
+      <h2>Импорт и экспорт</h2>
+      <label>Импорт сделок (CSV: symbol,side,price,quantity)
+        <input type="file" accept=".csv,text/csv" multiple data-testid="import-input">
+      </label>
+      <p data-testid="import-status">Файлы не выбраны</p>
+      <table data-testid="import-table">
+        <thead><tr><th>Пара</th><th>Сторона</th><th>Цена</th><th>Кол-во</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="row">
+        <button type="button" data-testid="export-button">Скачать CSV</button>
+        <label>Аватар <input type="file" accept="image/*" data-testid="avatar-input"></label>
+      </div>
+      <img data-testid="avatar-preview" hidden width="64" height="64">
+    </section>
+
+    <!-- 5. Drag & drop и клавиатура -->
+    <section class="card" data-testid="watchlist">
+      <h2>Избранное</h2>
+      <ul class="dnd" data-testid="watchlist-items">
+        <li draggable="true" data-testid="watch-item">BTC</li>
+        <li draggable="true" data-testid="watch-item">ETH</li>
+        <li draggable="true" data-testid="watch-item">USDT</li>
+      </ul>
+      <label>Добавить тикер (Enter — добавить, Escape — очистить поле)
+        <input data-testid="ticker-input" autocomplete="off">
+      </label>
+      <p class="muted">Ctrl+K — поиск по таблице</p>
+    </section>
+
+    <!-- 6. Таблица с сортировкой и фильтром -->
+    <section class="card" data-testid="trades">
+      <h2>Котировки</h2>
+      <label>Поиск <input type="search" data-testid="trades-search" placeholder="Тикер"></label>
+      <table data-testid="quotes-table">
+        <thead>
+          <tr>
+            <th><button type="button" data-sort="ticker">Тикер</button></th>
+            <th><button type="button" data-sort="price">Цена</button></th>
+            <th><button type="button" data-sort="change">Изменение, %</button></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <p data-testid="quotes-count"></p>
+    </section>
+
+    <!-- 7. Бесконечная лента -->
+    <section class="card">
+      <h2>Лента сделок</h2>
+      <div class="feed" data-testid="feed" tabindex="0"></div>
+      <p data-testid="feed-count"></p>
+    </section>
+
+    <!-- 8. Shadow DOM -->
+    <section class="card">
+      <h2>Тикер (веб-компонент)</h2>
+      <price-ticker symbol="BTC-USDT" price="65000" data-testid="ticker"></price-ticker>
+    </section>
+
+    <!-- 9. Модальное окно -->
+    <section class="card" data-testid="withdraw">
+      <h2>Вывод средств</h2>
+      <label>Сумма, USDT <input data-testid="withdraw-amount" inputmode="decimal"></label>
+      <button type="button" data-testid="withdraw-button">Вывести</button>
+      <p data-testid="withdraw-result">—</p>
+    </section>
+
+    <!-- 10. Окружение браузера -->
+    <section class="card" data-testid="env">
+      <h2>Окружение</h2>
+      <dl>
+        <dt>Часовой пояс</dt><dd data-testid="env-timezone"></dd>
+        <dt>Локаль</dt><dd data-testid="env-locale"></dd>
+        <dt>Сумма 1234567.891</dt><dd data-testid="env-number"></dd>
+        <dt>Дата 2030-01-15 12:00 UTC</dt><dd data-testid="env-date"></dd>
+        <dt>Экран</dt><dd data-testid="env-layout"></dd>
+        <dt>Сеть</dt><dd data-testid="env-online"></dd>
+        <dt>Тема</dt><dd data-testid="env-scheme"></dd>
+      </dl>
+      <div class="row">
+        <button type="button" data-testid="geo-button">Где я?</button>
+        <button type="button" data-testid="notify-button">Включить уведомления</button>
+        <button type="button" data-testid="copy-button">Скопировать адрес кошелька</button>
+      </div>
+      <p data-testid="geo-result">—</p>
+      <p data-testid="notify-result">—</p>
+      <p data-testid="copy-result">—</p>
+      <img src="logo.svg" width="48" height="48">
+      <button type="button" class="icon" data-testid="refresh-icon">⟳</button>
+    </section>
+  </main>
+
+  <div class="overlay" data-testid="modal-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" data-testid="confirm-modal">
+      <h2 id="modal-title">Подтвердите вывод</h2>
+      <p data-testid="modal-text"></p>
+      <label><input type="checkbox" data-testid="modal-agree"> Я проверил адрес кошелька</label>
+      <div class="row">
+        <button type="button" data-testid="modal-confirm" disabled>Подтвердить</button>
+        <button type="button" class="secondary" data-testid="modal-cancel">Отмена</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" role="status" data-testid="toast" hidden></div>
+  <script src="lab.js"></script>
+</body>
+</html>

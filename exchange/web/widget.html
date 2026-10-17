@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ru">
+<head><meta charset="utf-8"><title>Курс ETH</title>
+<style>body{font-family:sans-serif;margin:8px} .price{font-size:24px}</style></head>
+<body>
+  <h3>ETH-USDT</h3>
+  <p class="price" data-testid="widget-price">3500.00</p>
+  <label>Сумма, ETH <input data-testid="widget-amount" value="1"></label>
+  <p>≈ <span data-testid="widget-total">3500.00</span> USDT</p>
+  <button type="button" data-testid="widget-refresh">Обновить</button>
+  <button type="button" data-testid="widget-subscribe">Подписаться</button>
+  <script>
+    let price = 3500;
+    const total = () => {
+      const amount = Number(document.querySelector('[data-testid="widget-amount"]').value) || 0;
+      document.querySelector('[data-testid="widget-total"]').textContent = (amount * price).toFixed(2);
+    };
+    document.querySelector('[data-testid="widget-amount"]').addEventListener("input", total);
+    document.querySelector('[data-testid="widget-refresh"]').addEventListener("click", () => {
+      price += 10;
+      document.querySelector('[data-testid="widget-price"]').textContent = price.toFixed(2);
+      total();
+    });
+    document.querySelector('[data-testid="widget-subscribe"]').addEventListener("click", () => {
+      parent.postMessage({ type: "widget-subscribe", symbol: "ETH-USDT" }, "*");
+    });
+  </script>
+</body>
+</html>

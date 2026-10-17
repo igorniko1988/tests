@@ -1,0 +1,108 @@
+# Стенд в Kubernetes (Docker Desktop → Settings → Kubernetes → Enable).
+# Образ берётся локальный, собранный compose: docker compose build exchange
+#   kubectl apply -f k8s/exchange.yaml
+#   kubectl -n exchange get pods
+#   kubectl -n exchange port-forward svc/exchange 8082:8000   → http://localhost:8082/docs
+#   kubectl delete namespace exchange                          — удалить всё
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: exchange
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: exchange-secrets
+  namespace: exchange
+stringData:
+  POSTGRES_PASSWORD: exchange
+  EXCHANGE_DATABASE_URL: postgresql+asyncpg://exchange:exchange@db:5432/exchange
+  EXCHANGE_JWT_SECRET: k8s-secret-change-me-at-least-32-bytes-long
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: exchange-config
+  namespace: exchange
+data:
+  EXCHANGE_CHAOS_RATE: "0"
+  EXCHANGE_MATCHING_INTERVAL: "1"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db
+  namespace: exchange
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: db}
+  template:
+    metadata:
+      labels: {app: db}
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          env:
+            - {name: POSTGRES_USER, value: exchange}
+            - {name: POSTGRES_DB, value: exchange}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef: {name: exchange-secrets, key: POSTGRES_PASSWORD}
+          ports:
+            - containerPort: 5432
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "exchange"]
+            periodSeconds: 2
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db
+  namespace: exchange
+spec:
+  selector: {app: db}
+  ports:
+    - port: 5432
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: exchange
+  namespace: exchange
+spec:
+  replicas: 2
+  selector:
+    matchLabels: {app: exchange}
+  template:
+    metadata:
+      labels: {app: exchange}
+    spec:
+      containers:
+        - name: api
+          image: api_learning-exchange:latest
+          imagePullPolicy: Never
+          envFrom:
+            - configMapRef: {name: exchange-config}
+            - secretRef: {name: exchange-secrets}
+          ports:
+            - containerPort: 8000
+          readinessProbe:
+            httpGet: {path: /health, port: 8000}
+            periodSeconds: 3
+          livenessProbe:
+            httpGet: {path: /health, port: 8000}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: exchange
+  namespace: exchange
+spec:
+  selector: {app: exchange}
+  ports:
+    - port: 8000

@@ -18,17 +18,23 @@ service = [
 ]
 # Зависимости фреймворка тестов
 tests = [
-    "httpx>=0.28",
+    "pytest>=8.3",
+    "playwright>=1.63.0",
+    "pytest-playwright>=0.9.0",
+    "requests>=2.32",
     "pydantic>=2.9",
     "pydantic-settings>=2.6",
-    "pytest>=8.3",
-    "pytest-asyncio>=0.24",
-    "allure-pytest>=2.13",
-    "tenacity>=9.0",
     "faker>=30.0",
+    "allure-pytest>=2.13",
+    "psycopg[binary]>=3.2",
+    "pytest-repeat>=0.9.4",
+    "pytest-rerunfailures>=16.7",
     "pytest-xdist>=3.8.0",
-    "psycopg[binary]>=3.3.6",
-    "hypothesis>=6.168.3",
+    "filelock>=4.1.0",
+    "pillow>=12.3.0",
+    "pixelmatch>=0.4.0",
+    "axe-playwright-python>=0.1.8",
+    "selenium>=4.51.0",
 ]
 dev = [
     { include-group = "service" },
@@ -43,11 +49,11 @@ default-groups = ["dev"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
-addopts = "-ra --strict-markers --alluredir=allure-results"
-asyncio_mode = "auto"
-asyncio_default_fixture_loop_scope = "session"
+# macOS 12: свежий Chromium от Playwright не ставится, поэтому используем установленный Chrome
+addopts = "-ra --strict-markers --browser-channel chrome"
+base_url = 'http://localhost:8080'
 markers = [
-    "smoke: быстрые проверки, что стенд жив",
+    'smoke: fast tests for fast check'
 ]
 
 [tool.ruff]

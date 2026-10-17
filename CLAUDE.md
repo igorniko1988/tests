@@ -45,6 +45,11 @@
   `/health` и `/docs` не затрагиваются. По умолчанию выключен.
 - Сопоставление ордеров идёт в фоне раз в `EXCHANGE_MATCHING_INTERVAL` секунд (по умолчанию 1):
   исполнение видно не сразу. Цена сделки — цена более раннего ордера.
+- Логи: одна JSON-строка на запрос (`level`, `request_id`, `method`, `path`, `status`, `duration_ms`);
+  `X-Request-ID` из запроса (или сгенерированный) возвращается в ответе.
+  Поиск: `docker compose logs exchange | grep <request_id>`.
+- Kubernetes (Docker Desktop): `kubectl apply -f k8s/exchange.yaml`, затем
+  `kubectl -n exchange port-forward svc/exchange 8082:8000`. Образ — локальный `api_learning-exchange:latest`.
 - Stage-экземпляр: `docker compose --profile stage up -d` → http://localhost:8081.
   Своя база и JWT-секрет, 5% сбоев (`EXCHANGE_STAGE_CHAOS_RATE`). Обычный `up` его не трогает.
 
@@ -53,4 +58,5 @@
 - Python 3.13 через `uv` (3.14 не используем: у gevent/grpcio/pact может не быть колёс).
 - Зависимости: группы `service` (только стенд, идут в Docker-образ), `tests`, `dev`.
   `uv sync` ставит всё.
-- Тесты: `uv run pytest`.
+- Тесты: `uv run pytest`. Условия заданий UI — `practice/tasks/`, решения пользователь пишет
+  в `tests/ui/` и `ui_framework/` с нуля (рабочие папки очищены 2026-10-10).
