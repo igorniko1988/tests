@@ -1,12 +1,34 @@
 import pytest
-from playwright.sync_api import Page, expect
+from playwright.sync_api import expect, Playwright
 from ui_framework.config.settings import Settings
+from ui_framework.data.generators import unique_email, unique_password
+from ui_framework.api.client import ExchangeApi
+
 
 pytest_plugins = [
     "ui_framework.fixtures.app",
     "ui_framework.fixtures.data",
     "ui_framework.plugins.reporting",
 ]
+
+
+@pytest.fixture(scope="session")
+def api_context(playwright: Playwright, base_url):
+    api = playwright.request.new_context(base_url=base_url)
+    yield api
+    api.dispose()
+
+@pytest.fixture()
+def create_api(api_context, new_context):
+    def _create():
+        email, password = unique_email(), unique_password()
+        exchange_api = ExchangeApi(api_context)
+        exchange_api.register(email=email, password=password)
+        exchange_api.login(email=email, password=password)
+        return exchange_api, email
+    return _create
+
+
 
 
 def pytest_configure(config: pytest.Config) -> None:

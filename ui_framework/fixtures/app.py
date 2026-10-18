@@ -49,3 +49,21 @@ def order_factory(logged_user):
         if row.cancel_button.count():
             row.cancel()
         print(f'teardown: order was deleted {order}')
+
+
+@pytest.fixture
+def login_in_browser(new_context, base_url):
+    """Открыть кабинет сразу залогиненным: кладём токен из API-клиента в localStorage до загрузки страницы."""
+    def open_as(api, email):
+        context = new_context(storage_state={
+            'cookies': [],
+            'origins': [{'origin': base_url, 'localStorage': [
+                {'name': 'token', 'value': api.token},
+                {'name': 'email', 'value': email},
+            ]}],
+        })
+        app = Application(context.new_page())
+        app.dashboard_page.open().wait_loaded()
+        return app
+
+    return open_as

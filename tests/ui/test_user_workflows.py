@@ -123,3 +123,15 @@ def test_deposit_invalid_amount(logged_user, amount):
     with allure.step('Проверить отказ и нулевой баланс'):
         assert not response.ok, response.text()
         expect(dashboard.balances.available('USDT')).to_have_text('0')
+
+
+@allure.epic('Биржа')
+@allure.feature('Авторизация')
+@allure.title('Браузер открывается залогиненным по токену из API')
+def test_browser_logged_in_by_token(create_api, login_in_browser):
+    api, email = create_api()
+
+    app = login_in_browser(api, email)
+
+    expect(app.dashboard_page.header.email).to_have_text(email)
+    expect(app.auth_page.auth_form).to_be_hidden()
