@@ -6,7 +6,6 @@ class ExchangeApi:
         self.ctx = ctx
         self.headers = {}
         self.token = None
-        self.token = None
 
     def register(self, email, password):
         return self.ctx.post('/auth/register', data={'email': email, 'password': password})
