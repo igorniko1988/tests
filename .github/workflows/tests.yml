@@ -1,0 +1,126 @@
+# Учебный пайплайн: unit → API → UI smoke на каждый PR; ночью — UI в трёх браузерах.
+# Гейт: в Settings → Branches для main отметить required checks «unit», «api», «ui-smoke».
+name: tests
+
+on:
+  pull_request:                       # гейт PR: всё ниже, кроме cross-browser
+  push:
+    branches: [main, ci/example]      # после merge в main (и для демо — на эту ветку)
+  schedule:
+    - cron: '0 2 * * *'               # ночной прогон, 02:00 UTC
+  workflow_dispatch:                  # кнопка «Run workflow» во вкладке Actions
+
+concurrency:                          # новый пуш отменяет ещё идущий прогон той же ветки
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  ENV: docker
+  UI_BASE_URL: http://localhost:8080
+  # в pyproject стоит --browser-channel chrome для macOS 12; в CI берём браузеры Playwright
+  CI_ADDOPTS: -o addopts=-ra
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --frozen
+      - run: uv run pytest tests/unit $CI_ADDOPTS -v
+
+  api:
+    needs: unit                       # API — только если юниты зелёные
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Поднять стенд из кода этого коммита
+        run: |
+          docker compose up -d --build
+          for i in $(seq 1 30); do curl -sf $UI_BASE_URL/health && exit 0; sleep 2; done
+          docker compose logs exchange; exit 1
+      - run: uv sync --frozen
+      # create_api зависит от new_context → pytest-playwright запускает браузер даже в API-тестах.
+      # Уберёшь new_context из create_api — этот шаг станет не нужен.
+      - run: uv run playwright install --with-deps chromium
+      - run: uv run pytest tests/api $CI_ADDOPTS -v --junitxml=report-api.xml
+      - name: Логи стенда при падении
+        if: failure()
+        run: docker compose logs exchange
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: api-report
+          path: report-api.xml
+
+  ui-smoke:
+    needs: api                        # UI — только если API зелёные
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Поднять стенд
+        run: |
+          docker compose up -d --build
+          for i in $(seq 1 30); do curl -sf $UI_BASE_URL/health && exit 0; sleep 2; done
+          docker compose logs exchange; exit 1
+      - run: uv sync --frozen
+      - run: uv run playwright install --with-deps chromium
+      - name: UI smoke
+        # когда тесты получат @pytest.mark.smoke — заменить -k на -m smoke
+        run: >
+          uv run pytest tests/ui $CI_ADDOPTS -v
+          -k "register or deposit_each_asset or logged_in_by_token"
+          --browser chromium --tracing retain-on-failure --screenshot only-on-failure
+          --alluredir=allure-results
+      - name: Логи стенда при падении
+        if: failure()
+        run: docker compose logs exchange
+      - uses: actions/upload-artifact@v4
+        if: always()                  # артефакты нужнее всего, когда тест упал
+        with:
+          name: ui-smoke-artifacts
+          path: |
+            test-results/
+            allure-results/
+          retention-days: 7
+
+  ui-cross-browser:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false                # упал Firefox — Chromium и WebKit всё равно доезжают
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Поднять стенд
+        run: |
+          docker compose up -d --build
+          for i in $(seq 1 30); do curl -sf $UI_BASE_URL/health && exit 0; sleep 2; done
+          docker compose logs exchange; exit 1
+      - run: uv sync --frozen
+      - run: uv run playwright install --with-deps ${{ matrix.browser }}
+      - run: >
+          uv run pytest tests/ui $CI_ADDOPTS
+          --browser ${{ matrix.browser }} --tracing retain-on-failure --screenshot only-on-failure
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ui-${{ matrix.browser }}-artifacts
+          path: test-results/
+          retention-days: 7
