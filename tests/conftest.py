@@ -5,6 +5,7 @@ from ui_framework.config.settings import Settings
 pytest_plugins = [
     "ui_framework.fixtures.app",
     "ui_framework.fixtures.data",
+    "ui_framework.plugins.reporting",
 ]
 
 

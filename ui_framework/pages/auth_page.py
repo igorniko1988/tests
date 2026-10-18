@@ -1,3 +1,4 @@
+import allure
 from playwright.sync_api import Page, expect
 from ui_framework.pages.base_page import BasePage
 
@@ -14,19 +15,23 @@ class AuthPage(BasePage):
         self.auth_form = self.page.get_by_test_id("auth-page")
         self.error_message = self.page.get_by_test_id('auth-error')
 
+    @allure.step('Дождаться страницы входа')
     def wait_loaded(self):
         expect(self.auth_form).to_be_visible()
         return self
 
+    @allure.step('Ввести email {email}')
     def fill_credentials(self, email, password):
         self.email.fill(email)
         self.password.fill(password)
         return self
 
+    @allure.step('Нажать «Войти»')
     def click_login(self):
         self.login_button.click()
         return self
 
+    @allure.step('Нажать «Зарегистрироваться»')
     def click_register(self):
         self.register_button.click()
         return self

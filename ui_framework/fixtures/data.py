@@ -1,14 +1,13 @@
 import pytest
-from faker import Faker
 
-faker = Faker()
+from ui_framework.data.generators import credentials as generate_credentials
 
 
 @pytest.fixture
 def credentials() -> dict[str, str]:
-    return {"email": faker.unique.email(), "password": faker.password()}
+    return generate_credentials()
 
 
-@pytest.fixture(params=['USDT','BTC','ETH'])
+@pytest.fixture(params=['USDT', 'BTC', 'ETH'])
 def asset(request: pytest.FixtureRequest):
     return request.param

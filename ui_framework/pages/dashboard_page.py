@@ -1,3 +1,4 @@
+import allure
 from playwright.sync_api import Page, expect
 from ui_framework.pages.base_page import BasePage
 from ui_framework.components.common import Header
@@ -17,6 +18,7 @@ class DashboardPage(BasePage):
         self.order_form = OrderForm(page)
         self.orders = OrdersTable(page)
 
+    @allure.step('Дождаться личного кабинета')
     def wait_loaded(self):
         expect(self.dashboard).to_be_visible()
         return self

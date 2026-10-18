@@ -1,3 +1,4 @@
+import allure
 from playwright.sync_api import Locator, Page
 
 
@@ -47,6 +48,7 @@ class OrderRow:
     def cell(self, column_name):
         return self.row.locator(f'td:nth-child({self.table.column_index(column_name)})')
 
+    @allure.step('Отменить ордер')
     def cancel(self):
         with self.page.expect_response(lambda r: r.request.method == 'DELETE' and '/orders/' in r.url) as info:
             self.cancel_button.click()
@@ -64,6 +66,7 @@ class OrdersTable:
     def row(self, order_id):
         return OrderRow(self.rows.and_(self.page.locator(f'[data-id="{order_id}"]')), self.table)
 
+    @allure.step('Отфильтровать ордера по статусу {status}')
     def filter_by_status(self, status):
         """status: "" (все), NEW, PARTIALLY_FILLED, FILLED, CANCELED. Ждёт ответ на запрос с этим фильтром."""
         expected_url = f'/orders?status={status}' if status else '/orders'

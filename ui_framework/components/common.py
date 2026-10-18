@@ -1,3 +1,4 @@
+import allure
 from playwright.sync_api import Page, expect
 
 
@@ -16,5 +17,6 @@ class Header:
         self.email = page.get_by_test_id('user-email')
         self.logout_button = page.get_by_role('button', name='Выйти')
 
+    @allure.step('Выйти из аккаунта')
     def logout(self):
         self.logout_button.click()

@@ -1,10 +1,8 @@
 import pytest
 from playwright.sync_api import Page
-from faker import Faker
 from ui_framework.application import Application
 from collections.abc import Callable
-
-faker = Faker()
+from ui_framework.data.generators import unique_email, unique_password
 
 
 @pytest.fixture
@@ -30,7 +28,7 @@ def new_app(new_context) -> Callable[[], Application]:
     def create_app():
         page = new_context().new_page()
         app = Application(page)
-        app.auth_page.open().fill_credentials(faker.unique.email(), faker.password()).click_register()
+        app.auth_page.open().fill_credentials(unique_email(), unique_password()).click_register()
         app.dashboard_page.wait_loaded()
         return app
     return create_app
