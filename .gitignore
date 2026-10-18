@@ -6,7 +6,6 @@ __pycache__/
 allure-results/
 allure-report/
 .env
-envs/*.local.env
 .idea/
 .DS_Store
 .schemathesis/

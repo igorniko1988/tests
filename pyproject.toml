@@ -50,10 +50,10 @@ default-groups = ["dev"]
 testpaths = ["tests"]
 pythonpath = ["."]
 # macOS 12: свежий Chromium от Playwright не ставится, поэтому используем установленный Chrome
-addopts = "-ra --strict-markers --browser-channel chrome"
-base_url = 'http://localhost:8080'
+addopts = "-ra --strict-markers --browser-channel chrome --screenshot only-on-failure"
 markers = [
-    'smoke: fast tests for fast check'
+    'smoke: quick checks',
+    'balance: deposit money before test'
 ]
 
 [tool.ruff]

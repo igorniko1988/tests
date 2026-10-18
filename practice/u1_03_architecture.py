@@ -46,7 +46,7 @@
     4. Почему Playwright не может работать с обычным Firefox или Safari? firefox and safari have no cdp, only patching aproaches
     5. sync или async API — что выбираешь и почему? sync it gives the same speed
     6. Что делать, если нужной возможности нет в API Playwright? make own helpers and utilz
-    7. Почему тесты на Playwright стабильнее? have autowaitings 
+    7. Почему тесты на Playwright стабильнее? have autowaitings
 """
 
 import asyncio
