@@ -52,7 +52,8 @@ pythonpath = ["."]
 # macOS 12: свежий Chromium от Playwright не ставится, поэтому используем установленный Chrome
 addopts = "-ra --strict-markers --browser-channel chrome"
 markers = [
-    'smoke: quick checks'
+    'smoke: quick checks',
+    'balance: deposit money before test'
 ]
 
 [tool.ruff]

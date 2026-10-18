@@ -45,3 +45,24 @@ def test_place_order_with_enough_balance(logged_user):
     assert response.ok, response.text()
     expect(dashboard.balances.locked('USDT')).to_have_text('2')
     dashboard.orders.row(response.json()['id']).cancel()
+
+@pytest.mark.balance(ETH='2')
+def test_user_with_balance(logged_user):
+    balance = logged_user.dashboard_page.balances
+    expect(balance.available('ETH')).to_have_text('2')
+
+@pytest.mark.balance(USDT="10")
+def test_cleanup_skips_cancelled_order(order_factory, logged_user):
+    orders = [order_factory('BUY','1','1') for _ in range(3)]
+    first_id = orders[0].json()["id"]
+
+    logged_user.dashboard_page.orders.row(first_id).cancel()
+    expect(logged_user.dashboard_page.orders.row(first_id).status).to_have_text("CANCELED")
+
+
+def test_deposit_each_asset(logged_user, asset):
+    dashboard = logged_user.dashboard_page
+    response = dashboard.deposit_form.deposit(asset, "1")
+
+    assert response.ok
+    expect(dashboard.balances.available(asset)).to_have_text("1")
