@@ -1,0 +1,292 @@
+<title>Compress по шагам</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: слева строка и состояние, справа код с подсветкой строки; на телефоне в одну колонку */
+:root {
+  --bg: #f3f5f4;
+  --panel: #ffffff;
+  --ink: #17211f;
+  --muted: #5b6965;
+  --line: #d7dedb;
+  --accent: #0d6b5e;
+  --accent-soft: #d5ece7;
+  --hit: #f3c24b;
+  --hit-soft: #fdf0cc;
+  --done: #e4e9f5;
+  --done-ink: #2f4a8a;
+  --code-bg: #1d2523;
+  --code-ink: #dfe7e4;
+  --code-dim: #7f8f8a;
+  --font-body: "Golos Text", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121816; --panel: #1a2220; --ink: #e4ebe8; --muted: #94a39e; --line: #2c3734;
+    --accent: #4fc2ad; --accent-soft: #1f3d37; --hit: #f3c24b; --hit-soft: #3d3219;
+    --done: #232d45; --done-ink: #a9bdf0; --code-bg: #0c1110; --code-ink: #dfe7e4; --code-dim: #6c7b76;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121816; --panel: #1a2220; --ink: #e4ebe8; --muted: #94a39e; --line: #2c3734;
+  --accent: #4fc2ad; --accent-soft: #1f3d37; --hit: #f3c24b; --hit-soft: #3d3219;
+  --done: #232d45; --done-ink: #a9bdf0; --code-bg: #0c1110; --code-ink: #dfe7e4; --code-dim: #6c7b76;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 40px;
+}
+.wrap { max-width: 1080px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 1.6rem; margin: 0; text-wrap: balance; }
+.sub { color: var(--muted); margin: 4px 0 0; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.controls label { font-size: .85rem; color: var(--muted); }
+input[type=text] {
+  font: 600 1rem var(--font-mono); padding: 8px 10px; border: 1px solid var(--line);
+  border-radius: 6px; background: var(--panel); color: var(--ink); width: 11rem;
+}
+button {
+  font: 500 .95rem var(--font-body); padding: 8px 14px; border-radius: 6px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--panel); color: var(--ink);
+}
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+button:disabled { opacity: .45; cursor: default; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--hit); outline-offset: 2px; }
+.presets { display: flex; gap: 6px; flex-wrap: wrap; }
+.presets button { font-family: var(--font-mono); font-size: .85rem; padding: 4px 8px; }
+.grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 820px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 16px; min-width: 0; }
+.eyebrow { font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 6px; }
+.cells { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 22px; }
+.cell { position: relative; width: 44px; display: grid; gap: 2px; justify-items: center; }
+.box {
+  width: 44px; height: 48px; display: grid; place-items: center; border-radius: 6px;
+  font: 600 1.3rem var(--font-mono); border: 2px solid var(--line); background: var(--panel);
+  transition: background .2s, border-color .2s;
+}
+.idx { font: .7rem var(--font-mono); color: var(--muted); }
+.cell.group .box { background: var(--accent-soft); border-color: var(--accent); }
+.cell.done .box { background: var(--done); border-color: var(--done); color: var(--done-ink); }
+.cell.ptr .box { background: var(--hit-soft); border-color: var(--hit); }
+.cell.ptr::before {
+  content: "ch"; position: absolute; top: -22px; font: 600 .75rem var(--font-mono); color: var(--ink);
+  background: var(--hit); padding: 0 6px; border-radius: 4px;
+}
+.empty { color: var(--muted); font-style: italic; }
+.vars { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 480px) { .vars { grid-template-columns: minmax(0, 1fr); } }
+.var { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; min-width: 0; }
+.var .name { font: .8rem var(--font-mono); color: var(--muted); }
+.var .val { font: 600 1.15rem var(--font-mono); overflow-wrap: anywhere; }
+.var.changed { border-color: var(--hit); background: var(--hit-soft); }
+.parts { display: flex; flex-wrap: wrap; gap: 6px; min-height: 34px; align-items: center; }
+.chip { font: 600 1rem var(--font-mono); background: var(--done); color: var(--done-ink); border-radius: 5px; padding: 3px 9px; }
+.chip.new { background: var(--hit); color: #2a2000; }
+.msg {
+  border-left: 3px solid var(--accent); padding: 10px 14px; background: var(--accent-soft);
+  border-radius: 0 8px 8px 0; min-height: 3.2em;
+}
+.msg b { font-family: var(--font-mono); }
+.code { background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 14px 0; overflow-x: auto; font: .9rem/1.65 var(--font-mono); }
+.code .ln { display: flex; padding: 0 14px; white-space: pre; border-left: 3px solid transparent; }
+.code .ln .no { color: var(--code-dim); width: 2.2em; flex: none; user-select: none; }
+.code .ln.active { background: rgba(243, 194, 75, .18); border-left-color: var(--hit); }
+.kw { color: #f0a36b; } .fn { color: #8fd3c4; } .st { color: #c3e88d; } .nu { color: #f3c24b; } .cm { color: var(--code-dim); }
+.progress { display: flex; justify-content: space-between; font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.result { font: 600 1.2rem var(--font-mono); }
+table { border-collapse: collapse; width: 100%; font: .85rem var(--font-mono); font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { color: var(--muted); font-weight: 400; font-family: var(--font-body); }
+tr.cur td { background: var(--hit-soft); }
+.tablewrap { overflow-x: auto; }
+.legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: .8rem; color: var(--muted); }
+.legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; border: 2px solid var(--sw); background: var(--swbg); }
+@media (prefers-reduced-motion: reduce) { .box { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>compress(s) по шагам</h1>
+    <p class="sub">Run-Length Encoding: «aabaa» → «a2b1a2». Жми «Шаг» и смотри, какая строка кода выполняется и как меняются переменные.</p>
+  </header>
+
+  <div class="controls">
+    <label for="inp">Строка</label>
+    <input id="inp" type="text" value="aabaa" maxlength="16" autocomplete="off" spellcheck="false">
+    <div class="presets" aria-label="Примеры">
+      <button data-p="aabaa">aabaa</button>
+      <button data-p="aaabcc">aaabcc</button>
+      <button data-p="abc">abc</button>
+      <button data-p="">пусто</button>
+    </div>
+  </div>
+  <div class="controls">
+    <button id="prev">← Назад</button>
+    <button id="next" class="primary">Шаг →</button>
+    <button id="play">▶ Авто</button>
+    <button id="reset">В начало</button>
+  </div>
+
+  <div class="grid">
+    <section class="panel">
+      <div>
+        <p class="eyebrow">Строка s</p>
+        <div class="cells" id="cells"></div>
+        <div class="legend" style="margin-top:10px">
+          <span style="--sw:var(--hit);--swbg:var(--hit-soft)">ch — текущий символ</span>
+          <span style="--sw:var(--accent);--swbg:var(--accent-soft)">открытая группа</span>
+          <span style="--sw:var(--done);--swbg:var(--done)">группа записана</span>
+        </div>
+      </div>
+      <div>
+        <p class="eyebrow">Переменные</p>
+        <div class="vars">
+          <div class="var" id="v-ch"><div class="name">ch</div><div class="val">—</div></div>
+          <div class="var" id="v-current"><div class="name">current</div><div class="val">—</div></div>
+          <div class="var" id="v-count"><div class="name">count</div><div class="val">—</div></div>
+        </div>
+      </div>
+      <div>
+        <p class="eyebrow">parts</p>
+        <div class="parts" id="parts"></div>
+      </div>
+      <div class="msg" id="msg"></div>
+      <div class="progress"><span id="stepno"></span><span>результат: <span class="result" id="result">…</span></span></div>
+    </section>
+
+    <section class="panel">
+      <div>
+        <p class="eyebrow">Код</p>
+        <div class="code" id="code"></div>
+      </div>
+      <div>
+        <p class="eyebrow">История шагов</p>
+        <div class="tablewrap"><table><thead><tr><th>#</th><th>строка</th><th>ch</th><th>current</th><th>count</th><th>parts</th></tr></thead><tbody id="hist"></tbody></table></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+const CODE = [
+  '<span class="kw">def</span> <span class="fn">compress</span>(s: str) -> str:',
+  '    <span class="kw">if not</span> s:',
+  '        <span class="kw">return</span> <span class="st">""</span>',
+  '    parts = []',
+  '    current, count = s[<span class="nu">0</span>], <span class="nu">1</span>',
+  '    <span class="kw">for</span> ch <span class="kw">in</span> s[<span class="nu">1</span>:]:',
+  '        <span class="kw">if</span> ch == current:',
+  '            count += <span class="nu">1</span>',
+  '        <span class="kw">else</span>:',
+  '            parts.append(<span class="st">f"{current}{count}"</span>)',
+  '            current, count = ch, <span class="nu">1</span>',
+  '    parts.append(<span class="st">f"{current}{count}"</span>)  <span class="cm"># последняя группа</span>',
+  '    <span class="kw">return</span> <span class="st">""</span>.join(parts)',
+];
+
+function buildSteps(s) {
+  const steps = [];
+  const st = { line: 1, i: null, gStart: null, current: null, count: null, parts: [], doneUpTo: -1, newChip: false, result: null, msg: "" };
+  const push = (patch) => { Object.assign(st, { newChip: false }, patch); steps.push(JSON.parse(JSON.stringify(st))); };
+
+  push({ line: 1, msg: s ? `Строка <b>"${s}"</b> не пустая, поэтому идём дальше.` : `Строка пустая: <b>not s</b> истинно.` });
+  if (!s) { push({ line: 2, result: '""', msg: `Сразу возвращаем <b>""</b>. Без этой проверки <b>s[0]</b> дал бы IndexError.` }); return steps; }
+  push({ line: 3, msg: `Создаём пустой список <b>parts</b>, туда будем складывать готовые группы.` });
+  push({ line: 4, i: 0, gStart: 0, current: s[0], count: 1, msg: `Открываем первую группу до цикла: <b>current = "${s[0]}"</b>, <b>count = 1</b>. Поэтому в цикле не нужен особый случай для первого символа.` });
+
+  let current = s[0], count = 1, gStart = 0;
+  const parts = [];
+  for (let i = 1; i < s.length; i++) {
+    const ch = s[i];
+    push({ line: 5, i, ch, msg: `Берём следующий символ: <b>ch = "${ch}"</b> (индекс ${i}). Цикл идёт по <b>s[1:]</b>, первый символ уже учтён.` });
+    if (ch === current) {
+      push({ line: 6, msg: `<b>"${ch}" == "${current}"</b>: да, группа продолжается.` });
+      count++;
+      push({ line: 7, count, msg: `<b>count += 1</b>, теперь ${count}. В parts ничего не пишем, группа ещё не закончилась.` });
+    } else {
+      push({ line: 6, msg: `<b>"${ch}" == "${current}"</b>: нет, символ сменился. Значит группа <b>${current}</b> закончилась.` });
+      push({ line: 8, msg: `Идём в <b>else</b>.` });
+      parts.push(current + count);
+      push({ line: 9, parts: parts.slice(), doneUpTo: i - 1, newChip: true, msg: `<b>Сначала</b> записываем старую группу, пока в current и count её значения: <b>"${current}${count}"</b>.` });
+      current = ch; count = 1; gStart = i;
+      push({ line: 10, current, count, gStart, msg: `<b>Потом</b> открываем новую группу: <b>current = "${ch}"</b>, <b>count = 1</b>.` });
+    }
+  }
+  push({ line: 5, i: null, ch: undefined, msg: `Символы кончились, цикл завершён. Последняя группа <b>${current}${count}</b> ещё НЕ записана: смены символа больше не будет.` });
+  parts.push(current + count);
+  push({ line: 11, parts: parts.slice(), doneUpTo: s.length - 1, gStart: null, newChip: true, msg: `Записываем последнюю группу <b>"${current}${count}"</b>. Это та строка, которую чаще всего забывают.` });
+  push({ line: 12, result: `"${parts.join("")}"`, msg: `<b>"".join(parts)</b> склеивает части без разделителя: <b>"${parts.join("")}"</b>. Время O(n), один проход.` });
+  return steps;
+}
+
+const $ = (id) => document.getElementById(id);
+let s = "", steps = [], k = 0, timer = null;
+
+function renderCode(line) {
+  $("code").innerHTML = CODE.map((c, n) => `<div class="ln${n === line ? " active" : ""}"><span class="no">${n + 1}</span>${c}</div>`).join("");
+}
+
+function setVar(id, val, prev) {
+  const el = $(id);
+  el.querySelector(".val").textContent = val === null || val === undefined ? "—" : (typeof val === "string" ? `"${val}"` : val);
+  el.classList.toggle("changed", prev !== undefined && prev !== val);
+}
+
+function render() {
+  const st = steps[k], pv = steps[k - 1] || {};
+  renderCode(st.line);
+  const cells = [...s].map((c, i) => {
+    let cls = "cell";
+    if (i <= st.doneUpTo) cls += " done";
+    else if (st.gStart !== null && i >= st.gStart && i <= (st.i ?? s.length - 1)) cls += " group";
+    if (st.i === i) cls += " ptr";
+    return `<div class="${cls}"><div class="box">${c}</div><div class="idx">${i}</div></div>`;
+  }).join("");
+  $("cells").innerHTML = cells || `<span class="empty">пустая строка</span>`;
+  setVar("v-ch", st.ch, k ? pv.ch : undefined);
+  setVar("v-current", st.current, k ? pv.current : undefined);
+  setVar("v-count", st.count, k ? pv.count : undefined);
+  $("parts").innerHTML = st.parts.length
+    ? st.parts.map((p, n) => `<span class="chip${st.newChip && n === st.parts.length - 1 ? " new" : ""}">"${p}"</span>`).join("")
+    : `<span class="empty">[]</span>`;
+  $("msg").innerHTML = st.msg;
+  $("stepno").textContent = `шаг ${k + 1} из ${steps.length}`;
+  $("result").textContent = st.result ?? "…";
+  $("hist").innerHTML = steps.slice(0, k + 1).map((h, n) =>
+    `<tr class="${n === k ? "cur" : ""}"><td>${n + 1}</td><td>${h.line + 1}</td><td>${h.ch ?? ""}</td><td>${h.current ?? ""}</td><td>${h.count ?? ""}</td><td>[${h.parts.map(p => `'${p}'`).join(", ")}]</td></tr>`).join("");
+  $("prev").disabled = k === 0;
+  $("next").disabled = k === steps.length - 1;
+}
+
+function load(str) {
+  stop();
+  s = str; $("inp").value = str; steps = buildSteps(s); k = 0; render();
+}
+function stop() { clearInterval(timer); timer = null; $("play").textContent = "▶ Авто"; }
+
+$("next").onclick = () => { if (k < steps.length - 1) { k++; render(); } };
+$("prev").onclick = () => { stop(); if (k > 0) { k--; render(); } };
+$("reset").onclick = () => { stop(); k = 0; render(); };
+$("play").onclick = () => {
+  if (timer) return stop();
+  if (k === steps.length - 1) k = 0;
+  $("play").textContent = "❚❚ Пауза";
+  timer = setInterval(() => { if (k < steps.length - 1) { k++; render(); } else stop(); }, 1100);
+};
+$("inp").addEventListener("input", (e) => load(e.target.value));
+document.querySelectorAll("[data-p]").forEach(b => b.onclick = () => load(b.dataset.p));
+document.addEventListener("keydown", (e) => {
+  if (e.target.tagName === "INPUT") return;
+  if (e.key === "ArrowRight") $("next").click();
+  if (e.key === "ArrowLeft") $("prev").click();
+});
+
+load("aabaa");
+</script>
