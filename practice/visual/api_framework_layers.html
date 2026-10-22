@@ -1,0 +1,269 @@
+<title>Слои API-фреймворка</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: слева дерево папок проекта с подсветкой файла, справа код этого файла и стек вызовов; на телефоне в одну колонку */
+:root {
+  --bg: #f3f5f4; --panel: #ffffff; --ink: #17211f; --muted: #5b6965; --line: #d7dedb;
+  --accent: #0d6b5e; --accent-soft: #d5ece7; --hit: #f3c24b; --hit-soft: #fdf0cc;
+  --l-test: #2f4a8a; --l-fix: #7a4a9e; --l-svc: #0d6b5e; --l-cli: #a0522d; --l-cfg: #5b6965; --l-net: #b3261e;
+  --code-bg: #1d2523; --code-ink: #dfe7e4; --code-dim: #7f8f8a;
+  --font-body: "Golos Text", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121816; --panel: #1a2220; --ink: #e4ebe8; --muted: #94a39e; --line: #2c3734;
+    --accent: #4fc2ad; --accent-soft: #1f3d37; --hit: #f3c24b; --hit-soft: #3d3219;
+    --l-test: #a9bdf0; --l-fix: #d1a8f0; --l-svc: #4fc2ad; --l-cli: #f0a36b; --l-cfg: #94a39e; --l-net: #ff8a80;
+    --code-bg: #0c1110; --code-ink: #dfe7e4; --code-dim: #6c7b76; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121816; --panel: #1a2220; --ink: #e4ebe8; --muted: #94a39e; --line: #2c3734;
+  --accent: #4fc2ad; --accent-soft: #1f3d37; --hit: #f3c24b; --hit-soft: #3d3219;
+  --l-test: #a9bdf0; --l-fix: #d1a8f0; --l-svc: #4fc2ad; --l-cli: #f0a36b; --l-cfg: #94a39e; --l-net: #ff8a80;
+  --code-bg: #0c1110; --code-ink: #dfe7e4; --code-dim: #6c7b76; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 40px;
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 1.6rem; margin: 0; text-wrap: balance; }
+.sub { color: var(--muted); margin: 4px 0 0; max-width: 72ch; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; }
+button {
+  font: 500 .95rem var(--font-body); padding: 8px 14px; border-radius: 6px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--panel); color: var(--ink);
+}
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+button:disabled { opacity: .45; cursor: default; }
+button:focus-visible { outline: 2px solid var(--hit); outline-offset: 2px; }
+.grid { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 20px; }
+@media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 14px; min-width: 0; align-content: start; }
+.eyebrow { font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 6px; }
+.tree { font: .85rem/1.75 var(--font-mono); overflow-x: auto; }
+.tree .row { white-space: pre; padding: 0 8px; border-radius: 4px; display: flex; gap: 10px; justify-content: space-between; }
+.tree .row .why { font-family: var(--font-body); font-size: .75rem; color: var(--muted); white-space: nowrap; }
+.tree .row.active { background: var(--hit-soft); outline: 1px solid var(--hit); }
+.tree .row.visited:not(.active) .nm { text-decoration: underline; text-decoration-color: var(--hit); text-underline-offset: 3px; }
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+.filehead { font: 600 .9rem var(--font-mono); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.badge { font: 600 .72rem var(--font-body); text-transform: uppercase; letter-spacing: .06em; padding: 2px 8px; border-radius: 999px; color: var(--panel); }
+.code { background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 14px 0; overflow-x: auto; font: .85rem/1.7 var(--font-mono); }
+.code .ln { display: flex; padding: 0 14px; white-space: pre; border-left: 3px solid transparent; }
+.code .ln .no { color: var(--code-dim); width: 2.2em; flex: none; user-select: none; }
+.code .ln.active { background: rgba(243, 194, 75, .18); border-left-color: var(--hit); }
+.kw { color: #f0a36b; } .fn { color: #8fd3c4; } .st { color: #c3e88d; } .cm { color: var(--code-dim); } .dc { color: #d1a8f0; }
+.msg { border-left: 3px solid var(--accent); padding: 10px 14px; background: var(--accent-soft); border-radius: 0 8px 8px 0; min-height: 4.5em; }
+.msg b { font-family: var(--font-mono); font-size: .92em; }
+.stack { display: grid; gap: 6px; }
+.frame { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; font: .82rem var(--font-mono); min-width: 0; overflow-wrap: anywhere; }
+.frame.top { border-color: var(--hit); background: var(--hit-soft); }
+.net { font: .82rem/1.5 var(--font-mono); padding: 8px 12px; border-radius: 6px; border: 1px dashed var(--l-net); color: var(--l-net); }
+.progress { font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: .8rem; color: var(--muted); }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Путь одного теста через слои фреймворка</h1>
+    <p class="sub">Тест <b>test_me_returns_own_email</b> на стенде: какие файлы по очереди работают, кто кого вызывает и почему каждый кусок лежит в своей папке.</p>
+  </header>
+
+  <div class="controls">
+    <button id="prev">← Назад</button>
+    <button id="next" class="primary">Шаг →</button>
+    <button id="play">▶ Авто</button>
+    <button id="reset">В начало</button>
+  </div>
+
+  <div class="grid">
+    <section class="panel">
+      <div>
+        <p class="eyebrow">Структура проекта</p>
+        <div class="tree" id="tree"></div>
+      </div>
+      <div class="legend" id="legend"></div>
+    </section>
+
+    <section class="panel">
+      <div class="filehead" id="filehead"></div>
+      <div class="code" id="code"></div>
+      <div class="msg" id="msg"></div>
+      <div>
+        <p class="eyebrow">Стек вызовов (сверху тот, кто работает сейчас)</p>
+        <div class="stack" id="stack"></div>
+      </div>
+      <div class="progress" id="stepno"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+const LAYERS = {
+  test: { name: "тест", color: "var(--l-test)" },
+  fix: { name: "фикстура", color: "var(--l-fix)" },
+  svc: { name: "service", color: "var(--l-svc)" },
+  cli: { name: "client", color: "var(--l-cli)" },
+  cfg: { name: "config", color: "var(--l-cfg)" },
+};
+const TREE = [
+  { p: "api_framework/", d: 0, why: "код фреймворка, тестов тут нет" },
+  { p: "config.py", d: 1, f: "api_framework/config.py", l: "cfg", why: "куда стучаться" },
+  { p: "clients/", d: 1 },
+  { p: "api_client.py", d: 2, f: "api_framework/clients/api_client.py", l: "cli", why: "как отправить HTTP" },
+  { p: "services/", d: 1 },
+  { p: "auth_service.py", d: 2, f: "api_framework/services/auth_service.py", l: "svc", why: "что умеет API" },
+  { p: "orders_service.py", d: 2, l: "svc", why: "" },
+  { p: "models/", d: 1, why: "форма ответов" },
+  { p: "fixtures/", d: 1 },
+  { p: "api.py", d: 2, f: "api_framework/fixtures/api.py", l: "fix", why: "готовят состояние" },
+  { p: "tests/api/", d: 0, why: "только тесты" },
+  { p: "conftest.py", d: 1, f: "tests/api/conftest.py", l: "fix", why: "подключает фикстуры" },
+  { p: "test_auth.py", d: 1, f: "tests/api/test_auth.py", l: "test", why: "что проверяем" },
+];
+const FILES = {
+  "tests/api/test_auth.py": [
+    '<span class="kw">def</span> <span class="fn">test_me_returns_own_email</span>(auth_api):',
+    '    api, email = auth_api',
+    '    r = api.<span class="fn">get</span>(<span class="st">"/me"</span>)',
+    '    <span class="kw">assert</span> r.status_code == <span class="st">200</span>',
+    '    <span class="kw">assert</span> r.<span class="fn">json</span>()[<span class="st">"email"</span>] == email',
+  ],
+  "tests/api/conftest.py": [
+    'pytest_plugins = [<span class="st">"api_framework.fixtures.api"</span>]',
+  ],
+  "api_framework/fixtures/api.py": [
+    '<span class="dc">@pytest.fixture</span>',
+    '<span class="kw">def</span> <span class="fn">api</span>():',
+    '    client = <span class="fn">ApiClient</span>(settings.base_url)',
+    '    <span class="kw">yield</span> client',
+    '    client.session.<span class="fn">close</span>()',
+    '',
+    '<span class="dc">@pytest.fixture</span>',
+    '<span class="kw">def</span> <span class="fn">auth_api</span>(api):',
+    '    email = f<span class="st">"u_{uuid4().hex[:8]}@test.io"</span>',
+    '    auth = <span class="fn">AuthService</span>(api)',
+    '    auth.<span class="fn">register</span>(email, PASSWORD)',
+    '    token = auth.<span class="fn">login</span>(email, PASSWORD).<span class="fn">json</span>()[<span class="st">"access_token"</span>]',
+    '    api.<span class="fn">set_token</span>(token)',
+    '    <span class="kw">return</span> api, email',
+  ],
+  "api_framework/config.py": [
+    '<span class="kw">class</span> <span class="fn">Settings</span>(BaseSettings):',
+    '    base_url: str = <span class="st">"http://localhost:8080"</span>',
+    '',
+    'settings = <span class="fn">Settings</span>()   <span class="cm"># BASE_URL=... из env перекрывает</span>',
+  ],
+  "api_framework/clients/api_client.py": [
+    '<span class="kw">class</span> <span class="fn">ApiClient</span>:',
+    '    <span class="kw">def</span> <span class="fn">__init__</span>(self, base_url, timeout=10):',
+    '        self.base_url = base_url.<span class="fn">rstrip</span>(<span class="st">"/"</span>)',
+    '        self.timeout = timeout',
+    '        self.session = <span class="fn">Session</span>()',
+    '',
+    '    <span class="kw">def</span> <span class="fn">set_token</span>(self, token):',
+    '        self.session.headers[<span class="st">"Authorization"</span>] = f<span class="st">"Bearer {token}"</span>',
+    '',
+    '    <span class="kw">def</span> <span class="fn">request</span>(self, method, path, **kwargs):',
+    '        kwargs.<span class="fn">setdefault</span>(<span class="st">"timeout"</span>, self.timeout)',
+    '        <span class="kw">return</span> self.session.<span class="fn">request</span>(method, f<span class="st">"{self.base_url}{path}"</span>, **kwargs)',
+    '',
+    '    <span class="kw">def</span> <span class="fn">get</span>(self, path, **kwargs):',
+    '        <span class="kw">return</span> self.<span class="fn">request</span>(<span class="st">"GET"</span>, path, **kwargs)',
+    '',
+    '    <span class="kw">def</span> <span class="fn">post</span>(self, path, **kwargs):',
+    '        <span class="kw">return</span> self.<span class="fn">request</span>(<span class="st">"POST"</span>, path, **kwargs)',
+  ],
+  "api_framework/services/auth_service.py": [
+    '<span class="kw">class</span> <span class="fn">AuthService</span>:',
+    '    <span class="kw">def</span> <span class="fn">__init__</span>(self, client: ApiClient):',
+    '        self.client = client',
+    '',
+    '    <span class="kw">def</span> <span class="fn">register</span>(self, email, password):',
+    '        <span class="kw">return</span> self.client.<span class="fn">post</span>(<span class="st">"/auth/register"</span>, json={<span class="st">"email"</span>: email, <span class="st">"password"</span>: password})',
+    '',
+    '    <span class="kw">def</span> <span class="fn">login</span>(self, email, password):',
+    '        <span class="kw">return</span> self.client.<span class="fn">post</span>(<span class="st">"/auth/login"</span>, json={<span class="st">"email"</span>: email, <span class="st">"password"</span>: password})',
+  ],
+};
+const F = { t: "tests/api/test_auth.py", c: "tests/api/conftest.py", fx: "api_framework/fixtures/api.py", cfg: "api_framework/config.py", cl: "api_framework/clients/api_client.py", s: "api_framework/services/auth_service.py" };
+const STEPS = [
+  { f: F.t, line: 0, stack: ["test_me_returns_own_email"],
+    msg: "pytest нашёл тест по имени: файл <b>test_*.py</b>, функция <b>test_*</b>. Тест просит фикстуру <b>auth_api</b> аргументом. Сам тест не знает, как её сделать, ему нужен готовый залогиненный клиент." },
+  { f: F.c, line: 0, stack: ["test_me_returns_own_email", "pytest ищет фикстуру auth_api"],
+    msg: "pytest ищет фикстуру в <b>conftest.py</b>. Здесь мы только подключаем модуль с фикстурами из фреймворка. Сами фикстуры лежат в <b>api_framework/fixtures/</b>: их можно переиспользовать в любых тестах, а conftest остаётся коротким." },
+  { f: F.fx, line: 7, stack: ["test_me_returns_own_email", "auth_api(api)"],
+    msg: "<b>auth_api</b> сама зависит от фикстуры <b>api</b>. pytest сначала строит <b>api</b>, потом передаёт её сюда. Это цепочка фикстур." },
+  { f: F.fx, line: 2, stack: ["test_me_returns_own_email", "auth_api(api)", "api()"],
+    msg: "Фикстура <b>api</b> создаёт клиента. Адрес берёт из настроек, а не пишет строкой: тот же тест пойдёт на stage, если задать переменную окружения." },
+  { f: F.cfg, line: 3, stack: ["test_me_returns_own_email", "auth_api(api)", "api()", "settings.base_url"],
+    msg: "<b>config.py</b> отвечает на один вопрос: «куда стучаться». <b>pydantic-settings</b> читает <b>BASE_URL</b> из env или .env, а иначе берёт значение по умолчанию. Здесь ни HTTP, ни тестов." },
+  { f: F.cl, line: 4, stack: ["test_me_returns_own_email", "auth_api(api)", "api()", "ApiClient.__init__"],
+    msg: "<b>clients/</b> — транспорт: адрес, таймаут, Session, заголовки. Клиент не знает ни одного эндпоинта стенда, поэтому его можно взять в любой проект без правок." },
+  { f: F.fx, line: 3, stack: ["test_me_returns_own_email", "auth_api(api)", "api() ⏸ yield"],
+    msg: "<b>yield client</b>: фикстура отдаёт клиента и «засыпает». Код после yield (закрыть сессию) выполнится после теста, это teardown." },
+  { f: F.fx, line: 8, stack: ["test_me_returns_own_email", "auth_api(api)"],
+    msg: "Уникальный email на каждый тест. Тесты не делят пользователя, поэтому их можно гонять параллельно на xdist, и они не ломают друг другу баланс и ордера." },
+  { f: F.s, line: 5, stack: ["test_me_returns_own_email", "auth_api(api)", "AuthService.register"],
+    msg: "<b>services/</b> — что умеет API: пути и форма тела. Если бэкенд переименует <b>/auth/register</b>, правка будет в одном месте, а не в 40 тестах." },
+  { f: F.cl, line: 11, stack: ["test_me_returns_own_email", "auth_api(api)", "AuthService.register", "ApiClient.post → request"],
+    msg: "Сервис не отправляет HTTP сам, он зовёт клиента. Таймаут и базовый адрес подставляются здесь, единым образом для всех запросов.", net: "POST http://localhost:8080/auth/register → 201 Created" },
+  { f: F.s, line: 8, stack: ["test_me_returns_own_email", "auth_api(api)", "AuthService.login"],
+    msg: "Логин тем же путём: сервис → клиент → сеть. В ответе лежит <b>access_token</b>.", net: "POST http://localhost:8080/auth/login → 200 OK {access_token: …}" },
+  { f: F.cl, line: 7, stack: ["test_me_returns_own_email", "auth_api(api)", "ApiClient.set_token"],
+    msg: "Токен ложится в <b>session.headers</b> этого клиента. Теперь все его запросы идут с <b>Authorization</b>." },
+  { f: F.fx, line: 13, stack: ["test_me_returns_own_email", "auth_api(api)"],
+    msg: "Фикстура возвращает готовое состояние: залогиненный клиент и его email (чтобы тест мог сравнить). Подготовка закончена, тест ещё не написал ни строчки про логин." },
+  { f: F.t, line: 2, stack: ["test_me_returns_own_email", "ApiClient.get → request"],
+    msg: "Тест работает. Здесь читается только смысл: «запросить /me». Ни адреса, ни токена, ни таймаута в тесте нет, всё это спрятано в слоях ниже.", net: "GET http://localhost:8080/me  Authorization: Bearer … → 200 OK" },
+  { f: F.t, line: 4, stack: ["test_me_returns_own_email"],
+    msg: "Проверки живут в тесте, а не в сервисе. Сервис возвращает <b>Response</b>, а тест сам решает, что для него «правильно». Поэтому тот же метод годится и для негативного теста." },
+  { f: F.fx, line: 4, stack: ["teardown: api()"],
+    msg: "Тест закончился, pytest будит фикстуру <b>api</b> после yield и закрывает сессию. Cleanup выполнится даже если тест упал." },
+];
+
+const $ = (id) => document.getElementById(id);
+let k = 0, timer = null;
+$("legend").innerHTML = Object.values(LAYERS).map(l => `<span><span class="dot" style="background:${l.color}"></span>${l.name}</span>`).join("");
+
+function render() {
+  const st = STEPS[k];
+  const visited = new Set(STEPS.slice(0, k + 1).map(s => s.f));
+  $("tree").innerHTML = TREE.map(r => {
+    const cls = ["row"]; if (r.f === st.f) cls.push("active"); if (r.f && visited.has(r.f)) cls.push("visited");
+    const dot = r.l ? `<span class="dot" style="background:${LAYERS[r.l].color}"></span>` : "";
+    return `<div class="${cls.join(" ")}"><span class="nm">${"    ".repeat(r.d)}${dot}${r.p}</span><span class="why">${r.why || ""}</span></div>`;
+  }).join("");
+  const layer = LAYERS[TREE.find(r => r.f === st.f).l];
+  $("filehead").innerHTML = `<span class="badge" style="background:${layer.color}">${layer.name}</span>${st.f}`;
+  $("code").innerHTML = FILES[st.f].map((c, n) => `<div class="ln${n === st.line ? " active" : ""}"><span class="no">${n + 1}</span>${c || " "}</div>`).join("");
+  $("msg").innerHTML = st.msg;
+  $("stack").innerHTML = st.stack.slice().reverse().map((s, i) => `<div class="frame${i === 0 ? " top" : ""}">${s}</div>`).join("")
+    + (st.net ? `<div class="net">сеть: ${st.net}</div>` : "");
+  $("stepno").textContent = `шаг ${k + 1} из ${STEPS.length}`;
+  $("prev").disabled = k === 0;
+  $("next").disabled = k === STEPS.length - 1;
+}
+function stop() { clearInterval(timer); timer = null; $("play").textContent = "▶ Авто"; }
+$("next").onclick = () => { if (k < STEPS.length - 1) { k++; render(); } };
+$("prev").onclick = () => { stop(); if (k > 0) { k--; render(); } };
+$("reset").onclick = () => { stop(); k = 0; render(); };
+$("play").onclick = () => {
+  if (timer) return stop();
+  if (k === STEPS.length - 1) k = 0;
+  $("play").textContent = "❚❚ Пауза";
+  timer = setInterval(() => { if (k < STEPS.length - 1) { k++; render(); } else stop(); }, 2800);
+};
+document.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowRight") $("next").click();
+  if (e.key === "ArrowLeft") $("prev").click();
+});
+render();
+</script>

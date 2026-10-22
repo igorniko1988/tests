@@ -1,0 +1,288 @@
+<title>Откуда Settings берёт значения</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: сверху выбор команды запуска; слева код settings.py, справа четыре источника значений и итоговый объект */
+:root {
+  --bg: #f3f5f4; --panel: #ffffff; --ink: #17211f; --muted: #5b6965; --line: #d7dedb;
+  --accent: #0d6b5e; --accent-soft: #d5ece7; --hit: #f3c24b; --hit-soft: #fdf0cc;
+  --ok: #1f7a3d; --ok-soft: #dcf1e2; --bad: #b3261e; --bad-soft: #f8dedb;
+  --code-bg: #1d2523; --code-ink: #dfe7e4; --code-dim: #7f8f8a;
+  --font-body: "Golos Text", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121816; --panel: #1a2220; --ink: #e4ebe8; --muted: #94a39e; --line: #2c3734;
+    --accent: #4fc2ad; --accent-soft: #1f3d37; --hit: #f3c24b; --hit-soft: #3d3219;
+    --ok: #6fd08f; --ok-soft: #1d3a26; --bad: #ff8a80; --bad-soft: #43201d;
+    --code-bg: #0c1110; --code-ink: #dfe7e4; --code-dim: #6c7b76; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121816; --panel: #1a2220; --ink: #e4ebe8; --muted: #94a39e; --line: #2c3734;
+  --accent: #4fc2ad; --accent-soft: #1f3d37; --hit: #f3c24b; --hit-soft: #3d3219;
+  --ok: #6fd08f; --ok-soft: #1d3a26; --bad: #ff8a80; --bad-soft: #43201d;
+  --code-bg: #0c1110; --code-ink: #dfe7e4; --code-dim: #6c7b76; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 40px;
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 18px; }
+h1 { font-size: 1.6rem; margin: 0; text-wrap: balance; }
+.sub { color: var(--muted); margin: 4px 0 0; max-width: 72ch; }
+.scen { display: grid; gap: 8px; }
+.scen-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.scen-list button { font-family: var(--font-mono); font-size: .82rem; text-align: left; }
+.scen-list button[aria-pressed="true"] { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; }
+button {
+  font: 500 .95rem var(--font-body); padding: 8px 14px; border-radius: 6px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--panel); color: var(--ink);
+}
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+button:disabled { opacity: .45; cursor: default; }
+button:focus-visible { outline: 2px solid var(--hit); outline-offset: 2px; }
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 880px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 14px; min-width: 0; align-content: start; }
+.eyebrow { font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 6px; }
+.code { background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 14px 0; overflow-x: auto; font: .84rem/1.7 var(--font-mono); }
+.code .ln { display: flex; padding: 0 14px; white-space: pre; border-left: 3px solid transparent; }
+.code .ln .no { color: var(--code-dim); width: 2.2em; flex: none; user-select: none; }
+.code .ln.active { background: rgba(243, 194, 75, .18); border-left-color: var(--hit); }
+.kw { color: #f0a36b; } .fn { color: #8fd3c4; } .st { color: #c3e88d; } .cm { color: var(--code-dim); }
+.msg { border-left: 3px solid var(--accent); padding: 10px 14px; background: var(--accent-soft); border-radius: 0 8px 8px 0; min-height: 4.5em; }
+.msg.bad { border-left-color: var(--bad); background: var(--bad-soft); }
+.msg b { font-family: var(--font-mono); font-size: .92em; }
+.sources { display: grid; gap: 8px; }
+.src { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; display: grid; gap: 4px; min-width: 0; }
+.src .hd { display: flex; justify-content: space-between; gap: 8px; font-size: .85rem; font-weight: 700; }
+.src .hd .pr { font-weight: 400; color: var(--muted); font-size: .78rem; }
+.src .kv { font: .8rem/1.55 var(--font-mono); overflow-wrap: anywhere; }
+.src .kv.hit { background: var(--ok-soft); outline: 1px solid var(--ok); border-radius: 3px; padding: 0 4px; }
+.src .kv.miss { color: var(--muted); }
+.src .kv.skip { color: var(--muted); text-decoration: line-through; }
+.src .kv.err { background: var(--bad-soft); outline: 1px solid var(--bad); border-radius: 3px; padding: 0 4px; }
+.src.looking { border-color: var(--hit); background: var(--hit-soft); }
+.src .none { color: var(--muted); font-style: italic; font-size: .8rem; }
+.result { font: .85rem/1.7 var(--font-mono); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; overflow-wrap: anywhere; }
+.result .f { display: flex; gap: 8px; flex-wrap: wrap; }
+.result .from { color: var(--muted); font-family: var(--font-body); font-size: .78rem; }
+.result.err { border-color: var(--bad); background: var(--bad-soft); }
+.progress { font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.toggle { display: flex; align-items: center; gap: 8px; font-size: .9rem; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Откуда Settings берёт каждое значение</h1>
+    <p class="sub">Выбери команду запуска и пройди по шагам. Для каждого поля pydantic-settings смотрит источники сверху вниз и берёт первый найденный. Результаты совпадают с реальными запусками.</p>
+  </header>
+
+  <div class="scen">
+    <p class="eyebrow" style="margin:0">Команда запуска</p>
+    <div class="scen-list" id="scen"></div>
+    <label class="toggle"><input type="checkbox" id="ignore" checked> <span><code>extra="ignore"</code> в model_config</span></label>
+  </div>
+
+  <div class="controls">
+    <button id="prev">← Назад</button>
+    <button id="next" class="primary">Шаг →</button>
+    <button id="play">▶ Авто</button>
+    <button id="reset">В начало</button>
+  </div>
+
+  <div class="grid">
+    <section class="panel">
+      <div>
+        <p class="eyebrow">framework/config/settings.py</p>
+        <div class="code" id="code"></div>
+      </div>
+      <div class="msg" id="msg"></div>
+      <div class="progress" id="stepno"></div>
+    </section>
+    <section class="panel">
+      <div>
+        <p class="eyebrow">Источники по приоритету</p>
+        <div class="sources" id="sources"></div>
+      </div>
+      <div>
+        <p class="eyebrow">Объект settings</p>
+        <div class="result" id="result"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+const FILES = {
+  docker: { "UI_BASE_URL": "http://localhost:8080", "API_BASE_URL": "http://localhost:8080" },
+  local: { "UI_BASE_URL": "http://localhost:8000", "API_BASE_URL": "http://localhost:8000" },
+  stage: { "UI_BASE_URL": "http://localhost:8081", "UI_EXPECT_TIMEOUT_MS": "10000", "API_BASE_URL": "http://localhost:8081", "API_TIMEOUT": "15" },
+};
+const SCEN = [
+  { cmd: "uv run pytest", env: {} },
+  { cmd: "ENV=stage uv run pytest", env: { ENV: "stage" } },
+  { cmd: "ENV=stage API_TIMEOUT=3 uv run pytest", env: { ENV: "stage", API_TIMEOUT: "3" } },
+  { cmd: "ENV=prod uv run pytest", env: { ENV: "prod" } },
+];
+const CODE = [
+  '<span class="kw">import</span> os',
+  '<span class="kw">from</span> pathlib <span class="kw">import</span> Path',
+  '<span class="kw">from</span> pydantic_settings <span class="kw">import</span> BaseSettings, SettingsConfigDict',
+  '',
+  'ENV = os.<span class="fn">getenv</span>(<span class="st">"ENV"</span>, <span class="st">"docker"</span>)',
+  'ENV_FILE = <span class="fn">Path</span>(__file__).parents[<span class="st">2</span>] / <span class="st">"envs"</span> / f<span class="st">"{ENV}.env"</span>',
+  '',
+  '<span class="kw">class</span> <span class="fn">Settings</span>(BaseSettings):',
+  '    model_config = <span class="fn">SettingsConfigDict</span>(',
+  '        env_prefix=<span class="st">"API_"</span>, env_file=ENV_FILE, extra=<span class="st">"ignore"</span>,',
+  '    )',
+  '    env: str = ENV',
+  '    base_url: str',
+  '    timeout: float = <span class="st">10</span>',
+  '',
+  'settings = <span class="fn">Settings</span>()',
+];
+
+function build(sc, ignore) {
+  const steps = [];
+  const ENV = sc.env.ENV || "docker";
+  const file = FILES[ENV] || null;
+  const result = {};
+  const base = { looking: null, hits: {}, result: {}, err: null };
+  const push = (p) => steps.push(JSON.parse(JSON.stringify({ ...base, ...p, result: { ...result }, ENV, file })));
+
+  push({ line: 4, msg: sc.env.ENV
+    ? `Команда задала <b>ENV=${ENV}</b> в окружении процесса. <b>os.getenv("ENV", "docker")</b> вернёт <b>"${ENV}"</b>.`
+    : `ENV не задан, поэтому <b>os.getenv</b> вернёт значение по умолчанию <b>"docker"</b>. Запуск без переменных идёт на docker-стенд :8080.` });
+  push({ line: 5, msg: `Собираем путь к файлу. <b>__file__</b> = framework/config/settings.py, <b>parents[2]</b> = корень проекта. Итог: <b>envs/${ENV}.env</b>. ${file ? "Файл существует." : "<b>Такого файла нет!</b> pydantic-settings молча пропустит отсутствующий файл."}` , bad: !file });
+  push({ line: 9, msg: `Префикс <b>API_</b>: поле <b>base_url</b> ищется под именем <b>API_BASE_URL</b>, поле <b>timeout</b> под именем <b>API_TIMEOUT</b>. Регистр не важен.` });
+
+  push({ line: 15, msg: "Вызов <b>Settings()</b>. Теперь pydantic проходит по каждому полю и ищет значение в источниках сверху вниз. Первый найденный побеждает." });
+
+  push({ line: 11, looking: "default", hits: { default: "env" }, msg: `Поле <b>env</b> без префикса в окружении не ищем: у него сразу значение по умолчанию <b>ENV</b> = <b>"${ENV}"</b>. Удобно печатать в отчёт, на каком окружении шёл прогон.` });
+  result.env = { v: `'${ENV}'`, from: "default" };
+  push({ line: 11, msg: `<b>env = '${ENV}'</b>.` });
+
+  // base_url
+  push({ line: 12, looking: "init", msg: "Поле <b>base_url</b>. Источник 1: аргументы <b>Settings(...)</b>. Мы ничего не передали." });
+  push({ line: 12, looking: "os", msg: "Источник 2: переменные окружения процесса. <b>API_BASE_URL</b> не задан." });
+  if (file && file.API_BASE_URL) {
+    push({ line: 12, looking: "file", hits: { file: "API_BASE_URL" }, msg: `Источник 3: файл <b>envs/${ENV}.env</b>. Нашли <b>API_BASE_URL=${file.API_BASE_URL}</b>. Берём, дальше не ищем.` });
+    result.base_url = { v: `'${file.API_BASE_URL}'`, from: `envs/${ENV}.env` };
+  } else {
+    push({ line: 12, looking: "file", msg: "Источник 3: файл .env. Файла нет, значит и значения нет." });
+    push({ line: 12, looking: "default", msg: "Источник 4: значение по умолчанию. У <b>base_url: str</b> его нет, поле <b>обязательное</b>.", bad: true });
+    result.base_url = { v: "—", from: "не найдено" };
+  }
+
+  // timeout
+  push({ line: 13, looking: "init", msg: "Поле <b>timeout</b>. Источник 1: аргументов нет." });
+  if (sc.env.API_TIMEOUT) {
+    push({ line: 13, looking: "os", hits: { os: "API_TIMEOUT" }, msg: `Источник 2: в окружении есть <b>API_TIMEOUT="3"</b>. Он <b>выше</b> файла, поэтому <b>15</b> из stage.env проигрывает. Так можно перекрыть одно значение из командной строки или из CI.` });
+    push({ line: 13, msg: `Переменные окружения всегда строки: пришло <b>"3"</b>. Поле объявлено как <b>float</b>, pydantic приводит тип: <b>3.0</b>. Если бы пришло <b>"abc"</b>, была бы ValidationError ещё до первого теста.` });
+    result.timeout = { v: "3.0", from: "переменная окружения" };
+  } else {
+    push({ line: 13, looking: "os", msg: "Источник 2: <b>API_TIMEOUT</b> в окружении нет." });
+    if (file && file.API_TIMEOUT) {
+      push({ line: 13, looking: "file", hits: { file: "API_TIMEOUT" }, msg: `Источник 3: в <b>envs/${ENV}.env</b> есть <b>API_TIMEOUT=15</b>. Строка <b>"15"</b> превращается в <b>15.0</b>: stage медленнее, и ему дали больший таймаут.` });
+      result.timeout = { v: "15.0", from: `envs/${ENV}.env` };
+    } else {
+      push({ line: 13, looking: file ? "file" : "default", hits: file ? {} : { default: "timeout" }, msg: file ? `Источник 3: в <b>envs/${ENV}.env</b> нет <b>API_TIMEOUT</b>.` : "Файла нет." });
+      push({ line: 13, looking: "default", hits: { default: "timeout" }, msg: "Источник 4: значение по умолчанию в классе, <b>10</b> → <b>10.0</b>." });
+      result.timeout = { v: "10.0", from: "default" };
+    }
+  }
+
+  // лишние ключи
+  if (file) {
+    const extra = Object.keys(file).filter(k => !k.startsWith("API_"));
+    if (ignore) {
+      push({ line: 9, looking: "file", hits: { skip: extra }, msg: `В том же файле лежат <b>${extra.join(", ")}</b> для UI-фреймворка. С <b>extra="ignore"</b> чужие ключи просто пропускаются. Один файл на окружение обслуживает и UI, и API.` });
+    } else {
+      push({ line: 9, looking: "file", hits: { err: extra }, msg: `В файле лежат <b>${extra.join(", ")}</b>. Без <b>extra="ignore"</b> BaseSettings запрещает лишние ключи: <b>ValidationError: ui_base_url — Extra inputs are not permitted</b>. Именно так упадёт и UI-Settings, когда ты добавишь в файл строки API_.`, bad: true });
+      steps[steps.length - 1].err = `ValidationError: ${extra.map(e => e.toLowerCase()).join(", ")} — Extra inputs are not permitted`;
+      return steps;
+    }
+  }
+
+  if (!result.base_url || result.base_url.v === "—") {
+    push({ line: 15, msg: "Итог: <b>ValidationError: base_url — Field required</b>. Тесты не запустятся вообще. Это хорошо: опечатка в ENV видна сразу, а не через 200 упавших тестов. Ещё лучше проверить, что файл существует, и написать понятную ошибку: «нет envs/prod.env».", bad: true, err: "ValidationError: base_url — Field required" });
+  } else {
+    push({ line: 15, msg: "Готово. Объект <b>settings</b> создан один раз при импорте модуля, и все фикстуры берут значения из него. Сменить окружение можно одной переменной <b>ENV</b>, код тестов не меняется." });
+  }
+  return steps;
+}
+
+const $ = (id) => document.getElementById(id);
+let sc = 0, steps = [], k = 0, timer = null;
+
+$("scen").innerHTML = SCEN.map((s, i) => `<button data-i="${i}" aria-pressed="${i === 0}">${s.cmd}</button>`).join("");
+$("scen").querySelectorAll("button").forEach(b => b.onclick = () => { sc = +b.dataset.i; load(); });
+$("ignore").onchange = load;
+
+function srcHtml(id, title, pr, rows, st) {
+  const cls = ["src"]; if (st.looking === id) cls.push("looking");
+  const body = rows.length ? rows.map(([k, v]) => {
+    let c = "kv";
+    if (st.hits[id] === k || st.hits[id] === (k && k.toLowerCase && k)) c += " hit";
+    if (id === "file" && st.hits.skip && st.hits.skip.includes(k)) c += " skip";
+    if (id === "file" && st.hits.err && st.hits.err.includes(k)) c += " err";
+    return `<div class="${c}">${k}${v !== undefined ? " = " + v : ""}</div>`;
+  }).join("") : `<div class="none">пусто</div>`;
+  return `<div class="${cls.join(" ")}"><div class="hd"><span>${title}</span><span class="pr">${pr}</span></div>${body}</div>`;
+}
+
+function render() {
+  const st = steps[k], s = SCEN[sc];
+  $("code").innerHTML = CODE.map((c, n) => {
+    let line = c;
+    if (n === 9 && !$("ignore").checked) line = '        env_prefix=<span class="st">"API_"</span>, env_file=ENV_FILE,';
+    return `<div class="ln${n === st.line ? " active" : ""}"><span class="no">${n + 1}</span>${line || " "}</div>`;
+  }).join("");
+  $("msg").innerHTML = st.msg;
+  $("msg").classList.toggle("bad", !!st.bad);
+  const osRows = Object.entries(s.env).map(([k, v]) => [k, `"${v}"`]);
+  const fileRows = st.file ? Object.entries(st.file).map(([k, v]) => [k, v]) : [];
+  $("sources").innerHTML =
+    srcHtml("init", "1. Аргументы Settings(...)", "самый сильный", [], st) +
+    srcHtml("os", "2. Переменные окружения", "из команды или CI", osRows, st) +
+    srcHtml("file", `3. Файл envs/${st.ENV}.env${st.file ? "" : " (нет файла)"}`, "env_file", fileRows, st) +
+    srcHtml("default", "4. Значения по умолчанию в классе", "самый слабый", [["env", "ENV"], ["timeout", "10"]], st);
+  const r = st.result;
+  $("result").className = "result" + (st.err ? " err" : "");
+  $("result").innerHTML = st.err ? st.err : (Object.keys(r).length
+    ? ["env", "base_url", "timeout"].filter(f => r[f]).map(f => `<div class="f"><span>${f} = ${r[f].v}</span><span class="from">← ${r[f].from}</span></div>`).join("")
+    : `<span class="from">ещё не создан</span>`);
+  $("stepno").textContent = `шаг ${k + 1} из ${steps.length}`;
+  $("prev").disabled = k === 0;
+  $("next").disabled = k === steps.length - 1;
+}
+function load() {
+  stop();
+  $("scen").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", +b.dataset.i === sc));
+  steps = build(SCEN[sc], $("ignore").checked); k = 0; render();
+}
+function stop() { clearInterval(timer); timer = null; $("play").textContent = "▶ Авто"; }
+$("next").onclick = () => { if (k < steps.length - 1) { k++; render(); } };
+$("prev").onclick = () => { stop(); if (k > 0) { k--; render(); } };
+$("reset").onclick = () => { stop(); k = 0; render(); };
+$("play").onclick = () => {
+  if (timer) return stop();
+  if (k === steps.length - 1) k = 0;
+  $("play").textContent = "❚❚ Пауза";
+  timer = setInterval(() => { if (k < steps.length - 1) { k++; render(); } else stop(); }, 2400);
+};
+document.addEventListener("keydown", (e) => {
+  if (e.target.tagName === "INPUT") return;
+  if (e.key === "ArrowRight") $("next").click();
+  if (e.key === "ArrowLeft") $("prev").click();
+});
+load();
+</script>

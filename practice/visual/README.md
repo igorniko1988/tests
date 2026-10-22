@@ -32,3 +32,6 @@
 | Тема | Файл | Онлайн |
 |------|------|--------|
 | Live coding, t02 compress (RLE) | `interview_prep/livecoding_python/m01_arrays_strings/visual/t02_compress.html` | https://claude.ai/artifact/Az7JJPTVcBMREakNebWSbo |
+| API-клиент: как токен попадает в каждый запрос | `practice/visual/api_auth_token.html` | https://claude.ai/artifact/JLuaXZz3yAGAYcvoD6XH7p |
+| API-фреймворк: путь теста через слои и папки | `practice/visual/api_framework_layers.html` | https://claude.ai/artifact/XqLJ5YvqfTesE8Ero26soj |
+| Settings и envs: откуда берётся каждое значение | `practice/visual/settings_env_sources.html` | https://claude.ai/artifact/Nb8YGKiw5bRqMuFAF8qLmg |
