@@ -15,5 +15,6 @@ def api():
 def auth_api(api, credentials):
     api.auth.register(**credentials)
     login = api.auth.login(**credentials)
+    assert login.status_code == 200
     api.client.set_token(login.json()['access_token'])
-    yield api
+    return api

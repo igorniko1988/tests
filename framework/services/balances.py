@@ -1,7 +1,7 @@
 from framework.transport.api_client import ApiClient
 
 
-class Balance:
+class BalanceService:
     def __init__(self, api_client: ApiClient):
         self.api_client = api_client
 

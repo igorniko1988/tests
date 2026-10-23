@@ -1,12 +1,12 @@
-from framework.services.auth_service import Auth
+from framework.services.auth import AuthService
 from framework.transport.api_client import ApiClient
-from framework.services.balances import Balance
-from framework.services.orders import Order
+from framework.services.balances import BalanceService
+from framework.services.orders import OrderService
 
 
 class Api:
     def __init__(self, client: ApiClient):
         self.client = client
-        self.auth = Auth(self.client)
-        self.balances = Balance(self.client)
-        self.orders = Order(self.client)
+        self.auth = AuthService(self.client)
+        self.balances = BalanceService(self.client)
+        self.orders = OrderService(self.client)

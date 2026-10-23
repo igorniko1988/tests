@@ -1,6 +1,6 @@
 from framework.transport.api_client import ApiClient
 
-class Auth:
+class AuthService:
     def __init__(self, api_client: ApiClient):
         self.api_client = api_client
 

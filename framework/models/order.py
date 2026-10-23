@@ -7,7 +7,6 @@ class Order(BaseModel):
     symbol: str
     side: str
     type: str
-    type: str
     price: str
     quantity: str
     filled_quantity: str
