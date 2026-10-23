@@ -3,7 +3,9 @@ name = "exchange-qa"
 version = "0.1.0"
 description = "Мини-биржа на FastAPI и фреймворк API-тестов к ней"
 requires-python = ">=3.13,<3.14"
-dependencies = []
+dependencies = [
+    "selenium>=4.51.0",
+]
 
 [dependency-groups]
 # Зависимости стенда: только они попадают в Docker-образ сервиса
