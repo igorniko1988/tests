@@ -71,3 +71,5 @@
 открываются в браузере (`open visual/t02_compress.html`).
 
 - t02 compress: https://claude.ai/artifact/Az7JJPTVcBMREakNebWSbo
+
+Шпаргалка по выбору паттерна: `PATTERNS.md`, интерактивное дерево решений: `pattern_picker.html` (https://claude.ai/artifact/WHT6kR9Rphaw4pznTSNQAk).

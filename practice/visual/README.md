@@ -35,3 +35,8 @@
 | API-клиент: как токен попадает в каждый запрос | `practice/visual/api_auth_token.html` | https://claude.ai/artifact/JLuaXZz3yAGAYcvoD6XH7p |
 | API-фреймворк: путь теста через слои и папки | `practice/visual/api_framework_layers.html` | https://claude.ai/artifact/XqLJ5YvqfTesE8Ero26soj |
 | Settings и envs: откуда берётся каждое значение | `practice/visual/settings_env_sources.html` | https://claude.ai/artifact/Nb8YGKiw5bRqMuFAF8qLmg |
+| Live coding, два указателя (Remove Element, к t03) | `interview_prep/livecoding_python/m01_arrays_strings/visual/two_pointers_remove_element.html` | https://claude.ai/artifact/4TmQK4gxy5BWFF5oMnuB2p |
+| Live coding: какой паттерн выбрать (дерево решений) | `interview_prep/livecoding_python/pattern_picker.html` | https://claude.ai/artifact/WHT6kR9Rphaw4pznTSNQAk |
+| Live coding, t03 move zeros | `interview_prep/livecoding_python/m01_arrays_strings/visual/t03_move_zeros.html` | https://claude.ai/artifact/CgpC6dE6zRLqWFBJ8Ashdd |
+| Live coding, t08 merge sorted | `interview_prep/livecoding_python/m01_arrays_strings/visual/t08_merge_sorted.html` | https://claude.ai/artifact/JfzZMFJwvexGc3ku8KY499 |
+| Live coding, t09 max profit | `interview_prep/livecoding_python/m01_arrays_strings/visual/t09_max_profit.html` | https://claude.ai/artifact/3215tZnLyjFNDAFpisESBV |

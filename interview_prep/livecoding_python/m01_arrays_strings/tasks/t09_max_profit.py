@@ -11,4 +11,25 @@ max_profit([])                  -> 0
 
 
 def max_profit(prices: list[int]) -> int:
-    raise NotImplementedError
+    prices_at_days = {}
+    profits = []
+
+    for day in range(len(prices)):
+        for price in prices:
+            buy = price
+            best_sell = max(prices[day:])
+            profit = best_sell - price
+            profits.append(profit)
+            prices_at_days[day] = profits
+
+    print(prices_at_days)
+    best_proposals = {day: max(price) for day, price in prices_at_days.items() }
+
+
+
+
+    return best_proposals
+
+
+
+print(max_profit([7, 1, 5, 3, 6, 4]))
