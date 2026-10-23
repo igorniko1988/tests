@@ -40,3 +40,4 @@
 | Live coding, t03 move zeros | `interview_prep/livecoding_python/m01_arrays_strings/visual/t03_move_zeros.html` | https://claude.ai/artifact/CgpC6dE6zRLqWFBJ8Ashdd |
 | Live coding, t08 merge sorted | `interview_prep/livecoding_python/m01_arrays_strings/visual/t08_merge_sorted.html` | https://claude.ai/artifact/JfzZMFJwvexGc3ku8KY499 |
 | Live coding, t09 max profit | `interview_prep/livecoding_python/m01_arrays_strings/visual/t09_max_profit.html` | https://claude.ai/artifact/3215tZnLyjFNDAFpisESBV |
+| pytest: кеш фикстур, почему credentials в тесте и в auth_api один | `practice/visual/pytest_fixture_cache.html` | https://claude.ai/artifact/6XpfucJ1jrZLu2rsGiXvtG |
