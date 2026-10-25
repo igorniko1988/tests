@@ -17,4 +17,8 @@ def auth_api(api, credentials):
     login = api.auth.login(**credentials)
     assert login.status_code == 200
     api.client.set_token(login.json()['access_token'])
-    return api
+    yield api
+
+    for order in api.orders.list().json():
+        if order['status'] in ['NEW', 'PARTIALLY_FILLED']:
+            api.orders.cancel(order['id'])

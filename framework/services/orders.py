@@ -1,4 +1,6 @@
 from framework.transport.api_client import ApiClient
+from uuid import uuid4
+
 
 class OrderService:
     def __init__(self, api_client: ApiClient):
@@ -12,13 +14,13 @@ class OrderService:
             'price': price,
             'quantity': quantity
         }
-        return self.api_client.post('/orders', json=data)
+        return self.api_client.post('/orders', json=data, headers={'Idempotency-Key': str(uuid4())})
 
-    def orders(self):
-        pass
+    def list(self, status = None):
+        return self.api_client.get('/orders', params={'status': status})
 
-    def get_order_by_id(self):
-        pass
+    def get(self, order_id):
+        return self.api_client.get(f'/orders/{order_id}')
 
-    def delete_order_by_id(self):
-        pass
+    def cancel(self, order_id):
+        return self.api_client.delete(f'/orders/{order_id}')
