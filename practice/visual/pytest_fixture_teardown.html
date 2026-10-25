@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Teardown фикстуры</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: сверху режимы; слева стек фикстур, стенд и отчёт pytest, справа код с подсветкой и журнал */
+:root {
+  --bg: #f3f5f4; --panel: #ffffff; --ink: #17211f; --muted: #5b6965; --line: #d7dedb;
+  --accent: #0d6b5e; --accent-soft: #d5ece7; --hit: #f3c24b; --hit-soft: #fdf0cc;
+  --write: #2f4a8a; --write-soft: #e4e9f5; --swap: #b3261e; --swap-soft: #f8dedb;
+  --code-bg: #1d2523; --code-ink: #dfe7e4; --code-dim: #7f8f8a;
+  --font-body: "Golos Text", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121816; --panel: #1a2220; --ink: #e4ebe8; --muted: #94a39e; --line: #2c3734;
+    --accent: #4fc2ad; --accent-soft: #1f3d37; --hit: #f3c24b; --hit-soft: #3d3219;
+    --write: #a9bdf0; --write-soft: #232d45; --swap: #ff8a80; --swap-soft: #43201d;
+    --code-bg: #0c1110; --code-ink: #dfe7e4; --code-dim: #6c7b76; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121816; --panel: #1a2220; --ink: #e4ebe8; --muted: #94a39e; --line: #2c3734;
+  --accent: #4fc2ad; --accent-soft: #1f3d37; --hit: #f3c24b; --hit-soft: #3d3219;
+  --write: #a9bdf0; --write-soft: #232d45; --swap: #ff8a80; --swap-soft: #43201d;
+  --code-bg: #0c1110; --code-ink: #dfe7e4; --code-dim: #6c7b76; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-body); padding: 24px 16px 40px; }
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 18px; }
+h1 { font-size: 1.6rem; margin: 0; text-wrap: balance; }
+.sub { color: var(--muted); margin: 4px 0 0; max-width: 78ch; }
+.tabs, .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.tabs button { font-size: .88rem; padding: 6px 12px; }
+.tabs button.on { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+button { font: 500 .95rem var(--font-body); padding: 8px 14px; border-radius: 6px; cursor: pointer; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+button:disabled { opacity: .45; cursor: default; }
+button:focus-visible { outline: 2px solid var(--hit); outline-offset: 2px; }
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 20px; }
+@media (max-width: 900px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 16px; min-width: 0; align-content: start; }
+.eyebrow { font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 6px; }
+.stack { display: grid; gap: 6px; }
+.fx { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: 8px; align-items: center; border: 2px solid var(--line); border-radius: 8px; padding: 8px 10px; font: .85rem var(--font-mono); transition: background .25s, border-color .25s; }
+.fx .n { font-weight: 600; }
+.fx .s { color: var(--muted); font-family: var(--font-body); font-size: .85rem; }
+.fx.setup { border-color: var(--write); background: var(--write-soft); }
+.fx.live { border-color: var(--accent); background: var(--accent-soft); }
+.fx.down { border-color: var(--hit); background: var(--hit-soft); }
+.fx.skip { border-style: dashed; border-color: var(--swap); background: var(--swap-soft); }
+.fx.done { opacity: .5; }
+.fx.test { border-style: dotted; }
+.cards { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+@media (max-width: 560px) { .cards { grid-template-columns: minmax(0, 1fr); } }
+.card { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; min-width: 0; font: .85rem var(--font-mono); }
+.card.changed { border-color: var(--hit); background: var(--hit-soft); }
+.card h3 { font: .72rem var(--font-body); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 6px; font-weight: 400; }
+.pill { padding: 0 6px; border-radius: 3px; font-weight: 600; }
+.pill.NEW { background: var(--write-soft); color: var(--write); }
+.pill.CANCELED { background: var(--line); color: var(--muted); }
+.rep { font-weight: 600; }
+.rep.PASSED { color: var(--accent); } .rep.FAILED, .rep.ERROR { color: var(--swap); }
+.empty { color: var(--muted); font-style: italic; }
+.msg { border-left: 3px solid var(--accent); padding: 10px 14px; background: var(--accent-soft); border-radius: 0 8px 8px 0; min-height: 4em; }
+.msg.err { border-left-color: var(--swap); background: var(--swap-soft); }
+.msg b { font-family: var(--font-mono); font-size: .92em; }
+.code { background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 14px 0; overflow-x: auto; font: .84rem/1.7 var(--font-mono); }
+.code .ln { display: flex; padding: 0 14px; white-space: pre; border-left: 3px solid transparent; }
+.code .ln .no { color: var(--code-dim); width: 2.2em; flex: none; user-select: none; }
+.code .ln.wrong { background: rgba(255, 138, 128, .16); }
+.code .ln.active { background: rgba(243, 194, 75, .2); border-left-color: var(--hit); }
+.kw { color: #f0a36b; } .fn { color: #8fd3c4; } .str { color: #b5d88a; } .cm { color: var(--code-dim); } .dec { color: #c5a5f0; }
+.progress { font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+table { border-collapse: collapse; width: 100%; font: .8rem var(--font-mono); }
+th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { color: var(--muted); font-weight: 400; font-family: var(--font-body); }
+tr.cur td { background: var(--hit-soft); }
+.tablewrap { overflow-x: auto; }
+.mistake { border-left: 3px solid var(--swap); background: var(--swap-soft); border-radius: 0 8px 8px 0; padding: 10px 14px; font-size: .9rem; }
+.mistake ul { margin: 6px 0 0; padding-left: 1.2em; }
+code { font-family: var(--font-mono); font-size: .9em; }
+@media (prefers-reduced-motion: reduce) { .fx { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Teardown фикстуры: что pytest выполняет до теста и после него</h1>
+    <p class="sub">Код фикстуры до <b>yield</b> — подготовка (setup), после <b>yield</b> — уборка (teardown). Pytest поднимает фикстуры от нижних к верхним, а убирает в обратном порядке. Переключай режимы: что будет, если тест упал, если упала сама подготовка, если вместо yield стоит return.</p>
+  </header>
+
+  <div class="tabs" id="tabs"></div>
+  <div class="controls">
+    <button id="prev">← Назад</button>
+    <button id="next" class="primary">Шаг →</button>
+    <button id="play">▶ Авто</button>
+    <button id="reset">В начало</button>
+  </div>
+
+  <div class="grid">
+    <section class="panel">
+      <div>
+        <p class="eyebrow">Стек фикстур (синий — setup, зелёный — живёт, жёлтый — teardown, красный пунктир — пропущено)</p>
+        <div class="stack" id="stack"></div>
+      </div>
+      <div class="cards">
+        <div class="card" id="c-orders"><h3>Ордера пользователя на стенде</h3><div id="orders"></div></div>
+        <div class="card" id="c-rep"><h3>Отчёт pytest</h3><div id="rep"></div></div>
+      </div>
+      <div class="msg" id="msg"></div>
+      <div class="progress" id="stepno"></div>
+    </section>
+
+    <section class="panel">
+      <div>
+        <p class="eyebrow">Код: framework/fixtures/api.py и тест</p>
+        <div class="code" id="code"></div>
+      </div>
+      <div>
+        <p class="eyebrow">Журнал: что pytest сделал</p>
+        <div class="tablewrap"><table><thead><tr><th>#</th><th>фаза</th><th>фикстура / тест</th><th>что произошло</th></tr></thead><tbody id="hist"></tbody></table></div>
+      </div>
+      <div class="mistake"><b>Где обычно ошибаются</b>
+        <ul>
+          <li>Пишут <code>return api</code>. После return код функции не выполняется — уборке негде стоять.</li>
+          <li>Думают, что при упавшем тесте teardown не выполнится. Выполнится: pytest доходит до кода после yield <b>всегда</b>, если setup дошёл до yield.</li>
+          <li>Ставят <code>assert</code> в teardown. Упадёт уборка — в отчёте будет <b>ERROR</b> рядом с PASSED, и остальные ордера не отменятся. Уборка должна быть «терпеливой».</li>
+          <li>Отменяют только ордер, id которого запомнили в тесте. Если тест упал до запоминания или ордер создан из другого места, он останется висеть.</li>
+          <li>Забывают про <code>PARTIALLY_FILLED</code>: он тоже открыт и держит деньги в locked.</li>
+        </ul>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+const CODE = (ret) => [
+  `<span class="dec">@pytest.fixture()</span>`,
+  `<span class="kw">def</span> <span class="fn">api</span>():`,
+  `    api_client = <span class="fn">ApiClient</span>(settings.base_url, settings.timeout)`,
+  `    <span class="kw">yield</span> <span class="fn">Api</span>(api_client)`,
+  `    api_client.session.<span class="fn">close</span>()`,
+  ``,
+  `<span class="dec">@pytest.fixture()</span>`,
+  `<span class="kw">def</span> <span class="fn">auth_api</span>(api, credentials):`,
+  `    api.auth.<span class="fn">register</span>(**credentials)`,
+  `    login = api.auth.<span class="fn">login</span>(**credentials)`,
+  `    <span class="kw">assert</span> login.status_code == 200`,
+  `    api.client.<span class="fn">set_token</span>(login.<span class="fn">json</span>()[<span class="str">'access_token'</span>])`,
+  ret ? `    <span class="kw">return</span> api                   <span class="cm"># после return ничего не выполнится</span>` : `    <span class="kw">yield</span> api`,
+  ret ? `    <span class="cm"># уборке негде стоять</span>` : `    <span class="kw">for</span> order <span class="kw">in</span> api.orders.<span class="fn">list</span>().<span class="fn">json</span>():`,
+  ret ? `` : `        <span class="kw">if</span> order[<span class="str">'status'</span>] <span class="kw">in</span> (<span class="str">'NEW'</span>, <span class="str">'PARTIALLY_FILLED'</span>):`,
+  ret ? `` : `            api.orders.<span class="fn">cancel</span>(order[<span class="str">'id'</span>])`,
+  ``,
+  `<span class="kw">def</span> <span class="fn">test_cancel_order</span>(auth_api):`,
+  `    auth_api.balances.<span class="fn">deposit</span>(<span class="str">'USDT'</span>, <span class="str">'100'</span>)`,
+  `    order = auth_api.orders.<span class="fn">create</span>(<span class="str">'ETH-USDT'</span>, <span class="str">'BUY'</span>, <span class="str">'LIMIT'</span>, <span class="str">'10'</span>, <span class="str">'1'</span>).<span class="fn">json</span>()`,
+  `    <span class="kw">assert</span> ...                  <span class="cm"># проверки теста</span>`,
+];
+
+const MODES = {
+  ok: { tab: "Обычный прогон" },
+  fail: { tab: "Тест упал" },
+  setup: { tab: "Упал setup (login 503)" },
+  ret: { tab: "return вместо yield", ret: true },
+};
+
+function build(mode) {
+  const S = [], hist = [];
+  const fx = { credentials: "wait", api: "wait", auth_api: "wait", test: "wait" };
+  let orders = [], rep = null;
+  const ret = !!MODES[mode].ret;
+  const push = (o) => S.push({ fx: { ...fx }, orders: orders.map((x) => ({ ...x })), rep, hist: hist.slice(), ...o });
+  const log = (phase, who, what) => hist.push([phase, who, what]);
+
+  push({ line: 17, msg: `pytest собрал тест <b>test_cancel_order(auth_api)</b>. Ему нужна фикстура <b>auth_api</b>, а ей — <b>api</b> и <b>credentials</b>. Сначала поднимутся зависимости, потом сама auth_api.` });
+  fx.credentials = "live"; log("setup", "credentials", "email и пароль от Faker");
+  push({ line: null, changed: "credentials", msg: `<b>credentials</b>: обычная фикстура с return. Убирать нечего, поэтому yield ей не нужен.` });
+  fx.api = "setup";
+  push({ line: 2, changed: "api", msg: `<b>api</b>, setup: создаём ApiClient — внутри requests.Session, она держит соединения и заголовки.` });
+  fx.api = "live"; log("setup", "api", "ApiClient создан, yield Api(...)");
+  push({ line: 3, changed: "api", msg: `<b>yield Api(api_client)</b>: фикстура <b>замирает</b> на этой строке и отдаёт объект дальше. Код ниже yield выполнится потом, после теста.` });
+  fx.auth_api = "setup";
+  push({ line: 8, changed: "auth_api", msg: `<b>auth_api</b>, setup: регистрируем нового пользователя. Он свой у каждого теста, поэтому все его ордера — только этого теста.` });
+  if (mode === "setup") {
+    fx.auth_api = "skip"; log("setup", "auth_api", "login → 503, assert упал");
+    push({ line: 10, changed: "auth_api", err: true, msg: `<b>login</b> ответил 503 (режим сбоев) → <b>assert login.status_code == 200</b> падает. Setup auth_api <b>не дошёл до yield</b>.` });
+    fx.test = "skip"; log("—", "тест", "не запускался");
+    push({ line: 17, changed: "test", err: true, msg: `Тело теста <b>не запускается</b>: фикстура не готова.` });
+    log("teardown", "auth_api", "пропущен: yield не был достигнут");
+    push({ line: 13, changed: "auth_api", err: true, msg: `Teardown auth_api <b>тоже пропущен</b>. Правило: код после yield выполняется, только если setup до yield дошёл. Это нормально: ордеров ещё нет, убирать нечего.` });
+    fx.api = "down"; log("teardown", "api", "session.close()");
+    push({ line: 4, changed: "api", msg: `А вот <b>api</b> свой setup закончила, поэтому её teardown выполняется: <b>session.close()</b>. Каждая фикстура убирает за собой независимо.` });
+    fx.api = "done"; fx.credentials = "done"; rep = "ERROR";
+    push({ line: null, msg: `В отчёте <b>ERROR</b>, а не FAILED: «сломалась подготовка, а не проверка». На собесе: FAILED — упал assert в тесте, ERROR — упала фикстура (setup или teardown).` });
+    return S;
+  }
+  log("setup", "auth_api", "register, login 200, set_token");
+  push({ line: 11, changed: "auth_api", msg: `Логин прошёл, токен лёг в <b>session.headers</b>. Подготовка закончена.` });
+  fx.auth_api = "live";
+  push({ line: 12, changed: "auth_api", err: ret, msg: ret
+    ? `<b>return api</b>: функция <b>закончилась</b>. Вызвать её «потом» pytest не может — продолжения нет. Уборку некуда поставить.`
+    : `<b>yield api</b>: auth_api замирает здесь. Тест получит готовый api с токеном.` });
+  fx.test = "live"; log("call", "test_cancel_order", "deposit 100 USDT");
+  push({ line: 18, changed: "test", msg: `Тело теста. Депозит.` });
+  orders = [{ id: "fb9f81d4…", status: "NEW" }]; log("call", "test_cancel_order", "create BUY 10 → NEW");
+  push({ line: 19, changed: "test", ordersChanged: true, msg: `Создали ордер. Он <b>NEW</b> и висит в общем стакане.` });
+  if (mode === "fail") {
+    fx.test = "skip"; log("call", "test_cancel_order", "AssertionError");
+    push({ line: 20, changed: "test", err: true, msg: `Проверка упала: <b>AssertionError</b>. Тест не дошёл до своей отмены ордера — ордер всё ещё <b>NEW</b>. Что теперь будет с ним?` });
+  } else {
+    fx.test = "done"; log("call", "test_cancel_order", "проверки прошли");
+    push({ line: 20, changed: "test", msg: `Проверки прошли. Тест закончился.` });
+  }
+  if (ret) {
+    log("teardown", "auth_api", "нечего выполнять");
+    push({ line: 13, changed: "auth_api", err: true, msg: `Teardown для auth_api <b>нет</b>. Ордер остаётся <b>NEW</b> в общем стакане и исполнится против ордера следующего теста.` });
+  } else {
+    fx.auth_api = "down";
+    log("teardown", "auth_api", "GET /orders");
+    push({ line: 13, changed: "auth_api", msg: mode === "fail"
+      ? `Тест упал, но pytest всё равно <b>возвращается в auth_api</b> и выполняет код после yield. Teardown не зависит от результата теста.`
+      : `Pytest возвращается в auth_api — в код после yield. <b>GET /orders</b>: все ордера этого пользователя.` });
+    push({ line: 14, changed: "auth_api", msg: `Открытые — <b>NEW</b> и <b>PARTIALLY_FILLED</b>: только они держат деньги и стоят в стакане. FILLED и CANCELED трогать не нужно, отмена дала бы 409.` });
+    orders = orders.map((x) => ({ ...x, status: "CANCELED" })); log("teardown", "auth_api", "DELETE /orders/fb9f81d4… → CANCELED");
+    push({ line: 15, changed: "auth_api", ordersChanged: true, msg: `<b>cancel(id)</b> → ордер <b>CANCELED</b>, ушёл из стакана. Следующий тест начнёт с чистого стакана.` });
+    fx.auth_api = "done";
+  }
+  fx.api = "down"; log("teardown", "api", "session.close()");
+  push({ line: 4, changed: "api", msg: `Последней убирается <b>api</b>: <b>session.close()</b>. Порядок обратный подготовке (LIFO): api поднималась первой — убирается последней. Иначе auth_api пыталась бы отменять ордера через закрытую сессию.` });
+  fx.api = "done"; fx.credentials = "done";
+  rep = mode === "fail" ? "FAILED" : "PASSED";
+  push({ line: null, err: ret, msg: ret
+    ? `Отчёт <b>PASSED</b> — и никто не узнал, что тест оставил мусор. Такие проблемы всплывают позже, в чужих тестах.`
+    : mode === "fail"
+      ? `Отчёт <b>FAILED</b> (упал assert теста), но стакан чистый: уборка отработала. Именно для этого уборка живёт в фикстуре, а не в конце теста.`
+      : `Отчёт <b>PASSED</b>, стенд чистый.` });
+  return S;
+}
+
+const $ = (id) => document.getElementById(id);
+let mode = "ok", steps = [], k = 0, timer = null;
+$("tabs").innerHTML = Object.entries(MODES).map(([id, m]) => `<button data-id="${id}">${m.tab}</button>`).join("");
+document.querySelectorAll("#tabs button").forEach((b) => b.onclick = () => { mode = b.dataset.id; load(); });
+
+const LABEL = { wait: "ещё не создана", setup: "setup: выполняется код до yield", live: "живёт, отдана дальше", down: "teardown: код после yield", skip: "", done: "убрана" };
+function render() {
+  const st = steps[k], ret = !!MODES[mode].ret;
+  document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("on", b.dataset.id === mode));
+  $("code").innerHTML = CODE(ret).map((c, n) => `<div class="ln${ret && n === 12 ? " wrong" : ""}${n === st.line ? " active" : ""}"><span class="no">${n + 1}</span>${c}</div>`).join("");
+  const rows = [["credentials", "credentials"], ["api", "api"], ["auth_api", "auth_api"], ["test", "test_cancel_order"]];
+  $("stack").innerHTML = rows.map(([key, name]) => {
+    const s = st.fx[key];
+    let label = LABEL[s];
+    if (s === "skip") label = key === "test" ? (mode === "fail" ? "упал (AssertionError)" : "не запускался") : "упала на setup";
+    if (key === "test") label = { wait: "ждёт фикстуры", live: "выполняется", done: "закончился" }[s] || label;
+    return `<div class="fx ${s}${key === "test" ? " test" : ""}"><span class="n">${name}</span><span class="s">${label}</span></div>`;
+  }).join("");
+  $("orders").innerHTML = st.orders.map((o) => `<div>${o.id} <span class="pill ${o.status}">${o.status}</span></div>`).join("") || '<span class="empty">нет</span>';
+  $("c-orders").classList.toggle("changed", !!st.ordersChanged);
+  $("rep").innerHTML = st.rep ? `test_cancel_order <span class="rep ${st.rep}">${st.rep}</span>` : '<span class="empty">ещё идёт</span>';
+  $("c-rep").classList.toggle("changed", !!st.rep);
+  $("msg").innerHTML = st.msg;
+  $("msg").classList.toggle("err", !!st.err);
+  $("stepno").textContent = `шаг ${k + 1} из ${steps.length}`;
+  $("hist").innerHTML = st.hist.map((h, n) => `<tr class="${n === st.hist.length - 1 ? "cur" : ""}"><td>${n + 1}</td><td>${h[0]}</td><td>${h[1]}</td><td>${h[2]}</td></tr>`).join("")
+    || '<tr><td colspan="4" style="color:var(--muted)">пока пусто</td></tr>';
+  $("prev").disabled = k === 0;
+  $("next").disabled = k === steps.length - 1;
+}
+function load() { stop(); steps = build(mode); k = 0; render(); }
+function stop() { clearInterval(timer); timer = null; $("play").textContent = "▶ Авто"; }
+$("next").onclick = () => { if (k < steps.length - 1) { k++; render(); } };
+$("prev").onclick = () => { stop(); if (k > 0) { k--; render(); } };
+$("reset").onclick = () => { stop(); k = 0; render(); };
+$("play").onclick = () => {
+  if (timer) return stop();
+  if (k === steps.length - 1) k = 0;
+  $("play").textContent = "❚❚ Пауза";
+  timer = setInterval(() => { if (k < steps.length - 1) { k++; render(); } else stop(); }, 1600);
+};
+document.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowRight") $("next").click();
+  if (e.key === "ArrowLeft") $("prev").click();
+});
+load();
+</script>
+</body>
+</html>

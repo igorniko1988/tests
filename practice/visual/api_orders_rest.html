@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ордер через REST</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: сверху сценарии и ввод; слева запрос/ответ и состояние стенда, справа код теста и история запросов */
+:root {
+  --bg: #f3f5f4; --panel: #ffffff; --ink: #17211f; --muted: #5b6965; --line: #d7dedb;
+  --accent: #0d6b5e; --accent-soft: #d5ece7; --hit: #f3c24b; --hit-soft: #fdf0cc;
+  --write: #2f4a8a; --write-soft: #e4e9f5; --swap: #b3261e; --swap-soft: #f8dedb;
+  --code-bg: #1d2523; --code-ink: #dfe7e4; --code-dim: #7f8f8a;
+  --font-body: "Golos Text", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121816; --panel: #1a2220; --ink: #e4ebe8; --muted: #94a39e; --line: #2c3734;
+    --accent: #4fc2ad; --accent-soft: #1f3d37; --hit: #f3c24b; --hit-soft: #3d3219;
+    --write: #a9bdf0; --write-soft: #232d45; --swap: #ff8a80; --swap-soft: #43201d;
+    --code-bg: #0c1110; --code-ink: #dfe7e4; --code-dim: #6c7b76; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121816; --panel: #1a2220; --ink: #e4ebe8; --muted: #94a39e; --line: #2c3734;
+  --accent: #4fc2ad; --accent-soft: #1f3d37; --hit: #f3c24b; --hit-soft: #3d3219;
+  --write: #a9bdf0; --write-soft: #232d45; --swap: #ff8a80; --swap-soft: #43201d;
+  --code-bg: #0c1110; --code-ink: #dfe7e4; --code-dim: #6c7b76; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-body); padding: 24px 16px 40px; }
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 18px; }
+h1 { font-size: 1.6rem; margin: 0; text-wrap: balance; }
+.sub { color: var(--muted); margin: 4px 0 0; max-width: 78ch; }
+.tabs, .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.tabs button { font-size: .88rem; padding: 6px 12px; }
+.tabs button.on { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+.controls label { font-size: .85rem; color: var(--muted); }
+input[type=text] { font: 600 .95rem var(--font-mono); padding: 7px 9px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--ink); width: 5.5rem; }
+button { font: 500 .95rem var(--font-body); padding: 8px 14px; border-radius: 6px; cursor: pointer; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+button.toggle.on { background: var(--accent-soft); border-color: var(--accent); }
+button:disabled { opacity: .45; cursor: default; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--hit); outline-offset: 2px; }
+.grid { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 900px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 16px; min-width: 0; align-content: start; }
+.eyebrow { font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 6px; }
+.layers { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; font: .78rem var(--font-mono); }
+.layers span.l { padding: 3px 8px; border-radius: 4px; border: 1px solid var(--line); }
+.layers span.l.on { background: var(--hit-soft); border-color: var(--hit); }
+.layers span.arr { color: var(--muted); }
+.http { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+@media (max-width: 560px) { .http { grid-template-columns: minmax(0, 1fr); } }
+.box { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font: .8rem/1.55 var(--font-mono); min-width: 0; overflow-wrap: anywhere; white-space: pre-wrap; min-height: 6.5em; }
+.box.changed { border-color: var(--hit); background: var(--hit-soft); }
+.box .t { font-family: var(--font-body); font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); display: block; margin-bottom: 4px; white-space: normal; }
+.meth { font-weight: 600; padding: 0 5px; border-radius: 3px; background: var(--write-soft); color: var(--write); }
+.st { font-weight: 600; padding: 0 5px; border-radius: 3px; }
+.st.ok { background: var(--accent-soft); color: var(--accent); }
+.st.bad { background: var(--swap-soft); color: var(--swap); }
+.state { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 10px; }
+@media (max-width: 560px) { .state { grid-template-columns: minmax(0, 1fr); } }
+.card { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; min-width: 0; }
+.card h3 { font: .72rem var(--font-body); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 6px; font-weight: 400; }
+.kv { display: flex; justify-content: space-between; gap: 8px; font: .88rem var(--font-mono); padding: 2px 4px; border-radius: 4px; }
+.kv.changed { background: var(--hit-soft); }
+.ord { display: flex; flex-wrap: wrap; gap: 6px; font: .8rem var(--font-mono); padding: 4px 6px; border-radius: 6px; border: 1px solid var(--line); margin-bottom: 4px; align-items: center; }
+.ord.changed { border-color: var(--hit); background: var(--hit-soft); }
+.ord.mine-a { border-left: 4px solid var(--write); }
+.ord.mine-b { border-left: 4px solid var(--accent); }
+.pill { padding: 0 6px; border-radius: 3px; font-weight: 600; }
+.pill.NEW { background: var(--write-soft); color: var(--write); }
+.pill.CANCELED { background: var(--line); color: var(--muted); }
+.pill.FILLED { background: var(--swap-soft); color: var(--swap); }
+.empty { color: var(--muted); font-style: italic; font-size: .85rem; }
+.msg { border-left: 3px solid var(--accent); padding: 10px 14px; background: var(--accent-soft); border-radius: 0 8px 8px 0; min-height: 4em; }
+.msg.err { border-left-color: var(--swap); background: var(--swap-soft); }
+.msg b { font-family: var(--font-mono); font-size: .92em; }
+.code { background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 14px 0; overflow-x: auto; font: .84rem/1.7 var(--font-mono); }
+.code .ln { display: flex; padding: 0 14px; white-space: pre; border-left: 3px solid transparent; }
+.code .ln .no { color: var(--code-dim); width: 2.2em; flex: none; user-select: none; }
+.code .ln.wrong { background: rgba(255, 138, 128, .16); }
+.code .ln.active { background: rgba(243, 194, 75, .2); border-left-color: var(--hit); }
+.kw { color: #f0a36b; } .fn { color: #8fd3c4; } .s { color: #b5d88a; } .cm { color: var(--code-dim); }
+.progress { font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+table { border-collapse: collapse; width: 100%; font: .8rem var(--font-mono); }
+th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { color: var(--muted); font-weight: 400; font-family: var(--font-body); }
+tr.cur td { background: var(--hit-soft); }
+.tablewrap { overflow-x: auto; }
+.mistake { border-left: 3px solid var(--swap); background: var(--swap-soft); border-radius: 0 8px 8px 0; padding: 10px 14px; font-size: .9rem; }
+.mistake ul { margin: 6px 0 0; padding-left: 1.2em; }
+code { font-family: var(--font-mono); font-size: .9em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Ордер через REST: какой запрос уходит, что отвечает стенд, что меняется</h1>
+    <p class="sub">Каждый шаг — одна строка теста. Видно, через какие слои фреймворка она проходит, какой HTTP-запрос уходит на стенд, что приходит в ответ и как меняются баланс и ордера. Цифры и тела ответов сняты с живого стенда.</p>
+  </header>
+
+  <div class="tabs" id="tabs"></div>
+  <div class="controls" id="opts"></div>
+  <div class="controls">
+    <button id="prev">← Назад</button>
+    <button id="next" class="primary">Шаг →</button>
+    <button id="play">▶ Авто</button>
+    <button id="reset">В начало</button>
+  </div>
+
+  <div class="grid">
+    <section class="panel">
+      <div>
+        <p class="eyebrow">Путь через слои</p>
+        <div class="layers" id="layers"></div>
+      </div>
+      <div class="http">
+        <div class="box" id="req"></div>
+        <div class="box" id="res"></div>
+      </div>
+      <div class="state" id="state"></div>
+      <div class="msg" id="msg"></div>
+      <div class="progress" id="stepno"></div>
+    </section>
+
+    <section class="panel">
+      <div>
+        <p class="eyebrow">Код теста</p>
+        <div class="code" id="code"></div>
+      </div>
+      <div>
+        <p class="eyebrow">История запросов</p>
+        <div class="tablewrap"><table><thead><tr><th>#</th><th>запрос</th><th>статус</th><th>итог</th></tr></thead><tbody id="hist"></tbody></table></div>
+      </div>
+      <div class="mistake"><b>Где обычно ошибаются</b>
+        <ul>
+          <li>Склеивают фильтр руками: <code>'/orders?status=' + str(status)</code>. При <code>None</code> уходит <code>?status=None</code> → 422. <code>params=</code> просто пропускает None.</li>
+          <li>Проверяют только «список не пустой». Это не доказывает, что там твой ордер и что фильтр сработал.</li>
+          <li>Ждут 403 на чужой ордер. Стенд отвечает 404: «такого ордера у тебя нет», не выдавая, что он существует.</li>
+          <li>Называют метод <code>delete</code>, а ордер не удаляется: он остаётся с <code>CANCELED</code>, деньги разблокируются.</li>
+          <li>Не убирают открытые ордера после теста. Стакан общий: висящий ордер исполнится против ордера другого теста (вкладка «Общий стакан»).</li>
+        </ul>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+const ID = "fb9f81d4-8b0b-45b2-9f01-55e0b4f4d327", ID2 = "3c1e0a77-5d2b-4f6e-9a41-c2b8e6d0f913", RND = "9e4d7c21-0b6a-4f3e-8d15-7a2c9f0e4b68";
+const short = (id) => id.slice(0, 8) + "…";
+const TOKEN = "Bearer eyJhbGciOi…  (маскируем в логах)";
+const D = (v) => { const n = Number(v); return Number.isFinite(n) ? String(+n.toFixed(8)) : "0"; };
+const L = { test: "тест", svc: "OrderService", bal: "BalanceService", cli: "ApiClient", req: "_request", http: "session.request → стенд" };
+const path = (svc, cliM) => ["test", svc, cliM, "req", "http"];
+
+const SCEN = {
+  life: {
+    tab: "Жизнь ордера",
+    opts: [["dep", "deposit USDT", "100"], ["price", "price", "10"], ["qty", "quantity", "1"]],
+    code: (o) => [
+      `<span class="kw">def</span> <span class="fn">test_order_lifecycle</span>(auth_api):`,
+      `    auth_api.balances.<span class="fn">deposit</span>(<span class="s">'USDT'</span>, <span class="s">'${o.dep}'</span>)`,
+      `    order = auth_api.orders.<span class="fn">create</span>(<span class="s">'ETH-USDT'</span>, <span class="s">'BUY'</span>, <span class="s">'LIMIT'</span>, <span class="s">'${o.price}'</span>, <span class="s">'${o.qty}'</span>).<span class="fn">json</span>()`,
+      `    auth_api.orders.<span class="fn">list</span>(status=<span class="s">'NEW'</span>)`,
+      `    auth_api.orders.<span class="fn">get</span>(order[<span class="s">'id'</span>])`,
+      `    auth_api.orders.<span class="fn">get</span>(uuid.<span class="fn">uuid4</span>())       <span class="cm"># такого id нет</span>`,
+      `    auth_api.orders.<span class="fn">cancel</span>(order[<span class="s">'id'</span>])`,
+      `    auth_api.orders.<span class="fn">cancel</span>(order[<span class="s">'id'</span>])     <span class="cm"># второй раз</span>`,
+      `    auth_api.orders.<span class="fn">list</span>(status=<span class="s">'NEW'</span>)`,
+    ],
+    build(o) {
+      const S = [], hist = [];
+      let bal = { available: "0", locked: "0" }, orders = [];
+      const lock = D(Number(o.price) * Number(o.qty));
+      const push = (x) => S.push({ hist: hist.slice(), state: { bal: { ...bal }, orders: orders.map((r) => ({ ...r })) }, ...x });
+      const rec = (req, code, note) => hist.push([req, code, note]);
+      push({ line: 0, layers: ["test"], req: null, res: null, msg: `Фикстура <b>auth_api</b> уже зарегистрировала пользователя, залогинилась и положила токен в <b>session.headers</b>. Дальше каждый запрос уходит с ним сам.` });
+
+      bal = { available: D(o.dep), locked: "0" };
+      rec(`POST /balances/deposit`, 200, `available ${bal.available}`);
+      push({ line: 1, layers: path("bal", "cli"), changed: ["bal"],
+        req: { m: "POST", url: "/balances/deposit", body: `{"asset": "USDT", "amount": "${o.dep}"}` },
+        res: { code: 200, body: `{"asset": "USDT", "available": "${bal.available}", "locked": "0"}` },
+        msg: `Пополнили USDT. Суммы уходят и приходят <b>строкой</b>: стенд хранит Decimal, float потерял бы копейки.` });
+
+      if (Number(o.price) * Number(o.qty) > Number(o.dep)) {
+        rec(`POST /orders`, 400, "insufficient_funds");
+        push({ line: 2, layers: path("svc", "cli"), err: true,
+          req: { m: "POST", url: "/orders", body: `{"symbol": "ETH-USDT", "side": "BUY", "type": "LIMIT",\n "price": "${o.price}", "quantity": "${o.qty}"}` },
+          res: { code: 400, body: `{"error": {"code": "insufficient_funds",\n  "message": "Not enough USDT to place order"}}` },
+          msg: `Нужно заблокировать <b>${o.price} × ${o.qty} = ${lock}</b> USDT, а доступно ${bal.available}. Стенд отвечает <b>400</b>, ордер не создан. Поменяй ввод сверху, чтобы пройти дальше.` });
+        return S;
+      }
+      bal = { available: D(Number(o.dep) - Number(lock)), locked: lock };
+      orders = [{ id: ID, side: "BUY", price: o.price, qty: o.qty, status: "NEW" }];
+      rec(`POST /orders`, 201, `NEW, locked ${lock}`);
+      push({ line: 2, layers: path("svc", "cli"), changed: ["bal", ID],
+        req: { m: "POST", url: "/orders", body: `{"symbol": "ETH-USDT", "side": "BUY", "type": "LIMIT",\n "price": "${o.price}", "quantity": "${o.qty}"}` },
+        res: { code: 201, body: `{"id": "${ID}",\n "status": "NEW", "filled_quantity": "0", ...}` },
+        msg: `<b>201 Created</b>: ресурс создан. Стенд <b>заблокировал</b> ${o.price} × ${o.qty} = ${lock} USDT: available ${bal.available}, locked ${lock}. Деньги не списаны, они зарезервированы под ордер.` });
+
+      rec(`GET /orders?status=NEW`, 200, "1 ордер");
+      push({ line: 3, layers: path("svc", "cli"),
+        req: { m: "GET", url: "/orders?status=NEW", body: "(тела нет)" },
+        res: { code: 200, body: `[{"id": "${short(ID)}", "status": "NEW", ...}]` },
+        msg: `<b>params={'status': 'NEW'}</b> requests превратил в <b>?status=NEW</b>. Это <b>query-параметр</b>: фильтр по коллекции. Ответ — список, даже если ордер один.` });
+
+      rec(`GET /orders/${short(ID)}`, 200, "тот же id");
+      push({ line: 4, layers: path("svc", "cli"),
+        req: { m: "GET", url: `/orders/${ID}`, body: "(тела нет)" },
+        res: { code: 200, body: `{"id": "${ID}",\n "status": "NEW", ...}` },
+        msg: `id стоит <b>в пути</b> URL: это <b>path-параметр</b>, «ресурс № такой-то». Ответ — один объект, не список.` });
+
+      rec(`GET /orders/${short(RND)}`, 404, "order_not_found");
+      push({ line: 5, layers: path("svc", "cli"), err: true,
+        req: { m: "GET", url: `/orders/${RND}`, body: "(тела нет)" },
+        res: { code: 404, body: `{"error": {"code": "order_not_found",\n  "message": "Order not found"}}` },
+        msg: `Случайный UUID: такого ордера нет → <b>404</b>. Тот же ответ будет и на <b>чужой</b> ордер: стенд ищет по id <b>и</b> владельцу (<b>exchange/api/orders.py:97</b>).` });
+
+      bal = { available: D(o.dep), locked: "0" };
+      orders[0].status = "CANCELED";
+      rec(`DELETE /orders/${short(ID)}`, 200, "CANCELED, unlocked");
+      push({ line: 6, layers: path("svc", "delete"), changed: ["bal", ID],
+        req: { m: "DELETE", url: `/orders/${ID}`, body: "(тела нет)" },
+        res: { code: 200, body: `{"id": "${ID}",\n "status": "CANCELED", ...}` },
+        msg: `<b>DELETE</b>, но ордер не исчез: статус <b>CANCELED</b>, и стенд вернул его в ответе (200). Деньги <b>разблокированы</b>: available ${bal.available}, locked 0. Поэтому метод сервиса называется <b>cancel</b>.` });
+
+      rec(`DELETE /orders/${short(ID)}`, 409, "order_not_open");
+      push({ line: 7, layers: path("svc", "delete"), err: true,
+        req: { m: "DELETE", url: `/orders/${ID}`, body: "(тела нет)" },
+        res: { code: 409, body: `{"error": {"code": "order_not_open",\n  "message": "Order is already CANCELED"}}` },
+        msg: `Повторная отмена → <b>409 Conflict</b>: запрос корректный, но конфликтует с текущим состоянием ресурса. Состояние не изменилось: деньги второй раз не вернулись. Это и надо проверять.` });
+
+      rec(`GET /orders?status=NEW`, 200, "[]");
+      push({ line: 8, layers: path("svc", "cli"),
+        req: { m: "GET", url: "/orders?status=NEW", body: "(тела нет)" },
+        res: { code: 200, body: "[]" },
+        msg: `Открытых ордеров нет — <b>пустой список и 200</b>, не 404. «Коллекция пуста» — нормальный ответ. Именно этот запрос сделает уборка после теста.` });
+      return S;
+    },
+  },
+
+  book: {
+    tab: "Общий стакан: зачем уборка",
+    toggle: ["cleanup", "с уборкой после теста"],
+    code: (o) => [
+      `<span class="cm"># тест A, пользователь A</span>`,
+      `<span class="kw">def</span> <span class="fn">test_a</span>(auth_api):`,
+      `    auth_api.orders.<span class="fn">create</span>(<span class="s">'ETH-USDT'</span>, <span class="s">'BUY'</span>, <span class="s">'LIMIT'</span>, <span class="s">'10'</span>, <span class="s">'1'</span>)`,
+      o.cleanup ? `    <span class="cm"># teardown auth_api: cancel всех открытых</span>` : `    <span class="cm"># конец теста, уборки нет</span>`,
+      `<span class="cm"># тест B, пользователь B</span>`,
+      `<span class="kw">def</span> <span class="fn">test_b</span>(auth_api):`,
+      `    order = auth_api.orders.<span class="fn">create</span>(<span class="s">'ETH-USDT'</span>, <span class="s">'SELL'</span>, <span class="s">'LIMIT'</span>, <span class="s">'10'</span>, <span class="s">'1'</span>).<span class="fn">json</span>()`,
+      `    time.<span class="fn">sleep</span>(<span class="nu">2</span>)                     <span class="cm"># сопоставление раз в 1 с</span>`,
+      `    <span class="kw">assert</span> auth_api.orders.<span class="fn">get</span>(order[<span class="s">'id'</span>]).<span class="fn">json</span>()[<span class="s">'status'</span>] == <span class="s">'NEW'</span>`,
+    ],
+    build(o) {
+      const S = [], hist = [];
+      let book = [];
+      const push = (x) => S.push({ hist: hist.slice(), state: { book: book.map((r) => ({ ...r })) }, ...x });
+      push({ line: 1, layers: ["test"], msg: `Два теста, два <b>разных</b> пользователя. Но стакан ETH-USDT у стенда <b>один на всех</b>: ордера всех пользователей сопоставляются между собой.` });
+      book = [{ id: ID, who: "A", side: "BUY", price: "10", qty: "1", status: "NEW" }];
+      hist.push(["A: POST /orders BUY 10", 201, "NEW"]);
+      push({ line: 2, layers: path("svc", "cli"), changed: [ID],
+        req: { m: "POST", url: "/orders", body: `{"side": "BUY", "price": "10", "quantity": "1", ...}` },
+        res: { code: 201, body: `{"id": "${short(ID)}", "status": "NEW", ...}` },
+        msg: `Тест A ставит BUY 1 ETH по 10 и проходит.` });
+      if (o.cleanup) {
+        hist.push(["A: GET /orders?status=NEW", 200, "1 ордер"]);
+        book[0].status = "CANCELED";
+        hist.push([`A: DELETE /orders/${short(ID)}`, 200, "CANCELED"]);
+        push({ line: 3, layers: path("svc", "delete"), changed: [ID],
+          req: { m: "DELETE", url: `/orders/${ID}`, body: "(тела нет)" },
+          res: { code: 200, body: `{"status": "CANCELED", ...}` },
+          msg: `Teardown фикстуры: <b>list(status='NEW')</b> → для каждого <b>cancel(id)</b>. Ордер A ушёл из стакана. Тест A ничего не оставил после себя.` });
+      } else {
+        push({ line: 3, layers: ["test"], err: true,
+          msg: `Тест A закончился, а его BUY по 10 <b>остался висеть</b> в стакане. Тест зелёный — проблему никто не заметит до следующего теста.` });
+      }
+      book.push({ id: ID2, who: "B", side: "SELL", price: "10", qty: "1", status: "NEW" });
+      hist.push(["B: POST /orders SELL 10", 201, "NEW"]);
+      push({ line: 6, layers: path("svc", "cli"), changed: [ID2],
+        req: { m: "POST", url: "/orders", body: `{"side": "SELL", "price": "10", "quantity": "1", ...}` },
+        res: { code: 201, body: `{"id": "${short(ID2)}", "status": "NEW", ...}` },
+        msg: `Тест B ставит SELL 1 ETH по 10. Он рассчитывает, что покупателя нет и ордер останется <b>NEW</b>.` });
+      if (!o.cleanup) {
+        book[0].status = "FILLED"; book[1].status = "FILLED";
+        push({ line: 7, layers: ["test"], changed: [ID, ID2], err: true,
+          msg: `Фоновое сопоставление (раз в EXCHANGE_MATCHING_INTERVAL = 1 с) нашло пару: <b>BUY A по 10</b> и <b>SELL B по 10</b>. Сделка! Оба ордера <b>FILLED</b>.` });
+        hist.push([`B: GET /orders/${short(ID2)}`, 200, "FILLED ≠ NEW"]);
+        push({ line: 8, layers: path("svc", "cli"), err: true,
+          req: { m: "GET", url: `/orders/${ID2}`, body: "(тела нет)" },
+          res: { code: 200, body: `{"status": "FILLED", "filled_quantity": "1", ...}` },
+          msg: `<b>AssertionError: 'FILLED' != 'NEW'</b>. Упал тест B, хотя ошибка в тесте A. Хуже всего: падает не всегда, а только когда A и B попали в один прогон. Это «плавающий» тест. Включи кнопку «с уборкой» сверху.` });
+      } else {
+        push({ line: 7, layers: ["test"],
+          msg: `Сопоставление ищет BUY по цене ≥ 10 — в стакане открытых BUY нет (A отменён). SELL B остаётся NEW.` });
+        hist.push([`B: GET /orders/${short(ID2)}`, 200, "NEW ✓"]);
+        push({ line: 8, layers: path("svc", "cli"),
+          req: { m: "GET", url: `/orders/${ID2}`, body: "(тела нет)" },
+          res: { code: 200, body: `{"status": "NEW", ...}` },
+          msg: `Тест B зелёный. И тесты не зависят от порядка запуска: <b>каждый убирает за собой</b>.` });
+      }
+      return S;
+    },
+  },
+
+  errors: {
+    tab: "Частые ошибки",
+    code: () => [
+      `<span class="cm"># 1. фильтр склеен руками</span>`,
+      `api_client.<span class="fn">get</span>(<span class="s">'/orders?status='</span> + <span class="fn">str</span>(status))   <span class="cm"># status = None</span>`,
+      `<span class="cm"># правильно</span>`,
+      `api_client.<span class="fn">get</span>(<span class="s">'/orders'</span>, params={<span class="s">'status'</span>: status})`,
+      `<span class="cm"># 2. фикстура api вместо auth_api — нет токена</span>`,
+      `api.orders.<span class="fn">list</span>()`,
+      `<span class="cm"># 3. id не UUID</span>`,
+      `auth_api.orders.<span class="fn">get</span>(<span class="s">'abc'</span>)`,
+      `<span class="cm"># 4. чужой ордер (создан пользователем B)</span>`,
+      `auth_api.orders.<span class="fn">cancel</span>(order_of_b[<span class="s">'id'</span>])`,
+    ],
+    wrong: [1, 5, 7, 9],
+    build() {
+      const S = [], hist = [];
+      const push = (x) => S.push({ hist: hist.slice(), state: null, ...x });
+      hist.push(["GET /orders?status=None", 422, "validation_error"]);
+      push({ line: 1, layers: path("svc", "cli"), err: true,
+        req: { m: "GET", url: "/orders?status=None", body: "(тела нет)" },
+        res: { code: 422, body: `{"error": {"code": "validation_error", "details": [{\n  "field": "status",\n  "message": "Input should be 'NEW', 'PARTIALLY_FILLED',\n   'FILLED' or 'CANCELED'"}]}}` },
+        msg: `<b>str(None)</b> — это строка <b>'None'</b>. Стенд получил статус «None», которого нет в списке → <b>422</b>. Ошибка в нашем коде, а выглядит как баг стенда.` });
+      hist.push(["GET /orders", 200, "все ордера"]);
+      push({ line: 3, layers: path("svc", "cli"),
+        req: { m: "GET", url: "/orders", body: "(тела нет)" },
+        res: { code: 200, body: `[ ... ]` },
+        msg: `С <b>params=</b> и status=None requests <b>выкидывает</b> параметр: уходит просто <b>/orders</b>, без фильтра. Проверено на стенде.` });
+      hist.push(["GET /orders (без токена)", 401, "unauthorized"]);
+      push({ line: 5, layers: path("svc", "cli"), err: true, noToken: true,
+        req: { m: "GET", url: "/orders", body: "(тела нет)", noAuth: true },
+        res: { code: 401, body: `{"error": {"code": "unauthorized",\n  "message": "Missing bearer token"}}` },
+        msg: `Фикстура <b>api</b> не логинится, в session.headers нет Authorization → <b>401</b>. Ордера — личные данные, без токена стенд не скажет даже «пусто».` });
+      hist.push(["GET /orders/abc", 422, "validation_error"]);
+      push({ line: 7, layers: path("svc", "cli"), err: true,
+        req: { m: "GET", url: "/orders/abc", body: "(тела нет)" },
+        res: { code: 422, body: `{"error": {"code": "validation_error", "details": [{\n  "field": "order_id",\n  "message": "Input should be a valid UUID ..."}]}}` },
+        msg: `<b>422, а не 404</b>: «abc» вообще не похож на UUID, запрос отбит ещё до поиска в базе. 404 будет только на <b>правильный</b> UUID, которого нет. Для негативного теста бери <b>uuid.uuid4()</b>.` });
+      hist.push(["DELETE /orders/<чужой>", 404, "order_not_found"]);
+      push({ line: 9, layers: path("svc", "delete"), err: true,
+        req: { m: "DELETE", url: `/orders/${ID2}`, body: "(тела нет)" },
+        res: { code: 404, body: `{"error": {"code": "order_not_found",\n  "message": "Order not found"}}` },
+        msg: `Ордер существует, но принадлежит B → <b>404</b>, а не 403. Стенд ищет «ордер с этим id <b>и</b> этим владельцем». Так он не выдаёт чужим, что такой id вообще есть. На собесе: «404 вместо 403 — защита от перебора id».` });
+      return S;
+    },
+  },
+};
+
+const $ = (id) => document.getElementById(id);
+let cur = "life", opts = { dep: "100", price: "10", qty: "1", cleanup: false }, steps = [], k = 0, timer = null;
+
+$("tabs").innerHTML = Object.entries(SCEN).map(([id, s]) => `<button data-id="${id}">${s.tab}</button>`).join("");
+document.querySelectorAll("#tabs button").forEach((b) => b.onclick = () => { cur = b.dataset.id; open(); });
+
+function open() {
+  const s = SCEN[cur];
+  document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("on", b.dataset.id === cur));
+  let html = "";
+  (s.opts || []).forEach(([key, label]) => { html += `<label for="o-${key}">${label}</label><input id="o-${key}" type="text" value="${opts[key]}" autocomplete="off">`; });
+  if (s.toggle) html += `<button id="tg" class="toggle${opts[s.toggle[0]] ? " on" : ""}">${opts[s.toggle[0]] ? "✓ " : ""}${s.toggle[1]}</button>`;
+  $("opts").innerHTML = html;
+  (s.opts || []).forEach(([key]) => $(`o-${key}`).addEventListener("input", (e) => { opts[key] = e.target.value.trim() || "0"; load(); }));
+  if (s.toggle) $("tg").onclick = () => { opts[s.toggle[0]] = !opts[s.toggle[0]]; open(); };
+  load();
+}
+function load() { stop(); steps = SCEN[cur].build(opts); k = 0; render(); }
+function reqHtml(r) {
+  if (!r) return '<span class="t">запрос</span><span class="empty">запроса нет</span>';
+  return `<span class="t">запрос</span><span class="meth">${r.m}</span> ${esc(r.url)}\nAuthorization: ${r.noAuth ? '<span class="st bad">нет</span>' : esc(TOKEN)}\n${esc(r.body)}`;
+}
+function resHtml(r) {
+  if (!r) return '<span class="t">ответ</span><span class="empty">—</span>';
+  return `<span class="t">ответ</span><span class="st ${r.code < 400 ? "ok" : "bad"}">${r.code}</span>\n${esc(r.body)}`;
+}
+function render() {
+  const s = SCEN[cur], st = steps[k], ch = st.changed || [];
+  const code = s.code(opts);
+  $("code").innerHTML = code.map((c, n) => `<div class="ln${(s.wrong || []).includes(n) ? " wrong" : ""}${n === st.line ? " active" : ""}"><span class="no">${n + 1}</span>${c}</div>`).join("");
+  const on = st.layers || [];
+  const order = ["test", "svc", "bal", "cli", "delete", "req", "http"];
+  const name = { test: L.test, svc: "OrderService", bal: "BalanceService", cli: "ApiClient.get/post", delete: "ApiClient.delete", req: L.req, http: L.http };
+  const shown = order.filter((x) => on.includes(x));
+  $("layers").innerHTML = shown.length ? shown.map((x) => `<span class="l on">${name[x]}</span>`).join('<span class="arr">→</span>') : '<span class="empty">—</span>';
+  $("req").innerHTML = reqHtml(st.req);
+  $("res").innerHTML = resHtml(st.res);
+  $("req").classList.toggle("changed", !!st.req);
+  $("res").classList.toggle("changed", !!st.res);
+  let html = "";
+  if (st.state && st.state.bal) {
+    const b = st.state.bal, c = ch.includes("bal");
+    html += `<div class="card"><h3>Баланс USDT</h3><div class="kv${c ? " changed" : ""}"><span>available</span><b>${b.available}</b></div><div class="kv${c ? " changed" : ""}"><span>locked</span><b>${b.locked}</b></div></div>`;
+    html += `<div class="card"><h3>Мои ордера</h3>${st.state.orders.map((r) => `<div class="ord${ch.includes(r.id) ? " changed" : ""}">${short(r.id)} ${r.side} ${r.qty} × ${r.price} <span class="pill ${r.status}">${r.status}</span></div>`).join("") || '<span class="empty">нет</span>'}</div>`;
+  } else if (st.state && st.state.book) {
+    html += `<div class="card" style="grid-column:1/-1"><h3>Стакан ETH-USDT (общий для всех пользователей)</h3>${st.state.book.map((r) => `<div class="ord mine-${r.who.toLowerCase()}${ch.includes(r.id) ? " changed" : ""}"><b>${r.who}</b> ${short(r.id)} ${r.side} ${r.qty} × ${r.price} <span class="pill ${r.status}">${r.status}</span></div>`).join("") || '<span class="empty">пусто</span>'}</div>`;
+  }
+  $("state").innerHTML = html;
+  $("state").hidden = !html;
+  $("msg").innerHTML = st.msg;
+  $("msg").classList.toggle("err", !!st.err);
+  $("stepno").textContent = `шаг ${k + 1} из ${steps.length}`;
+  $("hist").innerHTML = st.hist.map((h, n) => `<tr class="${n === st.hist.length - 1 ? "cur" : ""}"><td>${n + 1}</td><td>${esc(h[0])}</td><td><span class="st ${h[1] < 400 ? "ok" : "bad"}">${h[1]}</span></td><td>${esc(h[2])}</td></tr>`).join("")
+    || '<tr><td colspan="4" style="color:var(--muted)">пока пусто</td></tr>';
+  $("prev").disabled = k === 0;
+  $("next").disabled = k === steps.length - 1;
+}
+function stop() { clearInterval(timer); timer = null; $("play").textContent = "▶ Авто"; }
+$("next").onclick = () => { if (k < steps.length - 1) { k++; render(); } };
+$("prev").onclick = () => { stop(); if (k > 0) { k--; render(); } };
+$("reset").onclick = () => { stop(); k = 0; render(); };
+$("play").onclick = () => {
+  if (timer) return stop();
+  if (k === steps.length - 1) k = 0;
+  $("play").textContent = "❚❚ Пауза";
+  timer = setInterval(() => { if (k < steps.length - 1) { k++; render(); } else stop(); }, 1800);
+};
+document.addEventListener("keydown", (e) => {
+  if (e.target.tagName === "INPUT") return;
+  if (e.key === "ArrowRight") $("next").click();
+  if (e.key === "ArrowLeft") $("prev").click();
+});
+open();
+</script>
+</body>
+</html>
