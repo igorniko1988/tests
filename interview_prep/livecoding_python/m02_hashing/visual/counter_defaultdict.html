@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Counter и defaultdict</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: сверху сценарии, слева «шкаф» (словарь) и переменные, справа код и история */
+:root {
+  --bg: #f3f5f4; --panel: #ffffff; --ink: #17211f; --muted: #5b6965; --line: #d7dedb;
+  --accent: #0d6b5e; --accent-soft: #d5ece7; --hit: #f3c24b; --hit-soft: #fdf0cc;
+  --write: #2f4a8a; --write-soft: #e4e9f5; --swap: #b3261e; --swap-soft: #f8dedb;
+  --code-bg: #1d2523; --code-ink: #dfe7e4; --code-dim: #7f8f8a;
+  --font-body: "Golos Text", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121816; --panel: #1a2220; --ink: #e4ebe8; --muted: #94a39e; --line: #2c3734;
+    --accent: #4fc2ad; --accent-soft: #1f3d37; --hit: #f3c24b; --hit-soft: #3d3219;
+    --write: #a9bdf0; --write-soft: #232d45; --swap: #ff8a80; --swap-soft: #43201d;
+    --code-bg: #0c1110; --code-ink: #dfe7e4; --code-dim: #6c7b76; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121816; --panel: #1a2220; --ink: #e4ebe8; --muted: #94a39e; --line: #2c3734;
+  --accent: #4fc2ad; --accent-soft: #1f3d37; --hit: #f3c24b; --hit-soft: #3d3219;
+  --write: #a9bdf0; --write-soft: #232d45; --swap: #ff8a80; --swap-soft: #43201d;
+  --code-bg: #0c1110; --code-ink: #dfe7e4; --code-dim: #6c7b76; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-body); padding: 24px 16px 40px; }
+.wrap { max-width: 1080px; margin: 0 auto; display: grid; gap: 18px; }
+h1 { font-size: 1.6rem; margin: 0; text-wrap: balance; }
+.sub { color: var(--muted); margin: 4px 0 0; max-width: 76ch; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.tabs button { font-size: .88rem; padding: 6px 12px; }
+.tabs button.on { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.controls label { font-size: .85rem; color: var(--muted); }
+input[type=text] { font: 600 .95rem var(--font-mono); padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--ink); width: 16rem; max-width: 100%; }
+button { font: 500 .95rem var(--font-body); padding: 8px 14px; border-radius: 6px; cursor: pointer; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+button:disabled { opacity: .45; cursor: default; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--hit); outline-offset: 2px; }
+.grid { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 16px; min-width: 0; align-content: start; }
+.eyebrow { font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 6px; }
+.cells { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 24px; }
+.cell { position: relative; display: grid; justify-items: center; }
+.box { min-width: 38px; height: 42px; padding: 0 8px; display: grid; place-items: center; border-radius: 6px; font: 600 1rem var(--font-mono); border: 2px solid var(--line); background: var(--panel); }
+.cell.past .box { background: var(--accent-soft); }
+.cell.cur .box { border-color: var(--hit); box-shadow: 0 0 0 2px var(--hit); }
+.tag { position: absolute; top: -22px; font: 600 .68rem var(--font-mono); padding: 0 5px; border-radius: 4px; background: var(--hit); color: #2a2000; }
+.dicthead { font: .85rem var(--font-mono); color: var(--muted); margin-bottom: 6px; }
+.dict { display: flex; flex-wrap: wrap; gap: 8px; min-height: 60px; align-items: center; }
+.slot { border: 2px solid var(--line); border-radius: 8px; padding: 6px 10px; display: grid; justify-items: center; min-width: 60px; font-family: var(--font-mono); transition: background .25s, border-color .25s; }
+.slot .k { font-weight: 600; }
+.slot .v { font-size: .8rem; color: var(--muted); max-width: 16rem; overflow-wrap: anywhere; text-align: center; }
+.slot.new { border-color: var(--write); background: var(--write-soft); }
+.slot.upd { border-color: var(--hit); background: var(--hit-soft); }
+.slot.ghost { border-style: dashed; border-color: var(--swap); color: var(--swap); background: transparent; }
+.slot.trap { border-color: var(--swap); background: var(--swap-soft); }
+.vars { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 520px) { .vars { grid-template-columns: minmax(0, 1fr); } }
+.var { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; min-width: 0; }
+.var .name { font: .8rem var(--font-mono); color: var(--muted); }
+.var .val { font: 600 1.05rem var(--font-mono); overflow-wrap: anywhere; }
+.var.changed { border-color: var(--hit); background: var(--hit-soft); }
+.msg { border-left: 3px solid var(--accent); padding: 10px 14px; background: var(--accent-soft); border-radius: 0 8px 8px 0; min-height: 4em; }
+.msg.err { border-left-color: var(--swap); background: var(--swap-soft); }
+.msg b { font-family: var(--font-mono); font-size: .92em; }
+.code { background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 14px 0; overflow-x: auto; font: .86rem/1.7 var(--font-mono); }
+.code .ln { display: flex; padding: 0 14px; white-space: pre; border-left: 3px solid transparent; }
+.code .ln .no { color: var(--code-dim); width: 2.2em; flex: none; user-select: none; }
+.code .ln.active { background: rgba(243, 194, 75, .2); border-left-color: var(--hit); }
+.code .ln.inner { color: var(--code-dim); font-style: italic; }
+.code .ln.inner.active { color: var(--code-ink); }
+.kw { color: #f0a36b; } .fn { color: #8fd3c4; } .nu { color: #f3c24b; } .st { color: #b5d88a; } .cm { color: var(--code-dim); }
+.progress { font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+table { border-collapse: collapse; width: 100%; font: .82rem var(--font-mono); }
+th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { color: var(--muted); font-weight: 400; font-family: var(--font-body); }
+tr.cur td { background: var(--hit-soft); }
+.tablewrap { overflow-x: auto; }
+.cmp { overflow-x: auto; }
+.cmp table td, .cmp table th { white-space: normal; min-width: 7rem; }
+.mistake { border-left: 3px solid var(--swap); background: var(--swap-soft); border-radius: 0 8px 8px 0; padding: 10px 14px; font-size: .9rem; }
+.mistake ul { margin: 6px 0 0; padding-left: 1.2em; }
+code { font-family: var(--font-mono); font-size: .9em; }
+@media (prefers-reduced-motion: reduce) { .slot { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Counter и defaultdict: что происходит со словарём на каждом шаге</h1>
+    <p class="sub">Оба — это обычный <b>dict</b> с одной добавкой: они знают, что делать, когда ключа ещё нет. У обычного dict будет <b>KeyError</b>. <b>defaultdict</b> вызывает фабрику, <b>кладёт</b> результат в словарь и возвращает его. <b>Counter</b> возвращает 0 и <b>ничего не кладёт</b>. Переключай сценарии и смотри на «шкаф».</p>
+  </header>
+
+  <div class="tabs" id="tabs"></div>
+  <div class="controls" id="inputrow">
+    <label for="inp" id="inplabel">word</label>
+    <input id="inp" type="text" autocomplete="off" spellcheck="false">
+  </div>
+  <div class="controls">
+    <button id="prev">← Назад</button>
+    <button id="next" class="primary">Шаг →</button>
+    <button id="play">▶ Авто</button>
+    <button id="reset">В начало</button>
+  </div>
+
+  <div class="grid">
+    <section class="panel">
+      <div id="seqwrap">
+        <p class="eyebrow">Что перебираем</p>
+        <div class="cells" id="cells"></div>
+      </div>
+      <div>
+        <p class="eyebrow">Шкаф (словарь): синий — новый ключ, жёлтый — изменён, красный пунктир — ключа нет</p>
+        <div id="dicts"></div>
+      </div>
+      <div class="vars">
+        <div class="var" id="v-a"><div class="name">—</div><div class="val">—</div></div>
+        <div class="var" id="v-b"><div class="name">—</div><div class="val">—</div></div>
+        <div class="var" id="v-c"><div class="name">—</div><div class="val">—</div></div>
+      </div>
+      <div class="msg" id="msg"></div>
+      <div class="progress" id="stepno"></div>
+    </section>
+
+    <section class="panel">
+      <div>
+        <p class="eyebrow">Код (серым курсивом — что Python делает внутри)</p>
+        <div class="code" id="code"></div>
+      </div>
+      <div>
+        <p class="eyebrow">История шагов</p>
+        <div class="tablewrap"><table><thead id="hhead"></thead><tbody id="hist"></tbody></table></div>
+      </div>
+    </section>
+  </div>
+
+  <section class="panel">
+    <p class="eyebrow">Шпаргалка: отсутствующий ключ</p>
+    <div class="cmp"><table>
+      <thead><tr><th></th><th>dict</th><th>defaultdict(int)</th><th>Counter</th></tr></thead>
+      <tbody>
+        <tr><td><code>d['z']</code></td><td>KeyError</td><td>0, и <b>'z': 0 появляется</b> в словаре</td><td>0, словарь не меняется</td></tr>
+        <tr><td><code>d.get('z')</code></td><td>None</td><td>None, не создаёт ключ</td><td>None, не создаёт ключ</td></tr>
+        <tr><td><code>'z' in d</code></td><td>False</td><td>False, не создаёт ключ</td><td>False</td></tr>
+        <tr><td><code>d['z'] += 1</code></td><td>KeyError</td><td>'z': 1</td><td>'z': 1</td></tr>
+        <tr><td>Чем полезен</td><td>всё руками через get</td><td>любая фабрика: <code>list</code>, <code>set</code>, <code>int</code></td><td>подсчёт, <code>most_common</code>, <code>+ - &amp; |</code></td></tr>
+      </tbody>
+    </table></div>
+    <div class="mistake"><b>Где обычно ошибаются</b>
+      <ul>
+        <li><code>defaultdict(0)</code> вместо <code>defaultdict(int)</code>. Нужна функция, которую можно вызвать без аргументов, а не значение. <code>int()</code> возвращает 0, <code>list()</code> — <code>[]</code>. С <code>0</code> будет TypeError.</li>
+        <li>Проверка <code>if dd[x]:</code> у defaultdict <b>создаёт</b> ключ x. Словарь «сам» растёт, а <code>len(dd)</code> врёт. Проверяй через <code>x in dd</code>.</li>
+        <li>Ждут, что <code>Counter</code> выдаст KeyError на чужом ключе. Он вернёт 0, это удобно, но надо помнить.</li>
+        <li><code>Counter == Counter</code> сравнивает как словари: порядок не важен. Поэтому <code>Counter(s) == Counter(t)</code> — готовая проверка анаграмм.</li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+<script>
+const esc = (c) => String(c).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+const q = (v) => typeof v === "string" ? `'${v}'` : Array.isArray(v) ? `[${v.map(q).join(", ")}]` : String(v);
+
+// Каждый сценарий: код, разбор входа и генератор шагов.
+// Шаг: строка кода, словари [{name, entries, hl, kind, ghost}], i (позиция в seq), vars, msg, hist
+const SCEN = {
+  get: {
+    tab: "dict + get",
+    label: "word", def: "banana",
+    head: ["ch", "counts.get(ch, 0)", "после"],
+    code: [
+      'counts = {}',
+      '<span class="kw">for</span> ch <span class="kw">in</span> word:',
+      '    counts[ch] = counts.<span class="fn">get</span>(ch, <span class="nu">0</span>) + <span class="nu">1</span>',
+      '<span class="fn">print</span>(counts)',
+    ],
+    build(word) {
+      const S = [], hist = [], d = new Map();
+      const push = (o) => S.push({ hist: hist.slice(), dicts: [{ name: "counts = {}", entries: [...d], ...o.dd }], ...o });
+      push({ line: 0, i: null, vars: {}, msg: `<b>counts = {}</b> — обычный пустой словарь. Ключа нет → <b>counts[ch]</b> упадёт с KeyError, поэтому читаем через <b>get</b>.` });
+      [...word].forEach((ch, i) => {
+        push({ line: 1, i, vars: { ch }, msg: `<b>ch = '${esc(ch)}'</b>.` });
+        const old = d.get(ch);
+        push({ line: 2, i, vars: { ch, "get(ch, 0)": old ?? 0 }, dd: old === undefined ? { ghost: ch } : { hl: ch, kind: "upd" },
+          msg: old === undefined
+            ? `<b>counts.get('${esc(ch)}', 0)</b>: ключа нет, get вернул запасное значение <b>0</b>. Сам get словарь не меняет.`
+            : `<b>counts.get('${esc(ch)}', 0)</b>: ключ есть, get вернул <b>${old}</b>.` });
+        d.set(ch, (old ?? 0) + 1);
+        hist.push([q(ch), old ?? 0, d.get(ch)]);
+        push({ line: 2, i, vars: { ch, "get(ch, 0)": old ?? 0, "counts[ch]": d.get(ch) }, dd: { hl: ch, kind: old === undefined ? "new" : "upd" },
+          msg: `<b>counts['${esc(ch)}'] = ${old ?? 0} + 1</b> → ${d.get(ch)}. Запись в словарь делаем мы сами, явно.` });
+      });
+      push({ line: 3, i: null, vars: {}, msg: `Итог: <b>${esc(fmt(d))}</b>. Работает везде, но get + 1 надо писать руками. Ниже два способа короче.` });
+      return S;
+    },
+  },
+  dd: {
+    tab: "defaultdict(int)",
+    label: "word", def: "banana",
+    head: ["ch", "ключ был?", "после"],
+    code: [
+      '<span class="kw">from</span> collections <span class="kw">import</span> defaultdict',
+      'counts = <span class="fn">defaultdict</span>(<span class="fn">int</span>)   <span class="cm"># int — фабрика, НЕ вызываем</span>',
+      '<span class="kw">for</span> ch <span class="kw">in</span> word:',
+      '    counts[ch] += <span class="nu">1</span>',
+      '<span class="cm">    #   внутри: ключа нет → __missing__(ch)</span>',
+      '<span class="cm">    #     value = int()  → 0</span>',
+      '<span class="cm">    #     counts[ch] = 0, потом += 1</span>',
+      '<span class="fn">print</span>(<span class="fn">dict</span>(counts))',
+    ],
+    inner: [4, 5, 6],
+    build(word) {
+      const S = [], hist = [], d = new Map();
+      const push = (o) => S.push({ hist: hist.slice(), dicts: [{ name: "counts = defaultdict(int)", entries: [...d], ...o.dd }], ...o });
+      push({ line: 0, i: null, vars: {}, msg: `defaultdict живёт в модуле <b>collections</b>, его надо импортировать.` });
+      push({ line: 1, i: null, vars: { "default_factory": "int" }, msg: `<b>defaultdict(int)</b>: словарь запоминает <b>функцию</b> int. Он её не вызывает сейчас — вызовет потом, когда попросят ключ, которого нет. Пишем <b>int</b>, а не <b>int()</b> и не <b>0</b>.` });
+      [...word].forEach((ch, i) => {
+        push({ line: 2, i, vars: { ch }, msg: `<b>ch = '${esc(ch)}'</b>.` });
+        const had = d.has(ch);
+        if (!had) {
+          push({ line: 4, i, vars: { ch, "ключ есть?": "нет" }, dd: { ghost: ch }, msg: `<b>counts['${esc(ch)}']</b>: ключа нет. Обычный dict тут упал бы с KeyError, а defaultdict вызывает свой метод <b>__missing__('${esc(ch)}')</b>.` });
+          push({ line: 5, i, vars: { ch, "ключ есть?": "нет", "int()": 0 }, dd: { ghost: ch }, msg: `__missing__ вызывает фабрику: <b>int()</b> → <b>0</b>. Так int() работает всегда: без аргументов возвращает ноль.` });
+          d.set(ch, 0);
+          push({ line: 6, i, vars: { ch, "ключ есть?": "создан", "counts[ch]": 0 }, dd: { hl: ch, kind: "new" }, msg: `Ноль <b>кладётся в словарь</b>: появился ключ '${esc(ch)}': 0. Это главное отличие от get и от Counter.` });
+        }
+        d.set(ch, d.get(ch) + 1);
+        hist.push([q(ch), had ? "да" : "нет → int()", d.get(ch)]);
+        push({ line: 3, i, vars: { ch, "ключ есть?": had ? "да" : "создан", "counts[ch]": d.get(ch) }, dd: { hl: ch, kind: had ? "upd" : "new" },
+          msg: had ? `Ключ '${esc(ch)}' уже есть, фабрика не нужна: <b>${d.get(ch) - 1} + 1 = ${d.get(ch)}</b>.` : `Теперь <b>+= 1</b>: 0 + 1 = <b>1</b>.` });
+      });
+      push({ line: 7, i: null, vars: {}, msg: `Итог: <b>${esc(fmt(d))}</b>. print(counts) показал бы <b>defaultdict(&lt;class 'int'&gt;, {...})</b>, поэтому оборачиваем в dict().` });
+      return S;
+    },
+  },
+  counter: {
+    tab: "Counter",
+    label: "word", def: "banana",
+    head: ["ch", "было", "после"],
+    code: [
+      '<span class="kw">from</span> collections <span class="kw">import</span> Counter',
+      'c = <span class="fn">Counter</span>(word)',
+      '<span class="cm">#   внутри: for ch in word:</span>',
+      '<span class="cm">#               c[ch] = c.get(ch, 0) + 1</span>',
+      '<span class="fn">print</span>(c[<span class="st">\'a\'</span>], c[<span class="st">\'z\'</span>])',
+      '<span class="fn">print</span>(c.<span class="fn">most_common</span>(<span class="nu">2</span>))',
+    ],
+    inner: [2, 3],
+    build(word) {
+      const S = [], hist = [], d = new Map();
+      const push = (o) => S.push({ hist: hist.slice(), dicts: [{ name: "c = Counter(word)", entries: [...d], ...o.dd }], ...o });
+      push({ line: 0, i: null, vars: {}, msg: `Counter тоже из <b>collections</b>. Это подкласс dict: у него есть всё, что у словаря, плюс методы для подсчёта.` });
+      push({ line: 1, i: null, vars: { word: `'${word}'` }, msg: `<b>Counter(word)</b> — одна строка. Внутри тот же цикл, что в способе с get. Посмотрим его по шагам.` });
+      [...word].forEach((ch, i) => {
+        const old = d.get(ch) ?? 0;
+        push({ line: 2, i, vars: { ch }, msg: `Внутренний цикл Counter: <b>ch = '${esc(ch)}'</b>.` });
+        d.set(ch, old + 1);
+        hist.push([q(ch), old, old + 1]);
+        push({ line: 3, i, vars: { ch, "c[ch]": old + 1 }, dd: { hl: ch, kind: old ? "upd" : "new" }, msg: `<b>c['${esc(ch)}'] = ${old} + 1</b> → ${old + 1}.` });
+      });
+      const a = d.get("a") ?? 0, z = d.get("z") ?? 0;
+      push({ line: 4, i: null, vars: { "c['a']": a, "c['z']": z }, dd: d.has("z") ? { hl: "z", kind: "upd" } : { ghost: "z" },
+        msg: `<b>c['a']</b> → ${a}. <b>c['z']</b> → ${z}${d.has("z") ? "" : ": ключа нет, но Counter <b>не падает</b> и <b>не добавляет</b> 'z' в словарь (его __missing__ просто возвращает 0). Посмотри: шкаф не изменился"}.` });
+      const top = [...d].sort((x, y) => y[1] - x[1]).slice(0, 2);
+      push({ line: 5, i: null, vars: { "most_common(2)": top.map(([k, v]) => `('${k}', ${v})`).join(", ") },
+        msg: `<b>most_common(2)</b> — список пар (ключ, количество) от большего к меньшему. При равных количествах первым идёт тот, кто встретился раньше. Без аргумента вернёт все пары.` });
+      return S;
+    },
+  },
+  trap: {
+    tab: "Ловушка: чтение ключа",
+    label: "ключ", def: "z",
+    head: ["словарь", "d[key]", "len после"],
+    code: [
+      'd  = {}',
+      'dd = <span class="fn">defaultdict</span>(<span class="fn">int</span>)',
+      'c  = <span class="fn">Counter</span>()',
+      'd[key]    <span class="cm"># ?</span>',
+      'dd[key]   <span class="cm"># ?</span>',
+      'c[key]    <span class="cm"># ?</span>',
+      '<span class="fn">print</span>(<span class="fn">len</span>(d), <span class="fn">len</span>(dd), <span class="fn">len</span>(c))',
+    ],
+    seq: false,
+    build(raw) {
+      const key = raw.trim() || "z", S = [], hist = [];
+      const D = [], DD = [], C = [];
+      const all = (o = {}) => [
+        { name: "d = {}", entries: D.slice(), ...(o.d || {}) },
+        { name: "dd = defaultdict(int)", entries: DD.slice(), ...(o.dd || {}) },
+        { name: "c = Counter()", entries: C.slice(), ...(o.c || {}) },
+      ];
+      const push = (o) => S.push({ hist: hist.slice(), i: null, dicts: all(o.st), ...o });
+      push({ line: 0, vars: {}, msg: `Три пустых словаря. Сейчас прочитаем ключ <b>'${esc(key)}'</b>, которого нет ни в одном. Сначала скажи сам: что вернёт каждый и что станет с len?` });
+      push({ line: 1, vars: {}, msg: `<b>dd</b> запомнил фабрику int.` });
+      push({ line: 2, vars: {}, msg: `<b>c</b> — пустой Counter.` });
+      hist.push(["d", "KeyError", 0]);
+      push({ line: 3, vars: { "d[key]": "KeyError" }, st: { d: { ghost: key } }, err: true, msg: `<b>d['${esc(key)}']</b> → <b>KeyError: '${esc(key)}'</b>. У обычного dict нет __missing__, поэтому ошибка. Безопасно читать через <b>d.get('${esc(key)}')</b> → None.` });
+      DD.push([key, 0]);
+      hist.push(["dd", "0", 1]);
+      push({ line: 4, vars: { "d[key]": "KeyError", "dd[key]": 0 }, st: { dd: { hl: key, kind: "trap" } }, err: true, msg: `<b>dd['${esc(key)}']</b> → <b>0</b>, но мы только ЧИТАЛИ, а в словаре появился ключ '${esc(key)}': 0. Это ловушка: после <b>if dd[x]:</b> словарь растёт сам.` });
+      hist.push(["c", "0", 0]);
+      push({ line: 5, vars: { "d[key]": "KeyError", "dd[key]": 0, "c[key]": 0 }, st: { c: { ghost: key } }, msg: `<b>c['${esc(key)}']</b> → <b>0</b>, и Counter остаётся пустым. Его __missing__ возвращает 0, но не записывает его в словарь.` });
+      push({ line: 6, vars: { "len(d)": 0, "len(dd)": 1, "len(c)": 0 }, msg: `Ответ: <b>0 1 0</b>. Только defaultdict создал ключ при чтении. Проверять наличие ключа у любого из трёх правильно через <b>key in d</b>: это никогда ничего не создаёт.` });
+      return S;
+    },
+  },
+  group: {
+    tab: "defaultdict(list): группировка",
+    label: "words", def: "cat, dog, ox, bird, ant, fish",
+    head: ["w", "len(w)", "группа после"],
+    code: [
+      'groups = <span class="fn">defaultdict</span>(<span class="fn">list</span>)',
+      '<span class="kw">for</span> w <span class="kw">in</span> words:',
+      '    groups[<span class="fn">len</span>(w)].<span class="fn">append</span>(w)',
+      '<span class="cm">    #   ключа нет → list() → [] кладётся в словарь</span>',
+      '<span class="cm">    #   потом .append(w) в этот самый список</span>',
+      '<span class="fn">print</span>(<span class="fn">dict</span>(groups))',
+    ],
+    inner: [3, 4],
+    parse: (s) => s.split(",").map((x) => x.trim()).filter(Boolean).slice(0, 8),
+    build(words) {
+      const S = [], hist = [], d = new Map();
+      const push = (o) => S.push({ hist: hist.slice(), dicts: [{ name: "groups = defaultdict(list)", entries: [...d].map(([k, v]) => [k, v.slice()]), ...o.dd }], ...o });
+      push({ line: 0, i: null, vars: { default_factory: "list" }, msg: `Фабрика — <b>list</b>. Для отсутствующего ключа будет вызвано <b>list()</b> → <b>[]</b>. Так собирают группы: по длине, по первой букве, по отсортированным буквам (это пригодится в t05).` });
+      words.forEach((w, i) => {
+        const key = w.length;
+        push({ line: 1, i, vars: { w: `'${w}'`, "len(w)": key }, msg: `<b>w = '${esc(w)}'</b>, ключ группы — длина <b>${key}</b>.` });
+        const had = d.has(key);
+        if (!had) {
+          push({ line: 3, i, vars: { w: `'${w}'`, "len(w)": key, "list()": "[]" }, dd: { ghost: key }, msg: `Ключа <b>${key}</b> нет → __missing__ → <b>list()</b> → пустой список <b>[]</b>, и он сразу кладётся в словарь.` });
+          d.set(key, []);
+        }
+        d.get(key).push(w);
+        hist.push([q(w), key, q(d.get(key).slice())]);
+        push({ line: had ? 2 : 4, i, vars: { w: `'${w}'`, "len(w)": key, [`groups[${key}]`]: q(d.get(key)) }, dd: { hl: key, kind: had ? "upd" : "new" },
+          msg: had ? `Ключ ${key} уже есть: <b>.append('${esc(w)}')</b> в существующий список.` : `<b>.append('${esc(w)}')</b> в только что созданный список.` });
+      });
+      push({ line: 5, i: null, vars: {}, msg: `Итог: <b>${esc(fmtList(d))}</b>. Без defaultdict пришлось бы писать <b>if key not in groups: groups[key] = []</b> перед каждым append (или <b>groups.setdefault(key, []).append(w)</b>).` });
+      return S;
+    },
+  },
+};
+function fmt(d) { return "{" + [...d].map(([k, v]) => `${q(k)}: ${v}`).join(", ") + "}"; }
+function fmtList(d) { return "{" + [...d].map(([k, v]) => `${k}: ${q(v)}`).join(", ") + "}"; }
+
+const $ = (id) => document.getElementById(id);
+let cur = "get", seq = [], steps = [], k = 0, timer = null;
+const inputs = {};
+
+$("tabs").innerHTML = Object.entries(SCEN).map(([id, s]) => `<button data-id="${id}">${s.tab}</button>`).join("");
+document.querySelectorAll("#tabs button").forEach((b) => b.onclick = () => { inputs[cur] = $("inp").value; cur = b.dataset.id; open(); });
+
+function open() {
+  const s = SCEN[cur];
+  document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("on", b.dataset.id === cur));
+  $("inplabel").textContent = s.label;
+  $("inp").value = inputs[cur] ?? s.def;
+  $("hhead").innerHTML = `<tr>${s.head.map((h) => `<th>${h}</th>`).join("")}</tr>`;
+  $("seqwrap").hidden = s.seq === false;
+  load();
+}
+function load() {
+  stop();
+  const s = SCEN[cur], raw = $("inp").value;
+  if (s.seq === false) { seq = []; steps = s.build(raw.slice(0, 10)); }
+  else if (s.parse) { seq = s.parse(raw); steps = s.build(seq); }
+  else { seq = [...raw.slice(0, 14)]; steps = s.build(seq.join("")); }
+  k = 0; render();
+}
+function setVar(slot, entry, prevVars) {
+  const el = $(slot);
+  if (!entry) { el.style.visibility = "hidden"; return; }
+  el.style.visibility = "visible";
+  const [name, val] = entry;
+  el.querySelector(".name").textContent = name;
+  el.querySelector(".val").textContent = typeof val === "string" && name === "ch" ? `'${val}'` : val;
+  el.classList.toggle("changed", k > 0 && (!prevVars || String(prevVars[name]) !== String(val)));
+}
+function render() {
+  const s = SCEN[cur], st = steps[k], pv = steps[k - 1];
+  $("code").innerHTML = s.code.map((c, n) => `<div class="ln${(s.inner || []).includes(n) ? " inner" : ""}${n === st.line ? " active" : ""}"><span class="no">${n + 1}</span>${c}</div>`).join("");
+  $("cells").innerHTML = seq.map((v, d) => {
+    const cls = ["cell"];
+    if (st.i !== null && d < st.i) cls.push("past");
+    if (st.i === d) cls.push("cur");
+    return `<div class="${cls.join(" ")}">${st.i === d ? '<span class="tag">→</span>' : ""}<div class="box">${esc(v)}</div></div>`;
+  }).join("") || '<span style="color:var(--muted);font-style:italic">пусто</span>';
+  $("dicts").innerHTML = st.dicts.map((dc) => {
+    const slots = dc.entries.map(([key, val]) => {
+      const cls = ["slot"];
+      if (dc.hl === key) cls.push(dc.kind);
+      return `<div class="${cls.join(" ")}"><span class="k">${esc(q(key))}</span><span class="v">→ ${esc(Array.isArray(val) ? q(val) : val)}</span></div>`;
+    });
+    if (dc.ghost !== undefined && !dc.entries.some(([key]) => key === dc.ghost)) slots.push(`<div class="slot ghost"><span class="k">${esc(q(dc.ghost))}?</span><span class="v">нет</span></div>`);
+    return `<div style="margin-bottom:12px"><div class="dicthead">${esc(dc.name)}  (len ${dc.entries.length})</div><div class="dict">${slots.join("") || '<span style="color:var(--muted);font-style:italic">{} — пусто</span>'}</div></div>`;
+  }).join("");
+  const vs = Object.entries(st.vars);
+  ["v-a", "v-b", "v-c"].forEach((id, n) => setVar(id, vs[n], pv && pv.vars));
+  $("msg").innerHTML = st.msg;
+  $("msg").classList.toggle("err", !!st.err);
+  $("stepno").textContent = `шаг ${k + 1} из ${steps.length}`;
+  $("hist").innerHTML = st.hist.map((h, n) => `<tr class="${n === st.hist.length - 1 ? "cur" : ""}">${h.map((c) => `<td>${esc(c)}</td>`).join("")}</tr>`).join("")
+    || `<tr><td colspan="${s.head.length}" style="color:var(--muted)">пока пусто</td></tr>`;
+  $("prev").disabled = k === 0;
+  $("next").disabled = k === steps.length - 1;
+}
+function stop() { clearInterval(timer); timer = null; $("play").textContent = "▶ Авто"; }
+$("next").onclick = () => { if (k < steps.length - 1) { k++; render(); } };
+$("prev").onclick = () => { stop(); if (k > 0) { k--; render(); } };
+$("reset").onclick = () => { stop(); k = 0; render(); };
+$("play").onclick = () => {
+  if (timer) return stop();
+  if (k === steps.length - 1) k = 0;
+  $("play").textContent = "❚❚ Пауза";
+  timer = setInterval(() => { if (k < steps.length - 1) { k++; render(); } else stop(); }, 1200);
+};
+$("inp").addEventListener("input", load);
+document.addEventListener("keydown", (e) => {
+  if (e.target.tagName === "INPUT") return;
+  if (e.key === "ArrowRight") $("next").click();
+  if (e.key === "ArrowLeft") $("prev").click();
+});
+open();
+</script>
+</body>
+</html>
