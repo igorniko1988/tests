@@ -37,6 +37,7 @@ tests = [
     "pixelmatch>=0.4.0",
     "axe-playwright-python>=0.1.8",
     "selenium>=4.51.0",
+    "jsonschema>=4.26.0",
 ]
 dev = [
     { include-group = "service" },

@@ -1,20 +1,14 @@
 from framework.transport.api_client import ApiClient
 from uuid import uuid4
+from framework.models.order import CreateOrder, Order
 
 
 class OrderService:
     def __init__(self, api_client: ApiClient):
         self.api_client = api_client
 
-    def create(self, symbol, side, type, price, quantity):
-        data = {
-            'symbol': symbol,
-            'side': side,
-            'type': type,
-            'price': price,
-            'quantity': quantity
-        }
-        return self.api_client.post('/orders', json=data, headers={'Idempotency-Key': str(uuid4())})
+    def create(self, order: CreateOrder, exclude=None):
+        return self.api_client.post('/orders', json=order.model_dump(exclude=exclude), headers={'Idempotency-Key': str(uuid4())})
 
     def list(self, status = None):
         return self.api_client.get('/orders', params={'status': status})

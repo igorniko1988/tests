@@ -3,10 +3,11 @@
 Фреймворк пишет пользователь, Claude ставит задачи и ревьюит (см. `CLAUDE.md`).
 Тесты — `api_tests/`, запуск `uv run pytest`, отчёт `uv run pytest --alluredir=allure-results` → `allure serve allure-results`.
 
-## Где остановились (2026-10-25)
+## Где остановились (2026-10-26)
 
-**Этап 2, шаг 2.2 выдан** — модель запроса `CreateOrder` с умолчаниями, `OrderService.create(order: CreateOrder)`
-через `model_dump(mode='json')`, в тестах `create(CreateOrder())` / `CreateOrder(price=Decimal('10'))`.
+**Этап 3, шаг 3.1 выдан** — `funded_api` (депозит USDT и ETH), фабрика-фикстура `create_order(**fields)` → `Order`,
+тесты на ордера переведены на неё, проверка `uv run pytest -n 4`.
+2.4 почти готово: в `test_contract.py` нужно `CreateOrder()` со скобками.
 
 Хвосты:
 - 2.1: `Balance` без `strict`, `available`/`locked` — `Decimal`, `asset` — `Literal`; в `test_cancel_orders` сравнивать `Decimal('200')`.
@@ -23,9 +24,13 @@
 ## Этап 2. Модели и контракты — идёт
 
 - 2.1 точные типы в моделях ответов (UUID, Decimal, datetime, Literal), lax + `extra='forbid'` — почти готово
-- 2.2 модели запросов с умолчаниями — **выдан**
-- 2.3 негативные тесты контракта: 422 на каждое неверное поле через `parametrize`
-- 2.4 сверка с OpenAPI-схемой стенда (`/openapi.json`)
+- 2.2 модели запросов с умолчаниями (`CreateOrder` на строках, `exclude` для пропуска поля) — ✅
+- 2.3 негативные тесты контракта: 422 на каждое неверное поле через `parametrize` — 2 случая, хвост: больше полей и границы
+- 2.4 сверка с OpenAPI: `framework/contract.py`, `assert_matches_schema(data, 'OrderOut')`; эталон можно хранить в `framework/openapi.json`
+
+## Этап 3. Данные и изоляция — идёт
+
+- 3.1 `funded_api` + фабрика `create_order`, параллельный прогон `-n 4` — **выдан**
 
 ## Дальше
 

@@ -4,6 +4,15 @@ from datetime import datetime
 from typing import Literal
 from decimal import Decimal
 
+
+class CreateOrder(BaseModel):
+    symbol: str = 'ETH-USDT'
+    side: str = 'BUY'
+    type: str = 'LIMIT'
+    price: str = '1'
+    quantity: str = '1'
+
+
 class Order(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
