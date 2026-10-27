@@ -19,7 +19,7 @@ from exchange.db import SessionLocal, create_schema
 from exchange.deposits import run_deposit_consumer
 from exchange.errors import install_error_handlers
 from exchange.matching import run_matching
-
+from exchange.tracing import current_trace_id, install_tracing
 
 # Одна JSON-строка на запрос: по request_id запрос находится в логах (docker compose logs | grep <id>)
 access_log = logging.getLogger("exchange.access")
@@ -67,6 +67,9 @@ async def request_id(request: Request, call_next):
         elif response.status_code >= 400:
             entry["level"] = "WARNING"
         response.headers["X-Request-ID"] = rid
+        if trace_id := current_trace_id():
+            entry["trace_id"] = trace_id
+            response.headers["X-Trace-ID"] = trace_id
         return response
     finally:
         entry["duration_ms"] = round((time.perf_counter() - start) * 1000, 1)
@@ -93,5 +96,7 @@ app.include_router(orderbook.router)
 app.include_router(webhooks.router)
 app.include_router(admin.router)
 app.include_router(signed.router)
+
+install_tracing(app)
 
 app.mount("/app", StaticFiles(directory=Path(__file__).parent / "web", html=True), name="web")

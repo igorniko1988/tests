@@ -108,6 +108,8 @@
   Подписанный API как у бирж: `POST /api-keys` → `{key, secret}`, `GET /v1/account`, `POST /v1/orders` —
   заголовок `X-API-KEY`, параметры в query, последним `signature` = HMAC-SHA256(secret, query без signature),
   `timestamp` в мс и `recvWindow` (по умолчанию 5000); `GET /time` — время сервера.
+- Трейсы: OpenTelemetry → Jaeger (UI http://localhost:16686, сервис `exchange`). Стенд продолжает
+  входящий `traceparent`, отдаёт `X-Trace-ID` и пишет `trace_id` в строку лога. Без `EXCHANGE_OTEL_ENDPOINT` выключено.
 - Stage-экземпляр: `docker compose --profile stage up -d` → http://localhost:8081.
   Своя база и JWT-секрет, 5% сбоев (`EXCHANGE_STAGE_CHAOS_RATE`). Обычный `up` его не трогает.
 

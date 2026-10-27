@@ -22,6 +22,7 @@ services:
       EXCHANGE_KAFKA_BOOTSTRAP: redpanda:9092
       EXCHANGE_RABBITMQ_URL: amqp://exchange:exchange@rabbitmq:5672/
       EXCHANGE_PRICE_FEED_URL: http://toxiproxy:8666
+      EXCHANGE_OTEL_ENDPOINT: http://jaeger:4318
     ports:
       - "8080:8000"
     depends_on:
@@ -74,6 +75,12 @@ services:
       - "8474:8474"
     depends_on:
       - price-feed
+
+  # Трейсы OpenTelemetry: стенд шлёт OTLP на jaeger:4318, UI — http://localhost:16686
+  jaeger:
+    image: jaegertracing/all-in-one:1.62.0
+    ports:
+      - "16686:16686"
 
   # Второй экземпляр стенда, имитирует общий stage: своя база, свой секрет,
   # немного нестабильности. Запуск: docker compose --profile stage up -d

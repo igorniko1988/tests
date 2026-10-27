@@ -17,6 +17,10 @@ service = [
     "email-validator>=2.3.0",
     "aiokafka>=0.14.0",
     "aio-pika>=10.2.1",
+    "opentelemetry-sdk>=1.45.1",
+    "opentelemetry-exporter-otlp-proto-http>=1.45.1",
+    "opentelemetry-instrumentation-fastapi>=0.66b1",
+    "opentelemetry-instrumentation-asyncpg>=0.66b1",
 ]
 # Зависимости фреймворка тестов
 tests = [

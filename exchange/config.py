@@ -19,6 +19,8 @@ class ServiceSettings(BaseSettings):
     webhook_retry_delay: float = 1.0
     kafka_bootstrap: str = ""
     rabbitmq_url: str = ""
+    otel_endpoint: str = ""
+    otel_service_name: str = "exchange"
     price_feed_url: str = ""
     price_feed_timeout: float = 2.0
     price_max_age: float = 10.0
