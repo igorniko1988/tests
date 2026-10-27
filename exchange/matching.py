@@ -15,6 +15,7 @@ from exchange.api.balances import lock_balance
 from exchange.config import settings
 from exchange.db import Order, OrderSide, OrderStatus, SessionLocal
 from exchange.orderbook import publish
+from exchange.webhooks import notify
 from exchange.schemas import SYMBOLS
 
 log = logging.getLogger(__name__)
@@ -66,6 +67,7 @@ async def _trade(session, buy: Order, sell: Order) -> None:
 async def match_once() -> None:
     async with SessionLocal() as session:
         changed = set()
+        filled = []
         for symbol in SYMBOLS:
             while True:
                 buy = await _best(session, symbol, OrderSide.BUY)
@@ -75,9 +77,12 @@ async def match_once() -> None:
                 await _trade(session, buy, sell)
                 await session.flush()
                 changed.add(symbol)
+                filled += [o for o in (buy, sell) if o.status is OrderStatus.FILLED]
         await session.commit()
     for symbol in changed:
         await publish(symbol)
+    for order in filled:
+        notify(order, "order.filled")
 
 
 async def run_matching() -> None:

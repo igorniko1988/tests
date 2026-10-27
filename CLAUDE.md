@@ -83,6 +83,10 @@
   `kubectl -n exchange port-forward svc/exchange 8082:8000`. Образ — локальный `api_learning-exchange:latest`.
 - WebSocket `/ws/orderbook/{symbol}`: сначала `snapshot`, затем `update` на каждое изменение стакана;
   `sequence` растёт на 1. Неизвестный символ — закрытие с кодом 4004.
+- Вебхуки: `POST /webhooks {url}` → `secret`; на `order.filled` и `order.canceled` стенд шлёт POST
+  с `X-Event-Id`, `X-Event-Type`, `X-Delivery-Attempt` и `X-Signature: sha256=<HMAC тела секретом>`.
+  Не 2xx — повтор через 1, 2, 4 с (всего 4 попытки, `EXCHANGE_WEBHOOK_MAX_ATTEMPTS`). Из Docker
+  приёмник на хосте доступен как `host.docker.internal`.
 - Stage-экземпляр: `docker compose --profile stage up -d` → http://localhost:8081.
   Своя база и JWT-секрет, 5% сбоев (`EXCHANGE_STAGE_CHAOS_RATE`). Обычный `up` его не трогает.
 

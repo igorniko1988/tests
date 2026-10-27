@@ -12,7 +12,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 
-from exchange import orderbook
+from exchange import orderbook, webhooks
 from exchange.api import auth, balances, orders
 from exchange.chaos import install_chaos
 from exchange.db import SessionLocal, create_schema
@@ -82,5 +82,6 @@ app.include_router(auth.router)
 app.include_router(balances.router)
 app.include_router(orders.router)
 app.include_router(orderbook.router)
+app.include_router(webhooks.router)
 
 app.mount("/app", StaticFiles(directory=Path(__file__).parent / "web", html=True), name="web")

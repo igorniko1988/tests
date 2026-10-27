@@ -82,3 +82,16 @@ class OrderOut(BaseModel):
     status: OrderStatus
     created_at: datetime
     updated_at: datetime
+
+
+class CreateWebhookRequest(BaseModel):
+    url: str = Field(pattern="^https?://", max_length=2048)
+
+
+class WebhookOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    url: str
+    secret: str
+    created_at: datetime

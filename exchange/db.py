@@ -94,6 +94,18 @@ class IdempotencyKey(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
+class Webhook(Base):
+    """Адрес пользователя, на который стенд шлёт события его ордеров."""
+
+    __tablename__ = "webhooks"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    url: Mapped[str] = mapped_column(String(2048))
+    secret: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
 async def get_session():
     async with SessionLocal() as session:
         yield session
