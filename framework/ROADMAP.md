@@ -55,8 +55,16 @@
 - М2: Pact — по программе в модуле 2 (мы отложили до модуля 6, нужен второй сервис)
 - М2 сценарий: ловим breaking change (поле стало nullable, поменялся enum)
 
+## Модуль 4 — теория выдана целиком (инварианты, машина состояний, hypothesis stateful, гонки, идемпотентность, polling, Decimal, пагинация, время); практика — 4.1 выдан
+
+## Модуль 5. Не-REST — идёт
+
+- Теория целиком выдана 2026-10-27 (WebSocket, вебхуки, GraphQL, gRPC, Kafka/RabbitMQ)
+- 5.1 WebSocket стакан: `framework/transport/ws_client.py` (websockets sync), фикстура `orderbook_ws`, snapshot → update, sequence+1, close 4004 — **выдан**;
+  ручка `/ws/orderbook/{symbol}` лежит в ветке `stand/websocket`, в текущий стенд не влита — перенести по просьбе
+
 ## Дальше — по порядку PROGRAM.md
 
-5 не-REST (WebSocket, вебхуки, GraphQL/gRPC, Kafka) · 6 моки и отказы (WireMock/responses, Toxiproxy) ·
+6 моки и отказы (WireMock/responses, Toxiproxy) ·
 7 безопасность (OWASP API Top 10, JWT, HMAC) · 8 производительность в функц. тестах · 9 CI/CD ·
 10 senior · 11–12 Locust
