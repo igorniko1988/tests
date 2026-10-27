@@ -13,7 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 
 from exchange import events, orderbook, webhooks
-from exchange.api import auth, balances, orders
+from exchange.api import admin, auth, balances, orders, signed
 from exchange.chaos import install_chaos
 from exchange.db import SessionLocal, create_schema
 from exchange.deposits import run_deposit_consumer
@@ -33,6 +33,7 @@ logging.getLogger("exchange").propagate = False
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     await create_schema()
+    await auth.ensure_admin()
     tasks = [
         asyncio.create_task(run_matching()),
         asyncio.create_task(events.start_producer()),
@@ -90,5 +91,7 @@ app.include_router(balances.router)
 app.include_router(orders.router)
 app.include_router(orderbook.router)
 app.include_router(webhooks.router)
+app.include_router(admin.router)
+app.include_router(signed.router)
 
 app.mount("/app", StaticFiles(directory=Path(__file__).parent / "web", html=True), name="web")
