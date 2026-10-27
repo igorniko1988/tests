@@ -85,7 +85,11 @@
   Задание: `framework/toxiproxy.py` (add_toxic / disable / reset), фикстура `network`, `test_price_feed_network.py`:
   latency 1500 → 201, latency 5000 → 503 < 3 с, прокси выключен → 503, reset_peer → 503, slicer (струйка) → 503 < 3 с;
   везде баланс не изменился — **выдан** (6.1 и 6.2 на диске ещё не начаты)
-- Pact (из модуля 2) — здесь же, после WireMock
+- 6.4 Pact (из модуля 2): `uv add --group tests pact-python` (4.x), папка `contract_tests/` в testpaths, файл в `contract_tests/pacts/`;
+  consumer — `Pact('aqa-framework','exchange').with_specification('V4')`, взаимодействия «list own orders» (given open order)
+  и «create limit order» (given 100 USDT), клиент — свой `Api(ApiClient(str(srv.url)))`; provider — `Verifier('exchange')`
+  + `add_custom_header('Authorization', ...)` из `auth_api` + `state_handler({...}, teardown=True)`;
+  ломаем контракт полем `fee` → «Actual map is missing the following keys: fee» — **выдан** (проверено Claude, 2 passed ~10 с)
 
 ## Дальше — по порядку PROGRAM.md
 
