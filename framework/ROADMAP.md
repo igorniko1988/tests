@@ -114,6 +114,18 @@
 - 8.3 `load/locustfile.py`: Trader (on_start регистрация+депозит, tasks 3/2/1, name для /orders/{id}),
   SLO в `events.quitting` (fail_ratio ≤ 1%, p95 ≤ 500) → exit code; `--headless -u 20 -r 5 -t 30s --csv --html`
 
+## Модуль 9. CI/CD и надёжность прогонов — выдан
+
+- Стенд `stand/tracing`: OpenTelemetry (FastAPI + asyncpg) → Jaeger :16686, входящий `traceparent`, ответ `X-Trace-ID`,
+  `trace_id` в строке лога; фоновые SQL не шумят (sampler только от входящих запросов)
+- 9.1 `.github/workflows/api.yml`: PR + push main + nightly + dispatch, concurrency, uv cache, compose up + ожидание /health,
+  matrix shard `-n auto` или `pytest-split`, artifacts allure-results/junit, логи стенда при падении, `docker compose down -v`
+- 9.2 защита main: required checks, 1 review, `.github/pull_request_template.md`, `CODEOWNERS`
+- 9.3 `Jenkinsfile` (declarative: stages, parallel, post always/failure, archiveArtifacts, junit, allure) и чтение `.gitlab-ci.yml`
+- 9.4 флейки: `framework/fixtures/tracing` — `traceparent` на каждый тест, при падении ссылка на Jaeger + request_id в Allure;
+  `pytest -p no:randomly --count 20` для поиска флейка, маркер `quarantine` (отдельный необязательный job), без rerun в гейте
+- 9.5 Allure с историей: gh-pages + `allure generate` с копией `history/`, уведомление в Telegram/Slack — обзор, по желанию
+
 ## Дальше — по порядку PROGRAM.md
 
 6 моки и отказы (WireMock/responses, Toxiproxy) ·
