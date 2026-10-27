@@ -3,7 +3,7 @@ import uuid
 from datetime import UTC, datetime
 from decimal import Decimal
 
-from sqlalchemy import JSON, DateTime, Enum, ForeignKey, Numeric, String, UniqueConstraint
+from sqlalchemy import JSON, DateTime, Enum, ForeignKey, Numeric, String, UniqueConstraint, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -30,6 +30,7 @@ class OrderSide(enum.StrEnum):
 
 class OrderType(enum.StrEnum):
     LIMIT = "LIMIT"
+    MARKET = "MARKET"
 
 
 class OrderStatus(enum.StrEnum):
@@ -66,7 +67,7 @@ class Order(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
     symbol: Mapped[str] = mapped_column(String(20))
     side: Mapped[OrderSide] = mapped_column(Enum(OrderSide, native_enum=False))
-    type: Mapped[OrderType] = mapped_column(Enum(OrderType, native_enum=False))
+    type: Mapped[OrderType] = mapped_column(Enum(OrderType, native_enum=False, length=16))
     price: Mapped[Decimal] = mapped_column(AMOUNT)
     quantity: Mapped[Decimal] = mapped_column(AMOUNT)
     filled_quantity: Mapped[Decimal] = mapped_column(AMOUNT, default=Decimal(0))
@@ -124,6 +125,8 @@ async def get_session():
 async def create_schema() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # Миграций нет: старые базы создавались с VARCHAR(5), а MARKET длиннее
+        await conn.execute(text("ALTER TABLE orders ALTER COLUMN type TYPE VARCHAR(16)"))
 
 
 __all__ = [

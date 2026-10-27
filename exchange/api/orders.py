@@ -4,22 +4,34 @@ from decimal import Decimal
 from typing import Annotated
 
 from fastapi import APIRouter, Header
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from exchange.api.balances import lock_balance
 from exchange.api.deps import Session, UserId
-from exchange.db import IdempotencyKey, Order, OrderSide, OrderStatus
+from exchange.db import IdempotencyKey, Order, OrderSide, OrderStatus, OrderType
 from exchange.errors import ApiError
 from exchange.events import build_event, send
 from exchange.orderbook import publish
+from exchange.pricefeed import current_price
 from exchange.webhooks import notify
 from exchange.schemas import SYMBOLS, CreateOrderRequest, OrderOut
 
 router = APIRouter(tags=["orders"])
 
 OPEN_STATUSES = (OrderStatus.NEW, OrderStatus.PARTIALLY_FILLED)
+
+
+def _check_price(body: CreateOrderRequest) -> None:
+    needs_price = body.type is OrderType.LIMIT
+    if needs_price == (body.price is not None):
+        return
+    message = "Field required" if needs_price else "Price must not be set for MARKET order"
+    raise RequestValidationError(
+        [{"loc": ("body", "price"), "msg": message, "type": "value_error"}]
+    )
 
 
 def _funds_to_lock(order: Order) -> tuple[str, object]:
@@ -52,6 +64,7 @@ async def create_order(
     session: Session,
     idempotency_key: Annotated[str | None, Header(max_length=255)] = None,
 ):
+    _check_price(body)
     request_hash = hashlib.sha256(body.model_dump_json().encode()).hexdigest()
     if idempotency_key:
         saved = await _find_key(session, user_id, idempotency_key)
@@ -59,6 +72,9 @@ async def create_order(
             return _replay(saved, request_hash)
 
     order = Order(user_id=user_id, filled_quantity=Decimal(0), **body.model_dump())
+    if body.type is OrderType.MARKET:
+        # Дальше MARKET-ордер живёт в стакане как лимитный по цене провайдера
+        order.price = await current_price(body.symbol)
     asset, amount = _funds_to_lock(order)
     balance = await lock_balance(session, user_id, asset)
     if balance.available < amount:
