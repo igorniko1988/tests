@@ -98,6 +98,9 @@
   (`EXCHANGE_PRICE_FEED_TIMEOUT`, 2 с) или цена старше `EXCHANGE_PRICE_MAX_AGE` (10 с) — 503
   `price_unavailable` / `price_stale`, деньги не блокируются. Цены по умолчанию — `wiremock/mappings/`,
   `POST /__admin/reset` возвращает к ним.
+- Toxiproxy (`localhost:8474`): стенд ходит к провайдеру цен через прокси `price_feed`
+  (`toxiproxy:8666` → `price-feed:8080`). Сбои сети — `POST /proxies/price_feed/toxics`,
+  `POST /reset` убирает все toxics и включает прокси.
 - Stage-экземпляр: `docker compose --profile stage up -d` → http://localhost:8081.
   Своя база и JWT-секрет, 5% сбоев (`EXCHANGE_STAGE_CHAOS_RATE`). Обычный `up` его не трогает.
 

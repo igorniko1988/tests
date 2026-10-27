@@ -21,7 +21,7 @@ services:
       EXCHANGE_CHAOS_RATE: ${EXCHANGE_CHAOS_RATE:-0}
       EXCHANGE_KAFKA_BOOTSTRAP: redpanda:9092
       EXCHANGE_RABBITMQ_URL: amqp://exchange:exchange@rabbitmq:5672/
-      EXCHANGE_PRICE_FEED_URL: http://price-feed:8080
+      EXCHANGE_PRICE_FEED_URL: http://toxiproxy:8666
     ports:
       - "8080:8000"
     depends_on:
@@ -62,6 +62,18 @@ services:
       - ./wiremock:/home/wiremock
     ports:
       - "8089:8080"
+
+  # Сеть между стендом и провайдером цен: стенд → toxiproxy:8666 → price-feed:8080.
+  # Задержки и обрывы: HTTP API http://localhost:8474 (прокси price_feed)
+  toxiproxy:
+    image: ghcr.io/shopify/toxiproxy:2.9.0
+    command: ["-host=0.0.0.0", "-config=/config/toxiproxy.json"]
+    volumes:
+      - ./toxiproxy:/config
+    ports:
+      - "8474:8474"
+    depends_on:
+      - price-feed
 
   # Второй экземпляр стенда, имитирует общий stage: своя база, свой секрет,
   # немного нестабильности. Запуск: docker compose --profile stage up -d
