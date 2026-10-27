@@ -65,7 +65,8 @@ class CreateOrderRequest(BaseModel):
     symbol: str = Field(pattern="^(BTC-USDT|ETH-USDT)$")
     side: OrderSide
     type: OrderType = OrderType.LIMIT
-    price: PositiveAmount
+    # LIMIT — цена обязательна; MARKET — цену не передают, её даёт провайдер цен
+    price: PositiveAmount | None = None
     quantity: PositiveAmount
 
 

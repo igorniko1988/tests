@@ -1,0 +1,20 @@
+{
+  "mappings": [
+    {
+      "request": { "method": "GET", "url": "/prices/ETH-USDT" },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": { "symbol": "ETH-USDT", "price": "2500", "timestamp": "{{now}}" }
+      }
+    },
+    {
+      "request": { "method": "GET", "url": "/prices/BTC-USDT" },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": { "symbol": "BTC-USDT", "price": "60000", "timestamp": "{{now}}" }
+      }
+    }
+  ]
+}

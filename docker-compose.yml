@@ -21,6 +21,7 @@ services:
       EXCHANGE_CHAOS_RATE: ${EXCHANGE_CHAOS_RATE:-0}
       EXCHANGE_KAFKA_BOOTSTRAP: redpanda:9092
       EXCHANGE_RABBITMQ_URL: amqp://exchange:exchange@rabbitmq:5672/
+      EXCHANGE_PRICE_FEED_URL: http://price-feed:8080
     ports:
       - "8080:8000"
     depends_on:
@@ -50,6 +51,17 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+
+  # Внешний провайдер цен для MARKET-ордеров — в тестах это WireMock.
+  # Цены по умолчанию — wiremock/mappings; стабы тестов: http://localhost:8089/__admin
+  price-feed:
+    image: wiremock/wiremock:3.9.1
+    # {{now}} и другие шаблоны в ответах работают во всех стабах
+    command: ["--global-response-templating"]
+    volumes:
+      - ./wiremock:/home/wiremock
+    ports:
+      - "8089:8080"
 
   # Второй экземпляр стенда, имитирует общий stage: своя база, свой секрет,
   # немного нестабильности. Запуск: docker compose --profile stage up -d

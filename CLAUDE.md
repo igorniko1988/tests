@@ -93,6 +93,11 @@
 - RabbitMQ (`localhost:5672`, консоль `:15672`, `exchange`/`exchange`): очередь `deposits`,
   тело `{"user_id", "asset", "amount"}` + обязательный `message_id`; повтор с тем же id не зачисляется,
   битые сообщения уходят в `deposits.dlq`. Без `EXCHANGE_KAFKA_BOOTSTRAP` / `EXCHANGE_RABBITMQ_URL` выключены.
+- Провайдер цен (WireMock `price-feed`, `localhost:8089`, админка `/__admin`): `type: MARKET` без `price`
+  берёт цену из `GET /prices/{symbol}` → `{"symbol", "price", "timestamp"}`. Ошибка, таймаут
+  (`EXCHANGE_PRICE_FEED_TIMEOUT`, 2 с) или цена старше `EXCHANGE_PRICE_MAX_AGE` (10 с) — 503
+  `price_unavailable` / `price_stale`, деньги не блокируются. Цены по умолчанию — `wiremock/mappings/`,
+  `POST /__admin/reset` возвращает к ним.
 - Stage-экземпляр: `docker compose --profile stage up -d` → http://localhost:8081.
   Своя база и JWT-секрет, 5% сбоев (`EXCHANGE_STAGE_CHAOS_RATE`). Обычный `up` его не трогает.
 
