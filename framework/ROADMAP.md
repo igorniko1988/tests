@@ -81,7 +81,10 @@
   Задание: `framework/wiremock.py` (stub / count / reset), фикстура `price_feed` с reset в teardown, `xdist_group('price_feed')`;
   `test_market_order.py`: цена из фида и блокировка, parametrize отказов (500, задержка 5 с, обрыв, старая цена, битое тело) → 503
   + баланс не изменился + ордера нет, count == 1, 422 для MARKET+price и LIMIT без price, 2 своих «правдоподобных, но неправильных» ответа — **выдан**
-- 6.3 Toxiproxy: задержки и обрывы между стендом и провайдером; сценарий «5 с или 500 → ордер не по устаревшей цене»
+- 6.3 Toxiproxy: стенд `stand/toxiproxy` (стенд → toxiproxy:8666 → price-feed:8080, API :8474, прокси `price_feed`).
+  Задание: `framework/toxiproxy.py` (add_toxic / disable / reset), фикстура `network`, `test_price_feed_network.py`:
+  latency 1500 → 201, latency 5000 → 503 < 3 с, прокси выключен → 503, reset_peer → 503, slicer (струйка) → 503 < 3 с;
+  везде баланс не изменился — **выдан** (6.1 и 6.2 на диске ещё не начаты)
 - Pact (из модуля 2) — здесь же, после WireMock
 
 ## Дальше — по порядку PROGRAM.md
