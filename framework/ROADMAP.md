@@ -104,6 +104,16 @@
   будущее > 1 с, replay после окна, recvWindow > 60000 отклоняется, сдвиг часов через `/time`
 - Всё выдано 2026-10-27; ожидаются найденные баги — оформлять как баг-репорты
 
+## Модуль 8. Производительность в функциональных тестах — выдан
+
+- Замеры Claude (1 пользователь, p50/p95 мс): login 237/449, balances 6/7, orders 6/7, create order 177/425;
+  Locust 20 users 20 с: p95 общий 1600 мс (login/register/deposit ~1 с) — SLO 500 мс не проходит, причину ищет пользователь
+- 8.1 бюджеты: `framework/budgets.py`, мягкая проверка в `ApiClient._request` (warning + Allure), жёсткая — `test_performance.py`
+  (прогрев, 20 запросов, p95 < бюджет, маркер `perf`)
+- 8.2 `framework/stats.py` percentile (nearest-rank) + тесты в `framework_tests/`
+- 8.3 `load/locustfile.py`: Trader (on_start регистрация+депозит, tasks 3/2/1, name для /orders/{id}),
+  SLO в `events.quitting` (fail_ratio ≤ 1%, p95 ≤ 500) → exit code; `--headless -u 20 -r 5 -t 30s --csv --html`
+
 ## Дальше — по порядку PROGRAM.md
 
 6 моки и отказы (WireMock/responses, Toxiproxy) ·
