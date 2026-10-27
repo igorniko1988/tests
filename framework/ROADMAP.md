@@ -91,6 +91,19 @@
   + `add_custom_header('Authorization', ...)` из `auth_api` + `state_handler({...}, teardown=True)`;
   ломаем контракт полем `fee` → «Actual map is missing the following keys: fee» — **выдан** (проверено Claude, 2 passed ~10 с)
 
+## Модуль 7. Безопасность API — выдан
+
+- Стенд `stand/security`: refresh-токены с ротацией, rate limit входа (5/60 с → 429), роли и `/admin/*`,
+  `GET/PATCH /me` (профиль, `test_me_returns_current_user` упадёт — модель `User` не знает `role`/`display_name`),
+  подписанный API `/v1/*` (X-API-KEY, HMAC query, timestamp, recvWindow), `/time`
+- 7.1 BOLA/IDOR: чужой ордер get/cancel → 404 (сценарий модуля), parametrize по ручкам
+- 7.2 BFLA + mass assignment: все `/admin/*` обычным пользователем → 403; `PATCH /me` с role/blocked/email не меняет их
+- 7.3 JWT: `framework/tokens.py` (PyJWT, `JWT_SECRET` в dev.env): alg none, чужой секрет, истёкший → token_expired,
+  refresh как access, refresh-ротация (старый → 401), rate limit 429 + Retry-After
+- 7.4 HMAC: `framework/signed.py` (sign query), happy, неверная подпись, подмена параметра, старый timestamp,
+  будущее > 1 с, replay после окна, recvWindow > 60000 отклоняется, сдвиг часов через `/time`
+- Всё выдано 2026-10-27; ожидаются найденные баги — оформлять как баг-репорты
+
 ## Дальше — по порядку PROGRAM.md
 
 6 моки и отказы (WireMock/responses, Toxiproxy) ·
