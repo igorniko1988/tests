@@ -19,11 +19,37 @@ services:
       EXCHANGE_DATABASE_URL: postgresql+asyncpg://exchange:exchange@db:5432/exchange
       EXCHANGE_JWT_SECRET: docker-secret-change-me-at-least-32-bytes
       EXCHANGE_CHAOS_RATE: ${EXCHANGE_CHAOS_RATE:-0}
+      EXCHANGE_KAFKA_BOOTSTRAP: redpanda:9092
+      EXCHANGE_RABBITMQ_URL: amqp://exchange:exchange@rabbitmq:5672/
     ports:
       - "8080:8000"
     depends_on:
       db:
         condition: service_healthy
+
+  # Брокер событий, совместимый с Kafka: стенд пишет в orders.events,
+  # тесты читают с хоста через localhost:19092
+  redpanda:
+    image: redpandadata/redpanda:v24.2.7
+    command:
+      - redpanda start
+      - --mode dev-container
+      - --smp 1
+      - --kafka-addr internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr internal://redpanda:9092,external://localhost:19092
+    ports:
+      - "19092:19092"
+
+  # Очередь депозитов: тесты кладут сообщения в deposits, стенд зачисляет.
+  # Веб-консоль: http://localhost:15672 (exchange / exchange)
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: exchange
+      RABBITMQ_DEFAULT_PASS: exchange
+    ports:
+      - "5672:5672"
+      - "15672:15672"
 
   # Второй экземпляр стенда, имитирует общий stage: своя база, свой секрет,
   # немного нестабильности. Запуск: docker compose --profile stage up -d

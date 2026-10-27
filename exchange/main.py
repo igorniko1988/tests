@@ -12,10 +12,11 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 
-from exchange import orderbook, webhooks
+from exchange import events, orderbook, webhooks
 from exchange.api import auth, balances, orders
 from exchange.chaos import install_chaos
 from exchange.db import SessionLocal, create_schema
+from exchange.deposits import run_deposit_consumer
 from exchange.errors import install_error_handlers
 from exchange.matching import run_matching
 
@@ -32,9 +33,15 @@ logging.getLogger("exchange").propagate = False
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     await create_schema()
-    matching = asyncio.create_task(run_matching())
+    tasks = [
+        asyncio.create_task(run_matching()),
+        asyncio.create_task(events.start_producer()),
+        asyncio.create_task(run_deposit_consumer()),
+    ]
     yield
-    matching.cancel()
+    for task in tasks:
+        task.cancel()
+    await events.stop_producer()
 
 
 app = FastAPI(title="Mini Exchange", version="0.1.0", lifespan=lifespan)
