@@ -8,18 +8,18 @@ def test_create_order(auth_api):
     auth_api.balances.deposit('USDT',100)
     order = auth_api.orders.create(CreateOrder())
 
+
     assert order.status_code == 201
     Order.model_validate(order.json())
 
 
-def test_get_orders(auth_api):
-    auth_api.balances.deposit('USDT', 100)
-    create = auth_api.orders.create(CreateOrder())
-    assert create.status_code == 201
+def test_get_orders(funded_user, create_order):
+    created = create_order(side='BUY', price='1')
+    assert created.status_code == 201
 
-    created = Order.model_validate(create.json())
+    created = Order.model_validate(created.json())
 
-    response = auth_api.orders.list('NEW')
+    response = funded_user.orders.list('NEW')
     assert response.status_code == 200
     orders = [Order.model_validate(o) for o in response.json()]
 

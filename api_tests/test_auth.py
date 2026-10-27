@@ -19,3 +19,10 @@ def test_register_with_invalid_creds(api, email, password,message):
 
     assert register.status_code == 422
     assert register.json()['error']['details'][0]['message'] == message
+
+
+def test_two_user(make_user):
+    first = make_user()
+    second = make_user()
+
+    assert first.client.session.headers['Authorization'] != second.client.session.headers['Authorization']

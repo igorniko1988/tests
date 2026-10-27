@@ -2,17 +2,19 @@
 
 Фреймворк пишет пользователь, Claude ставит задачи и ревьюит (см. `CLAUDE.md`).
 Тесты — `api_tests/`, запуск `uv run pytest`, отчёт `uv run pytest --alluredir=allure-results` → `allure serve allure-results`.
+Пункты курса — `PROGRAM.md` (модули 1–10 = этапы ниже); перед переходом к следующему этапу сверяться со списком модуля.
 
-## Где остановились (2026-10-26)
+## Где остановились (2026-10-27)
 
-**Этап 3, шаг 3.1 выдан** — `funded_api` (депозит USDT и ETH), фабрика-фикстура `create_order(**fields)` → `Order`,
-тесты на ордера переведены на неё, проверка `uv run pytest -n 4`.
-2.4 почти готово: в `test_contract.py` нужно `CreateOrder()` со скобками.
+**Этап 3: выданы 3.4 (БД) и 3.5 (testcontainers).** Дальше — пропуски модулей 1–2 (раздел ниже), затем модуль 4 (4.1 уже выдан).
 
 Хвосты:
-- 2.1: `Balance` без `strict`, `available`/`locked` — `Decimal`, `asset` — `Literal`; в `test_cancel_orders` сравнивать `Decimal('200')`.
+- 2.1: `Balance` без `strict`, `available`/`locked` — `Decimal`, `asset` — `Literal`; в `test_cancel_orders` сравнивать `Decimal`.
 - 1.6: POST повторять только для `/orders` и `/auth/login` (второй `HTTPAdapter` через `mount` по префиксу) —
   в режиме сбоев `allowed_methods=None` дважды зачисляет депозит; уборка в `auth_api` пропускает, если `list()` не 200.
+- 3.x: `framework/waiter.py` — `if condition:` без скобок и без умолчаний; `make_user` без списка `users` и уборки;
+  нет `test_user_cannot_see_foreign_order` и `test_trade.py`; `test_order_by_id`/`test_cancel_orders` не на фабрике;
+  в `funded_user` нет ETH; `print(ENV_FILE)` в settings.py.
 
 ## Этап 1. Каркас — ✅
 
@@ -21,18 +23,40 @@
 - 1.5 `transport/reporting.py`: строка лога на запрос + шаги и вложения Allure, тела `/auth/*` не прикладываются
 - 1.6 `Retry` на 503 через `HTTPAdapter`, `Idempotency-Key` на `POST /orders`
 
-## Этап 2. Модели и контракты — идёт
+## Этап 2. Модели и контракты — почти ✅
 
-- 2.1 точные типы в моделях ответов (UUID, Decimal, datetime, Literal), lax + `extra='forbid'` — почти готово
+- 2.1 точные типы в моделях ответов (UUID, Decimal, datetime, Literal), lax + `extra='forbid'` — `Balance` ещё нет
 - 2.2 модели запросов с умолчаниями (`CreateOrder` на строках, `exclude` для пропуска поля) — ✅
 - 2.3 негативные тесты контракта: 422 на каждое неверное поле через `parametrize` — 2 случая, хвост: больше полей и границы
-- 2.4 сверка с OpenAPI: `framework/contract.py`, `assert_matches_schema(data, 'OrderOut')`; эталон можно хранить в `framework/openapi.json`
+- 2.4 сверка с OpenAPI: `framework/contract.py`, `assert_matches_schema(data, 'OrderOut')` — ✅; эталон можно хранить в `framework/openapi.json`
+- Pact — объяснён, практика на этапе 8
 
 ## Этап 3. Данные и изоляция — идёт
 
-- 3.1 `funded_api` + фабрика `create_order`, параллельный прогон `-n 4` — **выдан**
+- 3.1 `funded_user` + фабрика `create_order`, параллельный прогон `-n 4` — частично
+- 3.2 фабрика `make_user` (уборка за всеми), тест чужого ордера: get/cancel → 404, нет в list — частично (токен исправлен)
+- 3.3 `wait`/`wait_until` (polling), `api_tests/test_trade.py` сделка BUY/SELL по 500, `xdist_group('order_book')` + `--dist loadgroup` — выдан
+- 3.4 БД: `DB_URL` в env, `framework/db.py` (psycopg, autocommit, dict_row), фикстура `db` session;
+  `test_db_side_effects.py`: пароль хранится хешем, повтор с тем же Idempotency-Key → один ордер в `orders` — **выдан**
+- 3.5 testcontainers: `framework/fixtures/containers.py` session-фикстура `container_stand` (Network + PostgresContainer alias db + образ стенда, HttpWaitStrategy /health), `TESTCONTAINERS_RYUK_DISABLED=true` (Ryuk не стартует на macOS 12), `testcontainers.community.postgres`, `driver=None`; `test_clean_stand.py` count users == 2; маркер `containers`, addopts `-m "not containers"` — **выдан** (проверено Claude: старт ~17 с)
+- Уборка без цикла: можно добавить на стенд `DELETE /orders` (cancel-all) — по просьбе пользователя
 
-## Дальше
+## Этап 4. Бизнес-логика — выдан 4.1
 
-3 данные и изоляция · 4 бизнес-логика · 5 безопасность · 6 CI · 7 не-REST · 8 моки и отказы, Pact ·
-9 производительность, Locust · 10 senior
+- 4.1 блокировка денег: `api_tests/test_balance_lock.py` — BUY блокирует price×qty USDT, SELL — qty ETH (parametrize), граница «ровно хватает» 201 / «3.01» 400, после 400 баланс не изменился — выдан
+
+## Пропущенные пункты модулей 1–2 (сверка с PROGRAM.md 2026-10-27)
+
+- М1: маскирование секретов в логах/Allure (сейчас тела `/auth/*` просто не прикладываются; токен в заголовках не маскируется)
+- М1: retry только для идемпотентных методов (= хвост 1.6)
+- М1 сценарий: тот же набор на local / docker / stage без изменений кода (`ENV=stage`, :8081)
+- М2: генерация клиента и моделей из OpenAPI (`datamodel-code-generator`)
+- М2: Schemathesis — фаззинг по спецификации
+- М2: Pact — по программе в модуле 2 (мы отложили до модуля 6, нужен второй сервис)
+- М2 сценарий: ловим breaking change (поле стало nullable, поменялся enum)
+
+## Дальше — по порядку PROGRAM.md
+
+5 не-REST (WebSocket, вебхуки, GraphQL/gRPC, Kafka) · 6 моки и отказы (WireMock/responses, Toxiproxy) ·
+7 безопасность (OWASP API Top 10, JWT, HMAC) · 8 производительность в функц. тестах · 9 CI/CD ·
+10 senior · 11–12 Locust
