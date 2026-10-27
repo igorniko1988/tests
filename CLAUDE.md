@@ -87,6 +87,12 @@
   с `X-Event-Id`, `X-Event-Type`, `X-Delivery-Attempt` и `X-Signature: sha256=<HMAC тела секретом>`.
   Не 2xx — повтор через 1, 2, 4 с (всего 4 попытки, `EXCHANGE_WEBHOOK_MAX_ATTEMPTS`). Из Docker
   приёмник на хосте доступен как `host.docker.internal`.
+- Kafka (Redpanda, `localhost:19092`): стенд пишет в `orders.events` (3 партиции, ключ — id ордера)
+  события `order.created`, `order.partially_filled`, `order.filled`, `order.canceled`.
+  Смотреть: `docker compose exec redpanda rpk topic consume orders.events -n 5`.
+- RabbitMQ (`localhost:5672`, консоль `:15672`, `exchange`/`exchange`): очередь `deposits`,
+  тело `{"user_id", "asset", "amount"}` + обязательный `message_id`; повтор с тем же id не зачисляется,
+  битые сообщения уходят в `deposits.dlq`. Без `EXCHANGE_KAFKA_BOOTSTRAP` / `EXCHANGE_RABBITMQ_URL` выключены.
 - Stage-экземпляр: `docker compose --profile stage up -d` → http://localhost:8081.
   Своя база и JWT-секрет, 5% сбоев (`EXCHANGE_STAGE_CHAOS_RATE`). Обычный `up` его не трогает.
 

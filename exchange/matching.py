@@ -14,6 +14,7 @@ from sqlalchemy import select
 from exchange.api.balances import lock_balance
 from exchange.config import settings
 from exchange.db import Order, OrderSide, OrderStatus, SessionLocal
+from exchange.events import build_event, send
 from exchange.orderbook import publish
 from exchange.webhooks import notify
 from exchange.schemas import SYMBOLS
@@ -68,6 +69,7 @@ async def match_once() -> None:
     async with SessionLocal() as session:
         changed = set()
         filled = []
+        events = []
         for symbol in SYMBOLS:
             while True:
                 buy = await _best(session, symbol, OrderSide.BUY)
@@ -78,11 +80,14 @@ async def match_once() -> None:
                 await session.flush()
                 changed.add(symbol)
                 filled += [o for o in (buy, sell) if o.status is OrderStatus.FILLED]
+                events += [build_event(o, f"order.{o.status.lower()}") for o in (buy, sell)]
         await session.commit()
     for symbol in changed:
         await publish(symbol)
     for order in filled:
         notify(order, "order.filled")
+    for event in events:
+        await send(event)
 
 
 async def run_matching() -> None:

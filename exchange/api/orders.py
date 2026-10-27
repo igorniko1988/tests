@@ -12,6 +12,7 @@ from exchange.api.balances import lock_balance
 from exchange.api.deps import Session, UserId
 from exchange.db import IdempotencyKey, Order, OrderSide, OrderStatus
 from exchange.errors import ApiError
+from exchange.events import build_event, send
 from exchange.orderbook import publish
 from exchange.webhooks import notify
 from exchange.schemas import SYMBOLS, CreateOrderRequest, OrderOut
@@ -84,6 +85,7 @@ async def create_order(
         # Такой же запрос с этим ключом успел раньше: наш откатился целиком
         await session.rollback()
         return _replay(await _find_key(session, user_id, idempotency_key), request_hash)
+    await send(build_event(order, "order.created"))
     await publish(order.symbol)
     return order
 
@@ -124,4 +126,5 @@ async def cancel_order(order_id: uuid.UUID, user_id: UserId, session: Session):
     await session.commit()
     await publish(order.symbol)
     notify(order, "order.canceled")
+    await send(build_event(order, "order.canceled"))
     return order

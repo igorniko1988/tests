@@ -95,3 +95,9 @@ class WebhookOut(BaseModel):
     url: str
     secret: str
     created_at: datetime
+
+
+class DepositMessage(BaseModel):
+    user_id: uuid.UUID
+    asset: str = Field(pattern="^(BTC|ETH|USDT)$")
+    amount: PositiveAmount

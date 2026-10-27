@@ -106,6 +106,16 @@ class Webhook(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
+class ProcessedMessage(Base):
+    """message_id уже обработанных сообщений очереди: повтор не зачисляется второй раз."""
+
+    __tablename__ = "processed_messages"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    message_id: Mapped[str] = mapped_column(String(255), unique=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
 async def get_session():
     async with SessionLocal() as session:
         yield session

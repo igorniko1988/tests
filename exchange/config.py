@@ -12,6 +12,8 @@ class ServiceSettings(BaseSettings):
     matching_interval: float = 1.0
     webhook_max_attempts: int = 4
     webhook_retry_delay: float = 1.0
+    kafka_bootstrap: str = ""
+    rabbitmq_url: str = ""
 
 
 settings = ServiceSettings()
