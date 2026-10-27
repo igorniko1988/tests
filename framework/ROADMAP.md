@@ -61,7 +61,10 @@
 
 - Теория целиком выдана 2026-10-27 (WebSocket, вебхуки, GraphQL, gRPC, Kafka/RabbitMQ)
 - 5.1 WebSocket стакан: `framework/transport/ws_client.py` (websockets sync), фикстура `orderbook_ws`, snapshot → update, sequence+1, close 4004 — **выдан**;
-  ручка `/ws/orderbook/{symbol}` лежит в ветке `stand/websocket`, в текущий стенд не влита — перенести по просьбе
+  ручка влита: ветка `stand/ws-orderbook` (PR в main открыть на сайте) + cherry-pick в sandbox; 4004 теперь после accept.
+  Пользователь сделал `api_tests/test_ws.py` (snapshot → update), фикстура через `with connect(...)`, WsClient не нужен
+- 5.2 вебхуки: стенд `stand/webhooks` (POST /webhooks → secret, order.filled/order.canceled, X-Signature HMAC, повторы 1/2/4 с) —
+  задание: `pytest-httpserver`, `WebhookService`, `framework/signature.py`, тесты подписи и повтора после 500, адрес `host.docker.internal` — **выдан**
 
 ## Дальше — по порядку PROGRAM.md
 
