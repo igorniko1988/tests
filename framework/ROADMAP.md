@@ -76,7 +76,11 @@
 - 6.1 тесты фреймворка в `framework_tests/` (в testpaths): `responses` — URL, токен, таймаут, clear_token;
   `pytest-httpserver` — ретрай GET на 503 (3 запроса), POST депозит НЕ ретраится (сейчас падает 4 == 1 → чинить хвост 1.6);
   отчёт без пароля и токена (monkeypatch allure.attach) — **выдан**
-- 6.2 WireMock вместо внешнего провайдера цен (стенд: MARKET-ордер по цене из price feed) — следующий, нужен стенд
+- 6.2 WireMock: стенд `stand/price-feed` (MARKET без price → цена из `price-feed:8080/prices/{symbol}`, таймаут 2 с,
+  старше 10 с → 503 `price_stale`, иначе `price_unavailable`; WireMock на :8089 с `--global-response-templating`).
+  Задание: `framework/wiremock.py` (stub / count / reset), фикстура `price_feed` с reset в teardown, `xdist_group('price_feed')`;
+  `test_market_order.py`: цена из фида и блокировка, parametrize отказов (500, задержка 5 с, обрыв, старая цена, битое тело) → 503
+  + баланс не изменился + ордера нет, count == 1, 422 для MARKET+price и LIMIT без price, 2 своих «правдоподобных, но неправильных» ответа — **выдан**
 - 6.3 Toxiproxy: задержки и обрывы между стендом и провайдером; сценарий «5 с или 500 → ордер не по устаревшей цене»
 - Pact (из модуля 2) — здесь же, после WireMock
 
