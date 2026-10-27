@@ -126,6 +126,15 @@
   `pytest -p no:randomly --count 20` для поиска флейка, маркер `quarantine` (отдельный необязательный job), без rerun в гейте
 - 9.5 Allure с историей: gh-pages + `allure generate` с копией `history/`, уведомление в Telegram/Slack — обзор, по желанию
 
+## Модуль 10. Senior-навыки — выдан
+
+- Артефакты в `docs/qa/`: `TEST_STRATEGY.md` (риски биржи, матрица вероятность × ущерб, пирамида, что не автоматизируем),
+  `TESTING_GUIDELINES.md` (гайдлайн + чек-лист ревью), `adr/0001-…`, `adr/0002-…` (2 ADR по фреймворку),
+  `METRICS.md` (5 метрик для менеджмента), `TEST_PLAN_market_orders.md` (тест-план + оценка), `ONBOARDING.md`
+- Ревью: `practice/m10_review_me.py` (PR джуна, >15 проблем, ответы внизу файла)
+- LLM-фичи: тест-дизайн для «AI-объяснения сделки» (структура, факты против API, LLM-as-judge, golden set)
+- Собес: 5 behavioural-историй по STAR в `docs/qa/INTERVIEW_STORIES.md`
+
 ## Дальше — по порядку PROGRAM.md
 
 6 моки и отказы (WireMock/responses, Toxiproxy) ·
