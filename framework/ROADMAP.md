@@ -65,6 +65,11 @@
   Пользователь сделал `api_tests/test_ws.py` (snapshot → update), фикстура через `with connect(...)`, WsClient не нужен
 - 5.2 вебхуки: стенд `stand/webhooks` (POST /webhooks → secret, order.filled/order.canceled, X-Signature HMAC, повторы 1/2/4 с) —
   задание: `pytest-httpserver`, `WebhookService`, `framework/signature.py`, тесты подписи и повтора после 500, адрес `host.docker.internal` — **выдан**
+- 5.3 GraphQL и gRPC — теория-обзор выдана (без практики, по программе обзор)
+- 5.4 Kafka: стенд `stand/messaging` (Redpanda localhost:19092, `orders.events`, 3 партиции, ключ = id ордера);
+  задание: `framework/kafka.py` subscribe (ждать assignment!) + collect, модель `OrderEvent`, тесты created и порядок created→partially_filled→canceled — **выдан**
+- 5.5 RabbitMQ: очередь `deposits` (message_id, дубль не зачисляется, битое → `deposits.dlq`);
+  задание: фикстура `rabbit` (pika), тесты зачисления, дубля, DLQ — **выдан**
 
 ## Дальше — по порядку PROGRAM.md
 
