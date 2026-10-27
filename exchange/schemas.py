@@ -42,10 +42,49 @@ class UserOut(BaseModel):
     created_at: datetime
 
 
+class ProfileOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    email: str
+    display_name: str | None
+    role: str
+    created_at: datetime
+
+
+class UpdateProfileRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    display_name: str = Field(min_length=1, max_length=64)
+
+
 class TokenOut(BaseModel):
     access_token: str
+    refresh_token: str
     token_type: str = "Bearer"
     expires_in: int
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+
+class AdminUserOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    email: str
+    role: str
+    blocked: bool
+    created_at: datetime
+
+
+class ApiKeyOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    key: str
+    secret: str
+    created_at: datetime
 
 
 class BalanceOut(BaseModel):

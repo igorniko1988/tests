@@ -16,8 +16,8 @@ from exchange.errors import ApiError
 from exchange.events import build_event, send
 from exchange.orderbook import publish
 from exchange.pricefeed import current_price
-from exchange.webhooks import notify
 from exchange.schemas import SYMBOLS, CreateOrderRequest, OrderOut
+from exchange.webhooks import notify
 
 router = APIRouter(tags=["orders"])
 

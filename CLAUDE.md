@@ -116,6 +116,13 @@
 - Toxiproxy (`localhost:8474`): стенд ходит к провайдеру цен через прокси `price_feed`
   (`toxiproxy:8666` → `price-feed:8080`). Сбои сети — `POST /proxies/price_feed/toxics`,
   `POST /reset` убирает все toxics и включает прокси.
+- Безопасность: `login` отдаёт `access_token` + `refresh_token`, `POST /auth/refresh` выдаёт новую пару
+  (ротация). 5 неудачных входов на email за 60 с — 429 с `Retry-After`. `GET/PATCH /me` (профиль, `display_name`).
+  Роль `admin` (сид `admin@mini-exchange.io` / `admin-password`, `EXCHANGE_ADMIN_*`): `GET /admin/users`,
+  `POST /admin/users/{id}/block|unblock`; заблокированный не входит (403 `user_blocked`).
+  Подписанный API как у бирж: `POST /api-keys` → `{key, secret}`, `GET /v1/account`, `POST /v1/orders` —
+  заголовок `X-API-KEY`, параметры в query, последним `signature` = HMAC-SHA256(secret, query без signature),
+  `timestamp` в мс и `recvWindow` (по умолчанию 5000); `GET /time` — время сервера.
 - Stage-экземпляр: `docker compose --profile stage up -d` → http://localhost:8081.
   Своя база и JWT-секрет, 5% сбоев (`EXCHANGE_STAGE_CHAOS_RATE`). Обычный `up` его не трогает.
 
