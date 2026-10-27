@@ -10,6 +10,8 @@ class ServiceSettings(BaseSettings):
     access_token_ttl_seconds: int = 900
     chaos_rate: float = 0.0
     matching_interval: float = 1.0
+    webhook_max_attempts: int = 4
+    webhook_retry_delay: float = 1.0
 
 
 settings = ServiceSettings()

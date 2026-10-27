@@ -13,6 +13,7 @@ from exchange.api.deps import Session, UserId
 from exchange.db import IdempotencyKey, Order, OrderSide, OrderStatus
 from exchange.errors import ApiError
 from exchange.orderbook import publish
+from exchange.webhooks import notify
 from exchange.schemas import SYMBOLS, CreateOrderRequest, OrderOut
 
 router = APIRouter(tags=["orders"])
@@ -122,4 +123,5 @@ async def cancel_order(order_id: uuid.UUID, user_id: UserId, session: Session):
     order.status = OrderStatus.CANCELED
     await session.commit()
     await publish(order.symbol)
+    notify(order, "order.canceled")
     return order
