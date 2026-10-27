@@ -54,10 +54,11 @@ async def publish(symbol: str) -> None:
 
 @router.websocket("/ws/orderbook/{symbol}")
 async def orderbook_stream(websocket: WebSocket, symbol: str):
+    # Сначала accept: закрытие до него uvicorn превращает в HTTP 403 на рукопожатии
+    await websocket.accept()
     if symbol not in SYMBOLS:
         await websocket.close(code=4004, reason="Unknown symbol")
         return
-    await websocket.accept()
     queue: asyncio.Queue = asyncio.Queue()
     subscribers[symbol].add(queue)
     try:
