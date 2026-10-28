@@ -14,6 +14,7 @@ from exchange.api.deps import Session, UserId
 from exchange.db import IdempotencyKey, Order, OrderSide, OrderStatus, OrderType
 from exchange.errors import ApiError
 from exchange.events import build_event, send
+from exchange.metrics import ORDERS_CREATED
 from exchange.orderbook import publish
 from exchange.pricefeed import current_price
 from exchange.schemas import SYMBOLS, CreateOrderRequest, OrderOut
@@ -101,6 +102,7 @@ async def create_order(
         # Такой же запрос с этим ключом успел раньше: наш откатился целиком
         await session.rollback()
         return _replay(await _find_key(session, user_id, idempotency_key), request_hash)
+    ORDERS_CREATED.labels(order.symbol, order.side, order.type).inc()
     await send(build_event(order, "order.created"))
     await publish(order.symbol)
     return order

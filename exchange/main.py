@@ -19,6 +19,7 @@ from exchange.db import SessionLocal, create_schema
 from exchange.deposits import run_deposit_consumer
 from exchange.errors import install_error_handlers
 from exchange.matching import run_matching
+from exchange.metrics import install_metrics
 from exchange.tracing import current_trace_id, install_tracing
 
 # Одна JSON-строка на запрос: по request_id запрос находится в логах (docker compose logs | grep <id>)
@@ -88,6 +89,9 @@ async def health():
         await session.execute(text("SELECT 1"))
     return {"status": "ok"}
 
+
+# Последним добавленный middleware — внешний: метрики видят и 503 от режима сбоев
+install_metrics(app)
 
 app.include_router(auth.router)
 app.include_router(balances.router)

@@ -1,0 +1,30 @@
+groups:
+  - name: exchange
+    rules:
+      - alert: ExchangeDown
+        expr: up{job="exchange", env="dev"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Стенд {{ $labels.instance }} не отвечает на /metrics"
+
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(exchange_http_requests_total{status=~"5.."}[1m]))
+            / sum(rate(exchange_http_requests_total[1m])) > 0.05
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Больше 5% ответов 5xx за минуту"
+
+      - alert: SlowResponses
+        expr: |
+          histogram_quantile(0.95,
+            sum by (le) (rate(exchange_http_request_duration_seconds_bucket[1m]))) > 0.5
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "p95 времени ответа выше 500 мс"

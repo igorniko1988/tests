@@ -37,7 +37,9 @@ def install_tracing(app: FastAPI) -> None:
     exporter = OTLPSpanExporter(endpoint=f"{settings.otel_endpoint.rstrip('/')}/v1/traces")
     provider.add_span_processor(BatchSpanProcessor(exporter))
     trace.set_tracer_provider(provider)
-    FastAPIInstrumentor.instrument_app(app, excluded_urls="health,app", tracer_provider=provider)
+    FastAPIInstrumentor.instrument_app(
+        app, excluded_urls="health,metrics,app", tracer_provider=provider
+    )
     AsyncPGInstrumentor().instrument(tracer_provider=provider)
 
 

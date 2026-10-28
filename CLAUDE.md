@@ -125,6 +125,11 @@
   `timestamp` в мс и `recvWindow` (по умолчанию 5000); `GET /time` — время сервера.
 - Трейсы: OpenTelemetry → Jaeger (UI http://localhost:16686, сервис `exchange`). Стенд продолжает
   входящий `traceparent`, отдаёт `X-Trace-ID` и пишет `trace_id` в строку лога. Без `EXCHANGE_OTEL_ENDPOINT` выключено.
+- Метрики: `GET /metrics` (Prometheus-формат) — `exchange_http_requests_total{method,route,status}`,
+  `exchange_http_request_duration_seconds` (histogram), `exchange_http_requests_in_progress`,
+  `exchange_orders_created_total{symbol,side,type}`, `exchange_trades_total{symbol}`,
+  `exchange_price_feed_errors_total{reason}`, `exchange_matching_cycle_seconds`. Prometheus http://localhost:9090
+  (скрейп 5 с, алерты `prometheus/alerts.yml`), Grafana http://localhost:3000 без логина, дашборд «Mini Exchange».
 - Stage-экземпляр: `docker compose --profile stage up -d` → http://localhost:8081.
   Своя база и JWT-секрет, 5% сбоев (`EXCHANGE_STAGE_CHAOS_RATE`). Обычный `up` его не трогает.
 
