@@ -1,0 +1,443 @@
+<title>Python к собесу AQA</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Onest:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: одна колонка-«тетрадь»; недели как главы, внутри уроки трёх треков с цветной меткой трека */
+:root {
+  --bg: #f3f5f8;
+  --surface: #ffffff;
+  --fg: #18202b;
+  --muted: #5b6676;
+  --line: #dde2ea;
+  --core: #2f5fa7;      /* трек C — ядро Python */
+  --algo: #b07a12;      /* трек A — алгоритмы */
+  --aqa: #2c7a5b;       /* трек Q — AQA-практика */
+  --exam: #9b3b55;      /* контрольные и моки */
+  --tint: #e8eef7;
+  --done: #2c7a5b;
+  --f-display: "Unbounded", "Arial Black", system-ui, sans-serif;
+  --f-body: "Onest", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11161d; --surface: #18202a; --fg: #e4e9f0; --muted: #98a3b3; --line: #2a3442;
+    --core: #7aa7ec; --algo: #e2b04a; --aqa: #5fc29a; --exam: #e4829b; --tint: #1e2a3a; --done: #5fc29a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11161d; --surface: #18202a; --fg: #e4e9f0; --muted: #98a3b3; --line: #2a3442;
+  --core: #7aa7ec; --algo: #e2b04a; --aqa: #5fc29a; --exam: #e4829b; --tint: #1e2a3a; --done: #5fc29a;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 16px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 64px;
+}
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 40px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; line-height: 1.2; }
+h1 { font-size: clamp(28px, 6vw, 44px); font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 22px; font-weight: 700; }
+h3 { font-size: 16px; font-weight: 500; }
+p { margin: 0; }
+code, .mono { font-family: var(--f-mono); font-size: 0.88em; }
+.muted { color: var(--muted); }
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+
+header { display: grid; gap: 16px; }
+.lead { font-size: 18px; max-width: 62ch; }
+.prompt { font-family: var(--f-mono); font-size: 14px; color: var(--muted); }
+.prompt b { color: var(--core); font-weight: 600; }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.stat { border-top: 2px solid var(--line); padding-top: 8px; }
+.stat .n { font-family: var(--f-display); font-size: 26px; font-variant-numeric: tabular-nums; }
+.stat .l { font-size: 13px; color: var(--muted); }
+
+.progress { display: grid; gap: 8px; }
+.bar { height: 10px; background: var(--line); border-radius: 5px; overflow: hidden; }
+.bar > span { display: block; height: 100%; background: var(--done); width: 0; transition: width .3s; }
+.progress .row { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 14px; }
+
+section { display: grid; gap: 16px; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 14px; }
+.tag { display: inline-flex; align-items: center; gap: 6px; }
+.dot { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+.k-core { --k: var(--core); } .k-algo { --k: var(--algo); } .k-aqa { --k: var(--aqa); } .k-exam { --k: var(--exam); }
+.dot { background: var(--k); }
+
+.cycle { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; counter-reset: s; }
+.cycle div { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px; font-size: 14px; display: grid; gap: 4px; align-content: start; }
+.cycle b { font-family: var(--f-display); font-weight: 500; font-size: 14px; }
+.cycle div::before { counter-increment: s; content: counter(s); font-family: var(--f-mono); color: var(--core); font-size: 13px; }
+
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+.week { display: grid; gap: 12px; }
+.week-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: 2px solid var(--fg); padding-bottom: 8px; }
+.week-head .goal { font-size: 14px; color: var(--muted); max-width: 60ch; }
+.week-count { font-family: var(--f-mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+details.lesson { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--k); border-radius: 6px; }
+details.lesson[open] { box-shadow: 0 1px 0 var(--line); }
+details.lesson summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: auto auto 1fr auto; align-items: center; gap: 12px; padding: 12px 14px; }
+details.lesson summary::-webkit-details-marker { display: none; }
+summary:focus-visible, input:focus-visible, button:focus-visible { outline: 2px solid var(--core); outline-offset: 2px; }
+.code { font-family: var(--f-mono); font-size: 13px; font-weight: 600; color: var(--k); min-width: 2.6em; }
+.title { min-width: 0; font-weight: 600; }
+.title small { display: block; font-weight: 400; color: var(--muted); font-size: 13px; }
+.chev { color: var(--muted); font-size: 12px; transition: transform .2s; }
+details[open] .chev { transform: rotate(90deg); }
+input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--done); margin: 0; cursor: pointer; }
+details.lesson.is-done .title { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line); }
+
+.body { padding: 0 14px 14px 14px; display: grid; gap: 14px; font-size: 15px; }
+.body h4 { margin: 0 0 4px; font-size: 12px; font-family: var(--f-mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; }
+.body ul { margin: 0; padding-left: 20px; display: grid; gap: 3px; }
+.body .qs li { font-style: normal; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-family: var(--f-mono); font-size: 12px; background: var(--tint); border-radius: 4px; padding: 2px 8px; }
+
+.formats { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.format { border-left: 3px solid var(--k); padding: 4px 0 4px 12px; display: grid; gap: 4px; font-size: 14px; }
+.format b { font-size: 15px; }
+
+.done-rule { background: var(--tint); border-radius: 8px; padding: 16px; display: grid; gap: 8px; }
+.done-rule ul { margin: 0; padding-left: 20px; }
+
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; font-size: 13px; background: none; border: 1px solid var(--line); color: var(--muted); padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+button:hover { color: var(--fg); border-color: var(--muted); }
+
+@media (max-width: 520px) {
+  details.lesson summary { grid-template-columns: auto auto 1fr; }
+  .chev { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Курс · Python для собеседования AQA Middle+/Senior</span>
+    <h1>Python к собесу AQA</h1>
+    <p class="lead">Шесть недель: ядро языка на уровне «объясню, как это устроено», все форматы лайвкодинга, которые дают на собесе AQA, и практика каждый день. Каждая тема заканчивается задачами с тестами и вопросами собеса вслух.</p>
+    <p class="prompt">Начать: напиши в чат <b>«начинаем»</b>. Следующий урок: <b>«дальше»</b>. Сдать задачу: <b>«готово C1 t03»</b>.</p>
+    <div class="stats">
+      <div class="stat"><div class="n">6 нед.</div><div class="l">по ~1 ч 45 мин в день, 5 дней в неделю</div></div>
+      <div class="stat"><div class="n">16</div><div class="l">уроков ядра Python (трек C)</div></div>
+      <div class="stat"><div class="n">140</div><div class="l">алгоритмических задач по 14 паттернам (трек A)</div></div>
+      <div class="stat"><div class="n">30</div><div class="l">практических задач AQA (трек Q)</div></div>
+      <div class="stat"><div class="n">~240</div><div class="l">вопросов собеса с ответами и столько же «что выведет»</div></div>
+    </div>
+    <div class="progress" aria-live="polite">
+      <div class="row"><span>Пройдено уроков: <b id="pDone">0</b> из <b id="pAll">0</b></span><span class="muted">Отметки хранятся в этом браузере</span></div>
+      <div class="bar"><span id="pBar"></span></div>
+    </div>
+  </header>
+
+  <section>
+    <h2>Три трека каждый день</h2>
+    <div class="legend">
+      <span class="tag k-core"><span class="dot"></span><b>C</b>&nbsp;ядро Python: как устроен язык, вопросы собеса</span>
+      <span class="tag k-algo"><span class="dot"></span><b>A</b>&nbsp;алгоритмы: паттерны задач LeetCode Easy/Medium</span>
+      <span class="tag k-aqa"><span class="dot"></span><b>Q</b>&nbsp;практика AQA: утилиты, классы, автотесты, ревью</span>
+      <span class="tag k-exam"><span class="dot"></span><b>X</b>&nbsp;контрольные и мок-собесы</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Когда</th><th>Что</th><th>Время</th></tr></thead>
+        <tbody>
+          <tr><td>Пн–Пт</td><td>Разминка: 5 вопросов собеса по прошлым темам + 1 старая задача по памяти</td><td>15 мин</td></tr>
+          <tr><td>Пн–Пт</td><td>Урок трека C: теория → «что выведет» → задачи</td><td>45 мин</td></tr>
+          <tr><td>Пн–Пт</td><td>2 задачи трека A или 1 задача трека Q, решение вслух</td><td>45 мин</td></tr>
+          <tr><td>Сб</td><td>Контрольная недели: вопросы вслух, «что выведет», задачи на время</td><td>1–1,5 ч</td></tr>
+          <tr><td>Вс</td><td>Отдых или добор хвостов</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Как проходит урок ядра</h2>
+    <div class="cycle">
+      <div><b>Теория</b>Простой язык, код на каждое утверждение, визуализатор для сложных мест.</div>
+      <div><b>Что выведет</b>15 фрагментов. Ответ пишешь до запуска, потом проверяешь.</div>
+      <div><b>Задачи</b>8–10 штук: разминка, основные, классика собеса, одна со звёздочкой. У каждой есть тесты.</div>
+      <div><b>Собес вслух</b>Отвечаешь на 5 вопросов вразброс, по 1–2 минуты на каждый, без шпаргалки.</div>
+      <div><b>Повтор</b>Вопросы урока возвращаются в разминке через 1, 3 и 7 дней.</div>
+    </div>
+    <div class="done-rule">
+      <b>Урок засчитан, когда</b>
+      <ul>
+        <li>все задачи проходят тесты, ревью в чате пройдено;</li>
+        <li>«что выведет»: не меньше 12 из 15 угадано до запуска;</li>
+        <li>вопросы собеса: каждый ответ полный, без подсказок;</li>
+        <li>задачу, решённую с подсказкой 3 (полный разбор), через день пишешь заново по памяти.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>Шесть форматов лайвкодинга на собесе AQA</h2>
+    <p class="muted">Курс тренирует каждый, а не только LeetCode.</p>
+    <div class="formats" id="formats"></div>
+  </section>
+
+  <section>
+    <h2>Решение задачи на собесе: 7 шагов</h2>
+    <div class="table-wrap">
+      <table>
+        <tbody>
+          <tr><td class="mono">1</td><td>Перескажи условие и спроси про границы: пустой вход, один элемент, дубли, отрицательные, регистр, размер входа.</td></tr>
+          <tr><td class="mono">2</td><td>Разбери 1–2 примера руками.</td></tr>
+          <tr><td class="mono">3</td><td>Скажи решение «в лоб» и его сложность. Это нормально и даже ожидается.</td></tr>
+          <tr><td class="mono">4</td><td>Найди лишнюю работу и подбери паттерн: хеш, два указателя, окно, стек, сортировка, куча, BFS, DP.</td></tr>
+          <tr><td class="mono">5</td><td>Пиши код и проговаривай, что делаешь.</td></tr>
+          <tr><td class="mono">6</td><td>Прогони пример глазами по коду, затем граничные случаи.</td></tr>
+          <tr><td class="mono">7</td><td>Назови сложность по времени и памяти и что можно улучшить.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="week-head">
+      <h2>Программа по неделям</h2>
+      <div class="actions"><button type="button" id="openAll">Раскрыть всё</button><button type="button" id="closeAll">Свернуть всё</button></div>
+    </div>
+    <div id="plan" style="display:grid;gap:36px"></div>
+  </section>
+</div>
+
+<script>
+const FORMATS = [
+  ["algo", "Алгоритмическая задача", "LeetCode Easy/Medium за 20–30 минут со сложностью.", "Трек A, 14 паттернов"],
+  ["core", "«Что выведет этот код»", "Ловушки: mutable default, замыкания, is, копии, генераторы, MRO.", "Quiz в каждом уроке C"],
+  ["aqa", "Практическая задача на данные", "Парсинг логов, сравнение JSON, частоты, группировки.", "Q1, Q2"],
+  ["aqa", "Утилита или класс с нуля", "retry, кэш, LRU, rate limiter, API-клиент, контекстный менеджер.", "Q2, Q3, Q4"],
+  ["aqa", "Автотесты по заданию", "Чек-лист и pytest-тесты на эндпоинт или функцию по документации.", "Q5"],
+  ["exam", "Ревью кода и поиск багов", "Найти ошибки в чужом коде или тесте, отрефакторить.", "Q5 и задачи-ревью в контрольных"],
+];
+
+const PLAN = [
+  { week: "Старт", title: "Диагностика и метод", goal: "Понять, где ты сейчас, и поставить рабочий цикл. Курс подстраивается под слабые места.", items: [
+    { code: "X0", k: "exam", title: "Входная диагностика", sub: "1 час, без подготовки", topics: [
+      "30 вопросов собеса вслух по всем темам курса", "15 фрагментов «что выведет»",
+      "Задача Easy на 20 минут и практическая задача на 25 минут", "Итог: карта слабых тем, которой проверяем прогресс в конце"] },
+    { code: "A0", k: "algo", title: "Big-O и метод решения", sub: "Основа всего трека A", topics: [
+      "O(1), O(log n), O(n), O(n log n), O(n²), O(2ⁿ): как оценить по коду", "Время и память, амортизированная сложность",
+      "Сложность операций list, dict, set, deque наизусть", "Размер входа подсказывает нужную сложность (n ≤ 10⁵ → не хуже O(n log n))"],
+      q: ["Какая сложность у x in list и x in set и почему?", "Что такое амортизированная O(1) у append?"] },
+  ]},
+  { week: "Неделя 1", title: "Данные и типы", goal: "Модель объектов Python и встроенные типы: половина вопросов «что выведет» отсюда.", items: [
+    { code: "C1", k: "core", title: "Объекты, имена и ссылки", sub: "Самая частая тема собеса", topics: [
+      "Переменная — имя, привязанное к объекту: id, type, значение", "Изменяемые и неизменяемые типы; += для list и для tuple",
+      "is против ==, кэш малых int, интернирование строк, почему is None", "Копии: присваивание, срез, copy, deepcopy; ловушка [[0]*3]*3",
+      "Изменяемый аргумент по умолчанию и паттерн с None", "Передача аргументов: call by sharing", "Хешируемость: почему list не ключ dict, а tuple иногда тоже"],
+      q: ["Чем изменяемые типы отличаются от неизменяемых? Примеры.", "is или ==, когда что?", "Shallow copy против deep copy.", "Что не так с def f(x=[])?", "Python передаёт по ссылке или по значению?"] },
+    { code: "C2", k: "core", title: "Числа, строки, bool", sub: "Точность, деньги, кодировки", topics: [
+      "int без переполнения; //, %, divmod с отрицательными", "float: 0.1 + 0.2, math.isclose; Decimal для денег; round и банковское округление",
+      "str неизменяема: срезы, методы, join против + в цикле", "f-строки и форматирование; str и bytes, encode/decode, UTF-8",
+      "bool — подкласс int; truthy и falsy значения"],
+      q: ["Почему 0.1 + 0.2 != 0.3 и как сравнивать float?", "Почему суммы денег в Decimal, а не float?", "Почему конкатенация строк в цикле медленная?", "Чем str отличается от bytes?"] },
+    { code: "C3", k: "core", title: "Коллекции и их устройство", sub: "list, tuple, dict, set, collections", topics: [
+      "list — динамический массив: append O(1) амортизированно, insert(0) и pop(0) O(n)", "tuple: неизменяемость, распаковка, когда выбрать tuple",
+      "dict — хеш-таблица: hash, коллизии, порядок вставки, get, setdefault, оператор |", "set и frozenset: операции над множествами, проверка in за O(1)",
+      "collections: Counter, defaultdict, deque, OrderedDict, namedtuple", "Сортировка: sorted против sort, key, стабильность, сортировка по нескольким полям"],
+      q: ["list против tuple.", "Как устроен dict внутри и почему поиск O(1)?", "Почему dict сохраняет порядок?", "Зачем deque, если есть list?", "Что такое стабильная сортировка?"] },
+    { code: "A1", k: "algo", title: "Массивы и строки", sub: "10 задач", tasks: ["reverse words", "move zeros", "merge sorted arrays", "best time to buy and sell stock", "product except self", "string compression"] },
+    { code: "A2", k: "algo", title: "Хеширование", sub: "10 задач", tasks: ["two sum", "valid anagram", "group anagrams", "first unique character", "contains duplicate", "longest consecutive sequence"] },
+    { code: "Q1", k: "aqa", title: "Работа с данными", sub: "6 задач из реальной работы AQA", tasks: [
+      "частота слов в тексте и топ-k", "разница двух JSON-ответов: какие поля добавлены, удалены, изменены", "дубли email в списке пользователей без учёта регистра",
+      "группировка ордеров по статусу и сумма в Decimal", "flatten вложенного dict в ключи вида a.b.c", "валидация структуры ответа без библиотек"] },
+    { code: "X1", k: "exam", title: "Контрольная недели 1", sub: "Суббота", topics: ["20 вопросов по C1–C3 вслух", "10 «что выведет»", "2 задачи A1/A2 на 40 минут, 1 задача Q1 на 20 минут"] },
+  ]},
+  { week: "Неделя 2", title: "Функции и ленивость", goal: "Функции как объекты, генераторы и декораторы — основа pytest и любого фреймворка.", items: [
+    { code: "C4", k: "core", title: "Функции и области видимости", sub: "Аргументы, LEGB, замыкания", topics: [
+      "Позиционные, именованные, *args, **kwargs, keyword-only (*), positional-only (/)", "Распаковка при вызове f(*xs, **kw)",
+      "LEGB, global, nonlocal, UnboundLocalError", "Функции первого класса, lambda, map, filter, zip, enumerate, any, all",
+      "Замыкания и ловушка позднего связывания: [lambda: i for i in range(3)]", "functools: partial, reduce, lru_cache, cache, wraps"],
+      q: ["Что такое *args и **kwargs?", "Что такое замыкание? Пример.", "Как Python ищет имя (LEGB)?", "Зачем nonlocal?", "Что выведет список лямбд из цикла и как починить?"] },
+    { code: "C5", k: "core", title: "Comprehensions, итераторы, генераторы", sub: "Ленивые вычисления", topics: [
+      "list, dict, set comprehension; вложенные и с условием; когда цикл читаемее", "Протокол итерации: iter, next, StopIteration; iterable против iterator",
+      "Как на самом деле работает for", "yield, состояние генератора, однократный проход", "Генераторное выражение против списка: память",
+      "yield from, send, close — на уровне «знаю, что это»", "itertools: chain, islice, groupby, product, permutations, combinations, count"],
+      q: ["Генератор против списка: когда что?", "Чем iterable отличается от iterator?", "Почему генератор нельзя пройти дважды?", "Как yield-фикстура pytest использует генератор?"] },
+    { code: "C6", k: "core", title: "Декораторы", sub: "Классика лайвкодинга", topics: [
+      "Декоратор — функция, которая принимает функцию и возвращает новую", "@ как синтаксический сахар; порядок нескольких декораторов",
+      "functools.wraps и что ломается без него", "Декоратор с параметрами: три уровня вложенности", "Декоратор-класс и декоратор класса",
+      "Как устроены @property, @classmethod, @pytest.fixture, @pytest.mark.parametrize"],
+      q: ["Что такое декоратор и как он работает?", "Зачем functools.wraps?", "Напиши декоратор с параметром.", "В каком порядке применяются два декоратора?"] },
+    { code: "A3", k: "algo", title: "Два указателя", sub: "10 задач", tasks: ["valid palindrome", "two sum II", "3sum", "container with most water", "remove duplicates in place", "squares of sorted array"] },
+    { code: "A4", k: "algo", title: "Скользящее окно", sub: "10 задач", tasks: ["max sum of k", "longest substring without repeating", "minimum size subarray sum", "permutation in string", "longest repeating character replacement"] },
+    { code: "A5", k: "algo", title: "Стек и очередь", sub: "10 задач", tasks: ["valid parentheses", "min stack", "daily temperatures", "evaluate RPN", "queue via two stacks", "simplify path"] },
+    { code: "Q2", k: "aqa", title: "Утилиты на функциях", sub: "6 задач", tasks: [
+      "декоратор retry(times, delay, exceptions)", "декоратор: время выполнения и лог аргументов", "генератор: построчно читать большой лог и отдавать только ERROR",
+      "разбить список на пачки по n (генератор)", "flatten списка любой вложенности", "wait_until(condition, timeout, interval) — своё ожидание"] },
+    { code: "X2", k: "exam", title: "Контрольная недели 2", sub: "Суббота", topics: ["20 вопросов по C1–C6 (половина — новые темы)", "10 «что выведет» на замыкания и генераторы", "retry с нуля за 15 минут; 2 задачи A3–A5 на 40 минут"] },
+  ]},
+  { week: "Неделя 3", title: "ООП", goal: "Классы так, как их спрашивают на собесе и как ими строят фреймворк.", items: [
+    { code: "C7", k: "core", title: "Классы и объекты", sub: "Атрибуты, property, методы", topics: [
+      "Класс, экземпляр, self; атрибуты класса против атрибутов экземпляра (ловушка с list)", "@property и setter, вычисляемые поля",
+      "@classmethod как альтернативный конструктор, @staticmethod", "Инкапсуляция: _protected, __private и name mangling", "Где хранятся атрибуты: __dict__"],
+      q: ["Атрибут класса против атрибута экземпляра.", "classmethod против staticmethod.", "Зачем @property?", "Есть ли в Python private?"] },
+    { code: "C8", k: "core", title: "Наследование и проектирование", sub: "MRO, ABC, композиция, SOLID", topics: [
+      "Наследование, переопределение, super()", "Множественное наследование, ромб, MRO (C3), Class.__mro__",
+      "Абстрактные классы: abc.ABC, @abstractmethod; утиная типизация и Protocol", "Композиция против наследования на примере Page Object и API-клиента",
+      "4 принципа ООП и SOLID на примерах тестового фреймворка"],
+      q: ["Назови 4 принципа ООП с примерами.", "Что такое MRO и как работает super()?", "Когда композиция лучше наследования?", "SOLID на примере твоего фреймворка."] },
+    { code: "C9", k: "core", title: "Магические методы и dataclasses", sub: "Модель данных Python", topics: [
+      "__new__ против __init__", "__repr__ против __str__", "__eq__, __lt__, __hash__ и их связь; functools.total_ordering",
+      "__len__, __getitem__, __contains__, __iter__, __call__, __bool__, __add__", "dataclasses: field(default_factory), frozen, order, asdict; против NamedTuple и pydantic",
+      "__slots__; дескрипторы и метаклассы — что это и где встречаются"],
+      q: ["__new__ против __init__.", "Что сломается, если переопределить __eq__ без __hash__?", "__repr__ против __str__.", "Зачем dataclass?", "Что такое метакласс одной фразой?"] },
+    { code: "A6", k: "algo", title: "Сортировка и интервалы", sub: "10 задач", tasks: ["merge intervals", "insert interval", "meeting rooms", "sort colors", "largest number", "non-overlapping intervals"] },
+    { code: "A7", k: "algo", title: "Бинарный поиск", sub: "10 задач", tasks: ["binary search", "search insert position", "first and last position", "search in rotated array", "sqrt(x)", "koko eating bananas (поиск по ответу)"] },
+    { code: "A8", k: "algo", title: "Префиксные суммы", sub: "10 задач", tasks: ["range sum query", "subarray sum equals k", "pivot index", "contiguous array", "running sum"] },
+    { code: "Q3", k: "aqa", title: "Проектирование классов", sub: "6 задач", tasks: [
+      "LRU cache: на OrderedDict и руками", "rate limiter: fixed и sliding window", "банковский счёт: история операций, свои исключения",
+      "класс Money: операторы, сравнение, хеш, Decimal", "простой API-клиент: base_url, сессия, токен, методы", "Page Object с компонентами через композицию"] },
+    { code: "X3", k: "exam", title: "Контрольная недели 3", sub: "Суббота", topics: ["20 вопросов по C1–C9", "10 «что выведет» на MRO, атрибуты класса, dunder", "LRU cache с нуля за 20 минут; 2 задачи A6–A8"] },
+  ]},
+  { week: "Неделя 4", title: "Ошибки, типы, рантайм", goal: "То, что отличает Senior: как Python исполняет код, память, GIL, конкурентность.", items: [
+    { code: "C10", k: "core", title: "Исключения и контекстные менеджеры", sub: "try, with, contextlib", topics: [
+      "Иерархия: BaseException, Exception; почему нельзя голый except", "try / except / else / finally; return в finally",
+      "raise, raise ... from, свои исключения с полями", "with: __enter__, __exit__, подавление исключения",
+      "contextlib: @contextmanager, suppress, ExitStack", "ExceptionGroup и except* — знать, что есть", "Как устроен pytest.raises"],
+      q: ["Что выведет функция с return в try и в finally?", "Зачем else в try?", "Напиши контекстный менеджер двумя способами.", "Чем raise from отличается от raise?"] },
+    { code: "C11", k: "core", title: "Типизация и современный синтаксис", sub: "typing, match, pydantic", topics: [
+      "Аннотации: list[int], X | None, Callable, Any", "TypedDict, Literal, Protocol, Generic и TypeVar, Final",
+      "mypy: что ловит и зачем во фреймворке", "match / case: разбор JSON-ответа по структуре", "Моржовый оператор :=, f-строки с =, распаковка *rest",
+      "pydantic: модель ответа API и валидация"],
+      q: ["Влияют ли аннотации на выполнение?", "Protocol против ABC.", "Зачем pydantic в API-тестах?"] },
+    { code: "C12", k: "core", title: "Память и интерпретатор", sub: "CPython изнутри", topics: [
+      "Исходник → байткод → виртуальная машина; dis", "Подсчёт ссылок, sys.getrefcount, сборщик циклов gc, weakref",
+      "GIL: что это, зачем, на что влияет; free-threaded Python 3.13+", "Утечки памяти в Python: откуда берутся", "Почему Python медленный и что с этим делают"],
+      q: ["Как Python управляет памятью?", "Что такое GIL и на что он влияет?", "Бывают ли утечки памяти в Python?"] },
+    { code: "C13", k: "core", title: "Конкурентность", sub: "threading, multiprocessing, asyncio", topics: [
+      "Процесс, поток, корутина простыми словами; I/O-bound против CPU-bound", "threading, Lock, состояние гонки на счётчике",
+      "concurrent.futures: ThreadPoolExecutor, ProcessPoolExecutor, as_completed", "asyncio: event loop, async/await, gather, create_task, wait_for, Semaphore",
+      "Почему time.sleep в корутине — ошибка", "AQA: параллельные запросы, pytest-xdist, гонки на стенде"],
+      q: ["threading против multiprocessing против asyncio.", "Помогают ли потоки при GIL?", "Что такое race condition и как его поймать тестом?", "Как ограничить число параллельных запросов в asyncio?"] },
+    { code: "A9", k: "algo", title: "Рекурсия и backtracking", sub: "10 задач", tasks: ["fibonacci с мемоизацией", "power set (subsets)", "permutations", "combination sum", "generate parentheses"] },
+    { code: "A10", k: "algo", title: "Связные списки", sub: "10 задач", tasks: ["reverse linked list", "middle node", "linked list cycle", "merge two sorted lists", "remove nth from end"] },
+    { code: "A11", k: "algo", title: "Деревья: DFS и BFS", sub: "10 задач", tasks: ["max depth", "invert tree", "level order traversal", "validate BST", "lowest common ancestor", "path sum"] },
+    { code: "Q4", k: "aqa", title: "Надёжность и параллельность", sub: "6 задач", tasks: [
+      "контекстный менеджер-таймер: классом и через @contextmanager", "иерархия исключений API-клиента с полями status и body",
+      "10 запросов параллельно, не больше 3 одновременно (asyncio)", "потокобезопасный счётчик и тест, который ловит гонку",
+      "разбор событий через match / case", "retry с экспоненциальной задержкой и джиттером"] },
+    { code: "X4", k: "exam", title: "Контрольная недели 4", sub: "Суббота", topics: ["25 вопросов по C1–C13", "10 «что выведет» на try/finally, генераторы, async", "2 задачи A9–A11 на 45 минут, 1 задача Q4"] },
+  ]},
+  { week: "Неделя 5", title: "Python для тестировщика", goal: "Окружение, pytest и моки на уровне Senior плюс лайвкодинг автотестов.", items: [
+    { code: "C14", k: "core", title: "Модули, окружение, stdlib", sub: "Что пригодится каждый день", topics: [
+      "import: модуль, пакет, __init__.py, sys.path, циклический импорт", "if __name__ == \"__main__\"",
+      "venv, pip, uv, pyproject.toml, lock-файл", "pathlib, json, csv, re (основы регулярок)", "datetime: naive против aware, часовые пояса",
+      "logging: уровни, handler, formatter; почему не print", "os.environ, subprocess, argparse кратко"],
+      q: ["Что происходит при import?", "Зачем виртуальное окружение?", "naive против aware datetime.", "Почему logging, а не print?"] },
+    { code: "C15", k: "core", title: "pytest в глубину", sub: "Фикстуры, параметризация, хуки", topics: [
+      "Как pytest находит тесты; перезапись assert", "Фикстуры: scope, yield, autouse, фабрика, зависимости, request, порядок выполнения",
+      "conftest.py: где действует", "parametrize: ids, indirect, несколько параметров", "Маркеры, skip, xfail, pytest.ini",
+      "Хуки и плагины: pytest_addoption, pytest_collection_modifyitems; xdist"],
+      q: ["Какие scope у фикстур и как они живут?", "Как сделать фикстуру с параметром?", "Как работает conftest.py?", "Как запустить тесты параллельно и что может сломаться?"] },
+    { code: "C16", k: "core", title: "Моки и HTTP", sub: "unittest.mock, requests", topics: [
+      "Mock, MagicMock, return_value, side_effect", "patch: где патчить (по месту использования, а не определения)",
+      "assert_called_once_with, call_args", "requests и httpx: сессия, таймауты, статусы, JSON", "Стабы внешних сервисов: responses, respx, WireMock",
+      "unittest против pytest"],
+      q: ["Mock против MagicMock.", "Где патчить и почему?", "Как замокать исключение?", "Мок против стаба против фейка."] },
+    { code: "A12", k: "algo", title: "Графы и BFS по сетке", sub: "10 задач", tasks: ["number of islands", "flood fill", "shortest path in binary matrix", "course schedule (топосортировка)", "clone graph", "rotting oranges"] },
+    { code: "A13", k: "algo", title: "Кучи и top-k", sub: "10 задач", tasks: ["kth largest element", "top k frequent", "merge k sorted lists", "k closest points", "task scheduler"] },
+    { code: "A14", k: "algo", title: "Динамическое программирование", sub: "10 задач", tasks: ["climbing stairs", "house robber", "coin change", "longest increasing subsequence", "unique paths", "edit distance ★"] },
+    { code: "Q5", k: "aqa", title: "Лайвкодинг автотестов", sub: "6 задач", tasks: [
+      "чек-лист и pytest-тесты на эндпоинт по документации", "тесты на функцию: границы, классы эквивалентности, parametrize",
+      "найди баги в чужом тесте (ревью)", "отрефакторь плохой тест: фикстуры, данные, проверки", "замокай внешний сервис и проверь обработку ошибок",
+      "тест на пагинацию и сортировку списка"] },
+    { code: "X5", k: "exam", title: "Контрольная недели 5", sub: "Суббота", topics: ["25 вопросов по всему ядру", "Задача Q5 на 30 минут с объяснением тест-дизайна", "2 задачи A12–A14 на 45 минут"] },
+  ]},
+  { week: "Неделя 6", title: "Финиш", goal: "Собес как он есть: на время, вслух, на английском. Добираем слабые места.", items: [
+    { code: "M1", k: "exam", title: "Мок-собесы × 4", sub: "Через день", topics: [
+      "20 минут вопросов по ядру", "40 минут: алгоритм Medium", "25 минут: задача AQA (утилита, тесты или ревью)",
+      "Разбор: где запнулся, что повторить", "2 из 4 моков на английском"] },
+    { code: "M2", k: "exam", title: "Добор слабых мест", sub: "Между моками", topics: [
+      "Все вопросы, где ответ был неполным", "Задачи, решённые с подсказкой 3, — заново по памяти",
+      "Скоростной раунд: 10 задач Easy по 10 минут", "Английский: 40 ключевых вопросов собеса"] },
+    { code: "X6", k: "exam", title: "Итоговый экзамен", sub: "Сравниваем с диагностикой X0", topics: [
+      "60 вопросов вразброс, 20 из них на английском", "30 «что выведет»", "2 задачи Medium за 45 минут и 1 задача AQA за 25 минут"] },
+  ]},
+];
+
+const KEY = "py-course-done-v1";
+let done = {};
+try { done = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { done = {}; }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const ul = (arr, cls = "") => `<ul class="${cls}">${arr.map(t => `<li>${esc(t)}</li>`).join("")}</ul>`;
+
+document.getElementById("formats").innerHTML = FORMATS.map(([k, t, d, w]) =>
+  `<div class="format k-${k}"><b>${esc(t)}</b><span>${esc(d)}</span><span class="mono muted">${esc(w)}</span></div>`).join("");
+
+function lessonHTML(it) {
+  const parts = [];
+  if (it.topics) parts.push(`<div><h4>${it.k === "exam" ? "Формат" : "Темы"}</h4>${ul(it.topics)}</div>`);
+  if (it.tasks) parts.push(`<div><h4>Задачи (примеры)</h4><div class="chips">${it.tasks.map(t => `<span class="chip">${esc(t)}</span>`).join("")}</div></div>`);
+  if (it.q) parts.push(`<div><h4>Вопросы собеса</h4>${ul(it.q, "qs")}</div>`);
+  const id = "cb-" + it.code;
+  return `<details class="lesson k-${it.k}${done[it.code] ? " is-done" : ""}" data-code="${it.code}">
+    <summary>
+      <input type="checkbox" id="${id}" aria-label="Урок ${it.code} пройден" ${done[it.code] ? "checked" : ""}>
+      <span class="code">${it.code}</span>
+      <span class="title">${esc(it.title)}<small>${esc(it.sub || "")}</small></span>
+      <span class="chev" aria-hidden="true">▶</span>
+    </summary>
+    <div class="body">${parts.join("")}</div>
+  </details>`;
+}
+
+const plan = document.getElementById("plan");
+plan.innerHTML = PLAN.map((w, i) => `
+  <div class="week" data-week="${i}">
+    <div class="week-head">
+      <div style="display:grid;gap:4px;min-width:0"><span class="eyebrow">${esc(w.week)}</span><h2>${esc(w.title)}</h2><p class="goal">${esc(w.goal)}</p></div>
+      <span class="week-count"></span>
+    </div>
+    ${w.items.map(lessonHTML).join("")}
+  </div>`).join("");
+
+function refresh() {
+  const all = PLAN.flatMap(w => w.items);
+  const n = all.filter(it => done[it.code]).length;
+  document.getElementById("pDone").textContent = n;
+  document.getElementById("pAll").textContent = all.length;
+  document.getElementById("pBar").style.width = (100 * n / all.length) + "%";
+  PLAN.forEach((w, i) => {
+    const d = w.items.filter(it => done[it.code]).length;
+    plan.querySelector(`[data-week="${i}"] .week-count`).textContent = `${d} / ${w.items.length}`;
+  });
+}
+
+plan.addEventListener("click", e => { if (e.target.matches("input[type=checkbox]")) e.stopPropagation(); }, true);
+plan.addEventListener("change", e => {
+  if (!e.target.matches("input[type=checkbox]")) return;
+  const det = e.target.closest("details");
+  const code = det.dataset.code;
+  if (e.target.checked) done[code] = true; else delete done[code];
+  det.classList.toggle("is-done", e.target.checked);
+  save(); refresh();
+});
+// клик по чекбоксу не должен раскрывать карточку
+plan.querySelectorAll("summary input").forEach(cb => cb.addEventListener("click", e => {
+  e.preventDefault();
+  cb.checked = !cb.checked;
+  cb.dispatchEvent(new Event("change", { bubbles: true }));
+}));
+document.getElementById("openAll").onclick = () => plan.querySelectorAll("details").forEach(d => d.open = true);
+document.getElementById("closeAll").onclick = () => plan.querySelectorAll("details").forEach(d => d.open = false);
+refresh();
+</script>
