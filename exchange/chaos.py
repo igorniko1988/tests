@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse
 from exchange.config import settings
 from exchange.errors import _body
 
-EXEMPT_PATHS = ("/health", "/docs", "/redoc", "/openapi.json")
+EXEMPT_PATHS = ("/health", "/metrics", "/docs", "/redoc", "/openapi.json")
 
 
 def install_chaos(app: FastAPI) -> None:
