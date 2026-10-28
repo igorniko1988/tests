@@ -48,3 +48,4 @@
 | Live coding, m02 t04 two sum (паттерн «ищу пару» через dict) | `interview_prep/livecoding_python/m02_hashing/visual/t04_two_sum.html` | https://claude.ai/artifact/PZ5mxKP5mFpfF8XpcMdVCS |
 | Метрики: счётчик стенда → Prometheus → PromQL → Grafana, алерт при отказе | `practice/visual/metrics_prometheus_grafana.html` | https://claude.ai/artifact/Lg7t7zzf4ZLaqby32JrvUd |
 | Метрики: атлас проблем — CPU, память, пулы, зависимости, диск, сеть на графиках | `practice/visual/metrics_problem_atlas.html` | https://claude.ai/artifact/T6EDrCurrTBEKVqBWm4jCb |
+| Python C1: имена и объекты, +=, копии, аргумент по умолчанию, передача в функцию | `interview_prep/python_course/c01_objects/visual/objects_refs.html` | https://claude.ai/artifact/TzYJP1PWSAMPkEiyaZNHLh |
