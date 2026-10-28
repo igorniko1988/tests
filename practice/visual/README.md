@@ -46,3 +46,5 @@
 | Live coding, m02 t02 first unique char (скрытый O(n²) в s.count) | `interview_prep/livecoding_python/m02_hashing/visual/t02_first_unique_char.html` | https://claude.ai/artifact/GE1aepAJHAupDasoxRsJKb |
 | Python: Counter и defaultdict (отсутствующий ключ, подсчёт, группировка) | `interview_prep/livecoding_python/m02_hashing/visual/counter_defaultdict.html` | https://claude.ai/artifact/2drpCM6Gcoy19wDmvdD795 |
 | Live coding, m02 t04 two sum (паттерн «ищу пару» через dict) | `interview_prep/livecoding_python/m02_hashing/visual/t04_two_sum.html` | https://claude.ai/artifact/PZ5mxKP5mFpfF8XpcMdVCS |
+| Метрики: счётчик стенда → Prometheus → PromQL → Grafana, алерт при отказе | `practice/visual/metrics_prometheus_grafana.html` | https://claude.ai/artifact/Lg7t7zzf4ZLaqby32JrvUd |
+| Метрики: атлас проблем — CPU, память, пулы, зависимости, диск, сеть на графиках | `practice/visual/metrics_problem_atlas.html` | https://claude.ai/artifact/T6EDrCurrTBEKVqBWm4jCb |

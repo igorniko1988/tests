@@ -1,0 +1,475 @@
+<title>Путь метрики до Grafana</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: сверху сценарии и кнопки; слева цепочка и состояние (стенд → Prometheus → Grafana), справа код, пояснение и история */
+:root {
+  --bg: #f3f5f4; --panel: #ffffff; --ink: #17211f; --muted: #5b6965; --line: #d7dedb;
+  --accent: #0d6b5e; --accent-soft: #d5ece7; --hit: #f3c24b; --hit-soft: #fdf0cc;
+  --write: #2f4a8a; --write-soft: #e4e9f5; --swap: #b3261e; --swap-soft: #f8dedb;
+  --code-bg: #1d2523; --code-ink: #dfe7e4; --code-dim: #7f8f8a; --code-hl: #3a3220;
+  --font-body: "Golos Text", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121816; --panel: #1a2220; --ink: #e4ebe8; --muted: #94a39e; --line: #2c3734;
+    --accent: #4fc2ad; --accent-soft: #1f3d37; --hit: #f3c24b; --hit-soft: #3d3219;
+    --write: #a9bdf0; --write-soft: #232d45; --swap: #ff8a80; --swap-soft: #43201d;
+    --code-bg: #0c1110; --code-ink: #dfe7e4; --code-dim: #6c7b76; --code-hl: #3d3219; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121816; --panel: #1a2220; --ink: #e4ebe8; --muted: #94a39e; --line: #2c3734;
+  --accent: #4fc2ad; --accent-soft: #1f3d37; --hit: #f3c24b; --hit-soft: #3d3219;
+  --write: #a9bdf0; --write-soft: #232d45; --swap: #ff8a80; --swap-soft: #43201d;
+  --code-bg: #0c1110; --code-ink: #dfe7e4; --code-dim: #6c7b76; --code-hl: #3d3219; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-body);
+  padding-block: 24px 40px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 1160px; margin: 0 auto; display: grid; gap: 18px; }
+h1 { font-size: 1.6rem; margin: 0; text-wrap: balance; }
+.sub { color: var(--muted); margin: 4px 0 0; max-width: 80ch; }
+.tabs, .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+button { font: 500 .95rem var(--font-body); padding: 8px 14px; border-radius: 6px; cursor: pointer; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+.tabs button.on { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+button.toggle.on { background: var(--accent-soft); border-color: var(--accent); }
+button:disabled { opacity: .45; cursor: default; }
+button:focus-visible { outline: 2px solid var(--hit); outline-offset: 2px; }
+.counter { font: .9rem var(--font-mono); color: var(--muted); }
+.grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 920px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 14px; min-width: 0; align-content: start; }
+.eyebrow { font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 6px; }
+.chain { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; font: .8rem var(--font-mono); }
+.chain .l { padding: 4px 9px; border-radius: 4px; border: 1px solid var(--line); }
+.chain .l.on { background: var(--hit-soft); border-color: var(--hit); font-weight: 600; }
+.chain .arr { color: var(--muted); }
+.clock { font: 600 .85rem var(--font-mono); color: var(--write); }
+.cards { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+@media (max-width: 560px) { .cards { grid-template-columns: minmax(0, 1fr); } }
+.card { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; min-width: 0; }
+.card.changed { border-color: var(--hit); background: var(--hit-soft); }
+.card.wide { grid-column: 1 / -1; }
+.card h3 { font: .72rem var(--font-body); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 6px; font-weight: 400; }
+.card .hint { font-size: .78rem; color: var(--muted); margin: 6px 0 0; }
+.kv { display: flex; justify-content: space-between; gap: 8px; font: .82rem var(--font-mono); padding: 2px 4px; border-radius: 4px; }
+.kv span:first-child { overflow-wrap: anywhere; }
+.kv b { font-variant-numeric: tabular-nums; }
+.kv.changed { background: var(--hit-soft); }
+.mtext { font: .74rem/1.55 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; }
+.mtext .cm { color: var(--muted); }
+table { border-collapse: collapse; width: 100%; font: .8rem var(--font-mono); font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: .7rem var(--font-body); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 400; }
+tr.changed td { background: var(--hit-soft); }
+.tscroll { overflow-x: auto; }
+.empty { color: var(--muted); font-style: italic; font-size: .85rem; }
+.q { font: .8rem var(--font-mono); overflow-wrap: anywhere; }
+.qres { font: 700 1.25rem var(--font-mono); margin-top: 4px; }
+.qres small { font: .8rem var(--font-body); color: var(--muted); font-weight: 400; }
+.alert { display: inline-block; font: 600 .8rem var(--font-mono); padding: 2px 8px; border-radius: 4px; }
+.alert.inactive { background: var(--accent-soft); color: var(--accent); }
+.alert.pending { background: var(--hit-soft); color: var(--ink); border: 1px solid var(--hit); }
+.alert.firing { background: var(--swap-soft); color: var(--swap); }
+.charts { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+@media (max-width: 560px) { .charts { grid-template-columns: minmax(0, 1fr); } }
+svg { width: 100%; height: auto; display: block; }
+.code { background: var(--code-bg); color: var(--code-ink); border-radius: 8px; padding: 10px 0; font: .8rem/1.6 var(--font-mono); overflow-x: auto; }
+.code .fn { color: var(--code-dim); padding: 0 14px 6px; font-size: .74rem; }
+.code .ln { display: block; padding: 0 14px; white-space: pre; }
+.code .ln.hl { background: var(--code-hl); box-shadow: inset 3px 0 0 var(--hit); }
+.code .ln .no { color: var(--code-dim); display: inline-block; width: 2.2em; user-select: none; }
+.msg { border-left: 3px solid var(--accent); padding: 10px 14px; background: var(--accent-soft); border-radius: 0 8px 8px 0; }
+.msg p { margin: 0 0 6px; } .msg p:last-child { margin: 0; }
+.msg.err { border-left-color: var(--swap); background: var(--swap-soft); }
+.mistake { border: 1px dashed var(--swap); color: var(--swap); border-radius: 8px; padding: 8px 12px; font-size: .9rem; }
+.who { font-weight: 600; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Путь метрики: стенд → Prometheus → Grafana</h1>
+    <p class="sub">Тест создаёт ордера, стенд считает их в памяти, Prometheus каждые 5 секунд забирает числа и записывает с временем, Grafana по этим записям рисует график. Жми «Шаг» и смотри, где что меняется.</p>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="Сценарий">
+    <button id="sc-normal" class="on" data-sc="normal">1. Обычная работа: счётчик и rate</button>
+    <button id="sc-outage" data-sc="outage">2. Отказ провайдера цен: ошибки и алерт</button>
+  </div>
+
+  <div class="controls">
+    <button id="prev">← Назад</button>
+    <button id="next" class="primary">Шаг →</button>
+    <button id="auto" class="toggle">▶ Авто</button>
+    <span class="counter" id="counter"></span>
+  </div>
+
+  <div class="grid">
+    <section class="panel" aria-label="Состояние">
+      <div>
+        <p class="eyebrow">Кто работает сейчас · <span class="clock" id="clock"></span></p>
+        <div class="chain" id="chain"></div>
+      </div>
+      <div class="cards">
+        <div class="card" id="c-mem">
+          <h3>Стенд: счётчики в памяти</h3>
+          <div id="mem"></div>
+          <p class="hint">Живут в процессе стенда. Рестарт — снова 0.</p>
+        </div>
+        <div class="card" id="c-text">
+          <h3>GET localhost:8080/metrics</h3>
+          <pre class="mtext" id="mtext"></pre>
+        </div>
+        <div class="card wide" id="c-store">
+          <h3>Prometheus: что записано (scrape раз в 5 с)</h3>
+          <div class="tscroll" id="store"></div>
+        </div>
+        <div class="card wide" id="c-query">
+          <h3>PromQL-запрос (localhost:9090 → Query)</h3>
+          <div id="query"></div>
+        </div>
+        <div class="card wide" id="c-graf">
+          <h3>Grafana: дашборд «Mini Exchange» (localhost:3000)</h3>
+          <div class="charts">
+            <div><p class="eyebrow">Запросы в секунду</p><svg id="ch-rps" viewBox="0 0 300 130" role="img" aria-label="График запросов в секунду"></svg></div>
+            <div><p class="eyebrow">Доля ошибок 5xx</p><svg id="ch-err" viewBox="0 0 300 130" role="img" aria-label="График доли ошибок"></svg></div>
+          </div>
+          <p class="hint">Алерт HighErrorRate (доля 5xx &gt; 5% дольше 1 мин): <span id="alert" class="alert inactive">inactive</span></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="Код и пояснение">
+      <div class="code" id="code"></div>
+      <div class="msg" id="msg"></div>
+      <div class="mistake" id="mistake" hidden></div>
+      <div>
+        <p class="eyebrow">История шагов</p>
+        <div class="tscroll"><table id="hist"><thead><tr><th>#</th><th>Время</th><th>Кто</th><th>Что произошло</th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+const CHAIN = ['Тест', 'Стенд', '/metrics', 'Prometheus', 'PromQL', 'Grafana', 'Алерт'];
+
+const CODE = {
+  test: { fn: 'tests/api/test_orders.py', lines: [
+    'def test_create_limit_order(funded_user):',
+    "    response = funded_user.orders.create(CreateOrder(price='10'))",
+    '    assert response.status_code == 201',
+  ]},
+  market: { fn: 'tests/api/test_orders.py', lines: [
+    'def test_market_order_uses_feed_price(funded_user):',
+    "    response = funded_user.orders.create(CreateOrder(type='MARKET'))",
+    '    assert response.status_code == 201   # а пришло 503',
+  ]},
+  mw: { fn: 'exchange/metrics.py', lines: [
+    'REQUESTS = Counter("exchange_http_requests_total", "HTTP-запросы",',
+    '                   ["method", "route", "status"])',
+    '',
+    'async def collect(request, call_next):',
+    '    response = await call_next(request)          # стенд обработал запрос',
+    '    route = request.scope["route"].path           # "/orders", а не id',
+    '    REQUESTS.labels(request.method, route, str(response.status_code)).inc()',
+    '    return response',
+  ]},
+  feed: { fn: 'exchange/pricefeed.py', lines: [
+    'try:',
+    '    data = await asyncio.to_thread(_fetch, url, settings.price_feed_timeout)',
+    'except (OSError, ValueError, ...):',
+    '    PRICE_FEED_ERRORS.labels("unavailable").inc()',
+    '    raise ApiError(503, "price_unavailable", "Price feed is unavailable")',
+  ]},
+  metrics: { fn: 'curl localhost:8080/metrics', lines: [
+    '# HELP exchange_http_requests_total HTTP-запросы',
+    '# TYPE exchange_http_requests_total counter',
+    'exchange_http_requests_total{method="POST",route="/orders",status="201"} 3.0',
+  ]},
+  prom: { fn: 'prometheus/prometheus.yml', lines: [
+    'global:',
+    '  scrape_interval: 5s              # как часто забирать',
+    'scrape_configs:',
+    '  - job_name: exchange',
+    '    static_configs:',
+    '      - targets: ["exchange:8000"]   # GET exchange:8000/metrics',
+  ]},
+  raw: { fn: 'Prometheus → Query', lines: [
+    'exchange_http_requests_total{route="/orders"}',
+  ]},
+  rate: { fn: 'Prometheus → Query', lines: [
+    'exchange_http_requests_total{route="/orders"}          # 9 — «с момента старта»',
+    'rate(exchange_http_requests_total{route="/orders"}[1m])  # в секунду',
+  ]},
+  graf: { fn: 'grafana/dashboards/exchange.json (панель)', lines: [
+    '"title": "Запросы в секунду по маршрутам",',
+    '"targets": [{',
+    '  "expr": "sum by (method, route) (rate(exchange_http_requests_total[1m]))"',
+    '}]',
+    '"refresh": "5s"     # дашборд повторяет запрос каждые 5 с',
+  ]},
+  toxi: { fn: 'терминал', lines: [
+    '# выключаем провайдера цен через Toxiproxy',
+    'curl -X POST localhost:8474/proxies/price_feed -d \'{"enabled": false}\'',
+  ]},
+  errq: { fn: 'Prometheus → Query', lines: [
+    'sum(rate(exchange_http_requests_total{status=~"5.."}[1m]))',
+    '  / sum(rate(exchange_http_requests_total[1m]))',
+  ]},
+  alert: { fn: 'prometheus/alerts.yml', lines: [
+    '- alert: HighErrorRate',
+    '  expr: sum(rate(...{status=~"5.."}[1m])) / sum(rate(...[1m])) > 0.05',
+    '  for: 1m                 # условие должно держаться минуту',
+    '  labels: { severity: warning }',
+  ]},
+  reset: { fn: 'терминал', lines: [
+    'curl -X POST localhost:8474/reset     # убрать сбои, включить прокси',
+  ]},
+};
+
+const START = () => ({
+  clock: '10:00:00', active: 'Тест',
+  mem: { ok: 0, err: 0, feed: 0 },
+  store: [],
+  query: null,
+  rps: [], err: [],
+  alert: 'inactive',
+});
+
+// Каждый шаг меняет копию предыдущего состояния: apply(s)
+const SCENARIOS = {
+  normal: [
+    { who: 'Тест', code: 'test', hl: 1, clock: '10:00:01',
+      what: 'POST /orders',
+      text: ['Тест создаёт ордер. Это обычный API-запрос, про метрики тест ничего не знает.',
+             'Стенд пока ничего не посчитал: счётчики по нулям, Prometheus и Grafana пусты.'],
+      apply: s => {} },
+    { who: 'Стенд', code: 'mw', hl: 6, clock: '10:00:01', what: 'счётчик 201: 0 → 1', changed: ['mem'],
+      text: ['Стенд ответил 201, и middleware сделал <b>+1</b> в счётчике с метками method=POST, route=/orders, status=201.',
+             'Это просто число в памяти процесса. Стенд никуда его не отправляет — он только считает.'],
+      apply: s => { s.mem.ok = 1; } },
+    { who: 'Стенд', code: 'mw', hl: 6, clock: '10:00:03', what: 'ещё 2 ордера: 1 → 3', changed: ['mem'],
+      text: ['Другие тесты создали ещё два ордера. Счётчик стал 3.',
+             '<b>Counter только растёт</b>: он хранит «сколько всего с момента старта стенда», а не «сколько сейчас».'],
+      apply: s => { s.mem.ok = 3; } },
+    { who: '/metrics', code: 'metrics', hl: 2, clock: '10:00:04', what: 'счётчики видны текстом', changed: ['text'],
+      text: ['Стенд показывает все свои счётчики на странице <b>/metrics</b> — обычный текст: имя, метки в фигурных скобках, число.',
+             'Открой http://localhost:8080/metrics в браузере и найди эту строку — это то же самое.'],
+      apply: s => {} },
+    { who: 'Prometheus', code: 'prom', hl: 1, clock: '10:00:05', what: 'scrape: записал 3', changed: ['store'],
+      text: ['Каждые 5 секунд Prometheus <b>сам</b> приходит на exchange:8000/metrics (это и есть «pull»), читает текст и записывает: «в 10:00:05 значение было 3».',
+             'Так копится история — временной ряд. Сам стенд истории не хранит.'],
+      apply: s => { s.store.push({ t: '10:00:05', ok: 3, err: 0 }); } },
+    { who: 'Стенд', code: 'mw', hl: 6, clock: '10:00:09', what: 'ещё 6 ордеров: 3 → 9', changed: ['mem'],
+      text: ['Между скрейпами тесты создали ещё 6 ордеров. В памяти стенда 9, а Prometheus об этом пока не знает — он придёт в 10:00:10.'],
+      apply: s => { s.mem.ok = 9; } },
+    { who: 'Prometheus', code: 'prom', hl: 1, clock: '10:00:10', what: 'scrape: записал 9', changed: ['store'],
+      text: ['Второй скрейп: в хранилище появилась вторая точка «10:00:10 → 9».',
+             'Теперь по двум точкам можно посчитать <b>скорость</b>.'],
+      apply: s => { s.store.push({ t: '10:00:10', ok: 9, err: 0 }); } },
+    { who: 'PromQL', code: 'raw', hl: 0, clock: '10:00:11', what: 'сырой счётчик = 9', changed: ['query'],
+      mistake: 'Частая ошибка: смотреть на сырое значение counter. «9» — это «с момента старта», после рестарта стенда будет 0. Счётчик всегда оборачивают в rate() или increase().',
+      text: ['Запрос в Prometheus без функций вернёт 9. Это ни о чём не говорит: 9 за минуту или за неделю?'],
+      apply: s => { s.query = { expr: 'exchange_http_requests_total{route="/orders"}', res: '9', note: 'всего с момента старта' }; } },
+    { who: 'PromQL', code: 'rate', hl: 1, clock: '10:00:11', what: 'rate = (9 − 3) / 5 с = 1.2/с', changed: ['query'],
+      text: ['<b>rate()</b> берёт точки за окно и считает прирост в секунду: (9 − 3) / 5 с = <b>1.2 запроса в секунду</b>.',
+             'Вот это уже полезно: «сейчас стенд получает 1.2 ордера в секунду».'],
+      apply: s => { s.query = { expr: 'rate(exchange_http_requests_total{route="/orders"}[1m])', res: '1.2', note: 'запроса в секунду' }; } },
+    { who: 'Grafana', code: 'graf', hl: 2, clock: '10:00:12', what: 'точка на графике: 1.2', changed: ['graf'],
+      text: ['Grafana сама данных не хранит. Каждая панель — это PromQL-запрос, который Grafana отправляет в Prometheus и рисует ответ точкой.',
+             'Дашборд обновляется каждые 5 секунд, поэтому график «живой».'],
+      apply: s => { s.rps.push(1.2); s.err.push(0); } },
+    { who: 'Prometheus', code: 'prom', hl: 1, clock: '10:00:15', what: 'scrape 13 → rate 0.8/с', changed: ['store', 'graf', 'mem'],
+      text: ['Тесты создали ещё 4 ордера: в памяти 13, скрейп записал 13, rate = (13 − 9) / 5 = 0.8/с, на графике новая точка.',
+             'Итог: <b>стенд считает → Prometheus забирает и хранит → Grafana спрашивает и рисует</b>.'],
+      apply: s => { s.mem.ok = 13; s.store.push({ t: '10:00:15', ok: 13, err: 0 }); s.rps.push(0.8); s.err.push(0);
+                    s.query = { expr: 'rate(exchange_http_requests_total{route="/orders"}[1m])', res: '0.8', note: 'запроса в секунду' }; } },
+  ],
+  outage: [
+    { who: 'Тест', code: 'toxi', hl: 1, clock: '10:01:00', what: 'провайдер цен выключен',
+      text: ['Начинаем с работающей системы: ошибок нет, алерт inactive.',
+             'Через Toxiproxy выключаем провайдера цен — так в жизни падает внешняя зависимость.'],
+      apply: s => {} },
+    { who: 'Тест', code: 'market', hl: 1, clock: '10:01:02', what: 'MARKET-ордер → 503',
+      text: ['Тест создаёт MARKET-ордер. Стенду нужна цена, он идёт к провайдеру — а тот недоступен.'],
+      apply: s => {} },
+    { who: 'Стенд', code: 'feed', hl: 3, clock: '10:01:02', what: 'feed_errors +1, 503 +1', changed: ['mem'],
+      text: ['Стенд считает отказ провайдера (<b>price_feed_errors_total{reason="unavailable"}</b>) и отвечает 503.',
+             'Middleware делает +1 и в счётчике status=503. Тест падает с «ожидали 201, пришло 503».'],
+      apply: s => { s.mem.feed += 1; s.mem.err += 1; } },
+    { who: 'Prometheus', code: 'prom', hl: 1, clock: '10:01:05', what: 'scrape: 201=15, 503=4', changed: ['store', 'mem'],
+      text: ['Пока провайдер лежит, идут и обычные LIMIT-ордера (201), и MARKET (503). Prometheus записал оба ряда: 201 и 503 — это разные временные ряды, потому что разная метка status.'],
+      apply: s => { s.mem.ok = 15; s.mem.err = 4; s.mem.feed = 4; s.store.push({ t: '10:01:05', ok: 15, err: 4 }); } },
+    { who: 'PromQL', code: 'errq', hl: 0, clock: '10:01:06', what: 'доля ошибок = 40%', changed: ['query'],
+      text: ['Считаем долю ошибок: скорость 5xx делить на скорость всех запросов.',
+             'Между скрейпами 10:00:55 и 10:01:05 (10 с): 503 выросли 0 → 4, это 0.4/с; 201 выросли 12 → 15, это 0.3/с. Доля ошибок = 0.4 / (0.4 + 0.3) ≈ <b>0.57</b>, то есть 57% запросов падает.'],
+      apply: s => { s.query = { expr: 'sum(rate(…{status=~"5.."}[1m])) / sum(rate(…[1m]))', res: '0.57', note: '= 57% ответов с ошибкой' }; } },
+    { who: 'Grafana', code: 'graf', hl: 2, clock: '10:01:07', what: 'всплеск на графике ошибок', changed: ['graf'],
+      text: ['На панели «Доля ошибок 5xx» резкий всплеск. Это первое, что видит дежурный или QA, открыв дашборд.'],
+      apply: s => { s.rps.push(0.7); s.err.push(0.57); } },
+    { who: 'Алерт', code: 'alert', hl: 1, clock: '10:01:10', what: 'условие > 5% → pending', changed: ['graf'],
+      text: ['Prometheus каждые 5 с проверяет правило алерта. 57% &gt; 5% — алерт перешёл в <b>pending</b>.',
+             'Он ещё не «звонит»: ждёт <b>for: 1m</b>, чтобы не поднимать тревогу из-за одного случайного всплеска.'],
+      apply: s => { s.alert = 'pending'; s.rps.push(0.7); s.err.push(0.55); } },
+    { who: 'Алерт', code: 'alert', hl: 2, clock: '10:02:10', what: 'минута прошла → firing', changed: ['graf'],
+      text: ['Условие держалось минуту — алерт <b>firing</b>. Alertmanager отправил бы сообщение в Slack или почту.'],
+      apply: s => { s.alert = 'firing'; s.rps.push(0.7); s.err.push(0.52); } },
+    { who: 'Grafana', code: 'graf', hl: 2, clock: '10:02:30', what: 'QA ищет причину падения', changed: ['graf'],
+      mistake: 'Ошибка при разборе: сразу заводить баг на создание ордеров. Сначала открой дашборд на время падения: всплеск отказов провайдера цен говорит, что сломана зависимость, а не код ордеров.',
+      text: ['Как этим пользуется QA: тест упал в 10:01:02. Открываешь Grafana, ставишь время 10:01 и видишь: в эту же минуту выросли 503 и <b>отказы провайдера цен</b>.',
+             'Дальше — логи по request_id и трейс в Jaeger, чтобы подтвердить.'],
+      apply: s => {} },
+    { who: 'Тест', code: 'reset', hl: 0, clock: '10:03:00', what: 'провайдер включён → resolved', changed: ['graf', 'query'],
+      text: ['Toxiproxy reset — провайдер снова отвечает. Новых 503 нет, rate ошибок падает к 0, алерт возвращается в inactive (resolved).',
+             'График сохранил историю: всплеск в 10:01–10:02 видно и через час.'],
+      apply: s => { s.alert = 'inactive'; s.rps.push(1.2); s.err.push(0.0);
+                    s.query = { expr: 'sum(rate(…{status=~"5.."}[1m])) / sum(rate(…[1m]))', res: '0.00', note: 'ошибок нет' }; } },
+  ],
+};
+
+function outageStart() {
+  const s = START();
+  s.clock = '10:00:55';
+  s.mem = { ok: 12, err: 0, feed: 0 };
+  s.store = [{ t: '10:00:50', ok: 10, err: 0 }, { t: '10:00:55', ok: 12, err: 0 }];
+  s.rps = [1.2, 0.8, 0.6, 0.4]; s.err = [0, 0, 0, 0];
+  return s;
+}
+
+let scenario = 'normal', snaps = [], idx = 0, timer = null;
+
+function build() {
+  const steps = SCENARIOS[scenario];
+  let s = scenario === 'normal' ? START() : outageStart();
+  snaps = [{ s: structuredClone(s), step: null }];
+  for (const st of steps) {
+    s = structuredClone(s);
+    st.apply(s); s.clock = st.clock; s.active = st.who;
+    snaps.push({ s: structuredClone(s), step: st });
+  }
+}
+
+const $ = id => document.getElementById(id);
+
+function chart(svg, values, max, fmt, color) {
+  const W = 300, H = 130, L = 34, R = 8, T = 10, B = 22;
+  const n = Math.max(values.length, 2);
+  const x = i => L + (W - L - R) * (values.length < 2 ? 0.5 : i / (n - 1));
+  const y = v => T + (H - T - B) * (1 - v / max);
+  let g = '';
+  [0, max / 2, max].forEach(v => {
+    g += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/>`;
+    g += `<text x="${L - 4}" y="${y(v) + 4}" font-size="10" text-anchor="end" fill="var(--muted)" font-family="var(--font-mono)">${fmt(v)}</text>`;
+  });
+  g += `<text x="${W - R}" y="${H - 6}" font-size="10" text-anchor="end" fill="var(--muted)">время →</text>`;
+  if (!values.length) {
+    g += `<text x="${(L + W) / 2}" y="${H / 2}" font-size="11" text-anchor="middle" fill="var(--muted)">нет данных</text>`;
+  } else {
+    const pts = values.map((v, i) => `${x(i)},${y(v)}`).join(' ');
+    if (values.length > 1) {
+      g += `<polygon points="${x(0)},${y(0)} ${pts} ${x(values.length - 1)},${y(0)}" fill="${color}" opacity=".15"/>`;
+      g += `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2"/>`;
+    }
+    const li = values.length - 1;
+    g += `<circle cx="${x(li)}" cy="${y(values[li])}" r="4" fill="${color}"/>`;
+    g += `<text x="${Math.min(x(li), W - R - 2)}" y="${y(values[li]) - 8}" font-size="10" text-anchor="end" fill="var(--ink)" font-family="var(--font-mono)">${fmt(values[li])}</text>`;
+  }
+  svg.innerHTML = g;
+}
+
+function render() {
+  const { s, step } = snaps[idx];
+  const prev = idx > 0 ? snaps[idx - 1].s : null;
+  const changed = new Set(step?.changed || []);
+  $('counter').textContent = `шаг ${idx} из ${snaps.length - 1}`;
+  $('prev').disabled = idx === 0;
+  $('next').disabled = idx === snaps.length - 1;
+  $('clock').textContent = s.clock;
+
+  $('chain').innerHTML = CHAIN.map((c, i) =>
+    (i ? '<span class="arr">→</span>' : '') + `<span class="l${step && step.who === c ? ' on' : ''}">${c}</span>`).join('');
+
+  const memRow = (label, key) => {
+    const ch = prev && prev.mem[key] !== s.mem[key];
+    return `<div class="kv${ch ? ' changed' : ''}"><span>${label}</span><b>${s.mem[key]}</b></div>`;
+  };
+  $('mem').innerHTML = memRow('POST /orders 201', 'ok') + memRow('POST /orders 503', 'err') + memRow('price_feed_errors{unavailable}', 'feed');
+  $('c-mem').classList.toggle('changed', changed.has('mem'));
+
+  $('mtext').innerHTML =
+    '<span class="cm"># TYPE exchange_http_requests_total counter</span>\n' +
+    `exchange_http_requests_total{method="POST",route="/orders",status="201"} ${s.mem.ok}.0\n` +
+    (s.mem.err ? `exchange_http_requests_total{method="POST",route="/orders",status="503"} ${s.mem.err}.0\n` : '') +
+    (s.mem.feed ? `exchange_price_feed_errors_total{reason="unavailable"} ${s.mem.feed}.0` : '');
+  $('c-text').classList.toggle('changed', changed.has('text'));
+
+  if (!s.store.length) {
+    $('store').innerHTML = '<p class="empty">Пусто: Prometheus ещё ни разу не приходил за метриками.</p>';
+  } else {
+    const last = s.store.length - 1;
+    $('store').innerHTML = '<table><thead><tr><th>время скрейпа</th><th>…{status="201"}</th><th>…{status="503"}</th></tr></thead><tbody>' +
+      s.store.map((r, i) => `<tr class="${changed.has('store') && i === last ? 'changed' : ''}"><td>${r.t}</td><td>${r.ok}</td><td>${r.err}</td></tr>`).join('') +
+      '</tbody></table>';
+  }
+  $('c-store').classList.toggle('changed', changed.has('store'));
+
+  $('query').innerHTML = s.query
+    ? `<div class="q">${s.query.expr.replace(/</g, '&lt;')}</div><div class="qres">${s.query.res} <small>${s.query.note}</small></div>`
+    : '<p class="empty">Запросов ещё не было.</p>';
+  $('c-query').classList.toggle('changed', changed.has('query'));
+
+  chart($('ch-rps'), s.rps, 2, v => v.toFixed(1), 'var(--accent)');
+  chart($('ch-err'), s.err, 1, v => Math.round(v * 100) + '%', 'var(--swap)');
+  const al = $('alert'); al.className = 'alert ' + s.alert; al.textContent = s.alert;
+  $('c-graf').classList.toggle('changed', changed.has('graf'));
+
+  const code = CODE[step ? step.code : (scenario === 'normal' ? 'test' : 'toxi')];
+  const hl = step ? step.hl : -1;
+  $('code').innerHTML = `<div class="fn">${code.fn}</div>` + code.lines.map((l, i) =>
+    `<span class="ln${i === hl ? ' hl' : ''}"><span class="no">${i + 1}</span>${l.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</span>`).join('');
+
+  const msg = $('msg');
+  if (step) {
+    msg.innerHTML = step.text.map(t => `<p>${t}</p>`).join('');
+    msg.classList.toggle('err', /503|ошиб|отказ/.test(step.what) || s.alert === 'firing');
+  } else {
+    msg.classList.remove('err');
+    msg.innerHTML = scenario === 'normal'
+      ? '<p>Старт: стенд только что запущен, тесты ещё ничего не сделали. Жми «Шаг →».</p>'
+      : '<p>Старт: система работает уже минуту, графики спокойные, ошибок нет. Сейчас сломаем зависимость. Жми «Шаг →».</p>';
+  }
+  const mk = $('mistake');
+  mk.hidden = !(step && step.mistake);
+  if (step && step.mistake) mk.textContent = step.mistake;
+
+  $('hist').querySelector('tbody').innerHTML = snaps.slice(1, idx + 1).map((sn, i) =>
+    `<tr class="${i === idx - 1 ? 'changed' : ''}"><td>${i + 1}</td><td>${sn.s.clock}</td><td class="who">${sn.step.who}</td><td>${sn.step.what}</td></tr>`).join('')
+    || '<tr><td colspan="4" class="empty">пока пусто</td></tr>';
+}
+
+function go(d) { idx = Math.max(0, Math.min(snaps.length - 1, idx + d)); render(); }
+function stopAuto() { clearInterval(timer); timer = null; $('auto').classList.remove('on'); $('auto').textContent = '▶ Авто'; }
+$('prev').onclick = () => { stopAuto(); go(-1); };
+$('next').onclick = () => { stopAuto(); go(1); };
+$('auto').onclick = () => {
+  if (timer) return stopAuto();
+  if (idx === snaps.length - 1) idx = 0;
+  $('auto').classList.add('on'); $('auto').textContent = '❚❚ Пауза';
+  timer = setInterval(() => { if (idx >= snaps.length - 1) return stopAuto(); go(1); }, 2200);
+};
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+  stopAuto();
+  document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
+  scenario = b.dataset.sc; build(); idx = 0; render();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight') { stopAuto(); go(1); }
+  if (e.key === 'ArrowLeft') { stopAuto(); go(-1); }
+});
+build(); render();
+</script>
