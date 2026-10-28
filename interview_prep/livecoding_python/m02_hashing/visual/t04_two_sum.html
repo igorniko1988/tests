@@ -1,0 +1,301 @@
+<title>Two Sum по шагам</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: слева массив и «шкаф» seen (dict), справа код с подсветкой и история шагов */
+:root {
+  --bg: #f3f5f4; --panel: #ffffff; --ink: #17211f; --muted: #5b6965; --line: #d7dedb;
+  --accent: #0d6b5e; --accent-soft: #d5ece7; --hit: #f3c24b; --hit-soft: #fdf0cc;
+  --write: #2f4a8a; --write-soft: #e4e9f5; --swap: #b3261e; --swap-soft: #f8dedb;
+  --code-bg: #1d2523; --code-ink: #dfe7e4; --code-dim: #7f8f8a;
+  --font-body: "Golos Text", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121816; --panel: #1a2220; --ink: #e4ebe8; --muted: #94a39e; --line: #2c3734;
+    --accent: #4fc2ad; --accent-soft: #1f3d37; --hit: #f3c24b; --hit-soft: #3d3219;
+    --write: #a9bdf0; --write-soft: #232d45; --swap: #ff8a80; --swap-soft: #43201d;
+    --code-bg: #0c1110; --code-ink: #dfe7e4; --code-dim: #6c7b76; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121816; --panel: #1a2220; --ink: #e4ebe8; --muted: #94a39e; --line: #2c3734;
+  --accent: #4fc2ad; --accent-soft: #1f3d37; --hit: #f3c24b; --hit-soft: #3d3219;
+  --write: #a9bdf0; --write-soft: #232d45; --swap: #ff8a80; --swap-soft: #43201d;
+  --code-bg: #0c1110; --code-ink: #dfe7e4; --code-dim: #6c7b76; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 40px;
+}
+.wrap { max-width: 1080px; margin: 0 auto; display: grid; gap: 18px; }
+h1 { font-size: 1.6rem; margin: 0; text-wrap: balance; }
+.sub { color: var(--muted); margin: 4px 0 0; max-width: 72ch; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.controls label { font-size: .85rem; color: var(--muted); }
+input[type=text] { font: 600 .95rem var(--font-mono); padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--ink); width: 13rem; }
+input#tg { width: 5rem; }
+button { font: 500 .95rem var(--font-body); padding: 8px 14px; border-radius: 6px; cursor: pointer; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+button.on { background: var(--swap-soft); border-color: var(--swap); }
+button:disabled { opacity: .45; cursor: default; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--hit); outline-offset: 2px; }
+.presets { display: flex; gap: 6px; flex-wrap: wrap; }
+.presets button { font-family: var(--font-mono); font-size: .82rem; padding: 4px 8px; }
+.grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 16px; min-width: 0; align-content: start; }
+.eyebrow { font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 6px; }
+.cells { display: flex; flex-wrap: wrap; gap: 6px; padding-block: 26px 6px; }
+.cell { position: relative; width: 50px; display: grid; gap: 2px; justify-items: center; }
+.box { width: 50px; height: 48px; display: grid; place-items: center; border-radius: 6px; font: 600 1.15rem var(--font-mono); border: 2px solid var(--line); background: var(--panel); transition: background .25s, border-color .25s; }
+.idx { font: .7rem var(--font-mono); color: var(--muted); }
+.cell.past .box { background: var(--accent-soft); }
+.cell.future .box { opacity: .4; }
+.cell.cur .box { border-color: var(--hit); box-shadow: 0 0 0 2px var(--hit); }
+.cell.found .box { background: var(--hit-soft); border-color: var(--hit); }
+.cell.bad .box { background: var(--swap-soft); border-color: var(--swap); }
+.tag { position: absolute; top: -24px; font: 600 .72rem var(--font-mono); padding: 0 6px; border-radius: 4px; white-space: nowrap; background: var(--hit); color: #2a2000; }
+.dict { display: flex; flex-wrap: wrap; gap: 8px; min-height: 58px; align-items: center; }
+.slot { border: 2px solid var(--line); border-radius: 8px; padding: 6px 10px; font: 600 .95rem var(--font-mono); display: grid; justify-items: center; min-width: 64px; transition: background .25s, border-color .25s; }
+.slot .k { font-size: 1.05rem; }
+.slot .v { font: .75rem var(--font-mono); color: var(--muted); }
+.slot.new { border-color: var(--write); background: var(--write-soft); }
+.slot.ask { border-color: var(--hit); background: var(--hit-soft); }
+.slot.miss { border-style: dashed; border-color: var(--swap); color: var(--swap); background: transparent; }
+.vars { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 520px) { .vars { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.var { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; min-width: 0; }
+.var .name { font: .8rem var(--font-mono); color: var(--muted); }
+.var .val { font: 600 1.15rem var(--font-mono); }
+.var.changed { border-color: var(--hit); background: var(--hit-soft); }
+.msg { border-left: 3px solid var(--accent); padding: 10px 14px; background: var(--accent-soft); border-radius: 0 8px 8px 0; min-height: 4em; }
+.msg.err { border-left-color: var(--swap); background: var(--swap-soft); }
+.msg b { font-family: var(--font-mono); font-size: .92em; }
+.code { background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 14px 0; overflow-x: auto; font: .88rem/1.7 var(--font-mono); }
+.code .ln { display: flex; padding: 0 14px; white-space: pre; border-left: 3px solid transparent; }
+.code .ln .no { color: var(--code-dim); width: 2.2em; flex: none; user-select: none; }
+.code .ln.active { background: rgba(243, 194, 75, .18); border-left-color: var(--hit); }
+.code .ln.wrong { background: rgba(255, 138, 128, .14); }
+.kw { color: #f0a36b; } .fn { color: #8fd3c4; } .nu { color: #f3c24b; } .cm { color: var(--code-dim); }
+.progress { font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+table { border-collapse: collapse; width: 100%; font: .82rem var(--font-mono); font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { color: var(--muted); font-weight: 400; font-family: var(--font-body); }
+tr.cur td { background: var(--hit-soft); }
+.tablewrap { overflow-x: auto; }
+.note { border: 1px dashed var(--line); border-radius: 8px; padding: 10px 14px; font-size: .9rem; }
+.mistake { border-left: 3px solid var(--swap); background: var(--swap-soft); border-radius: 0 8px 8px 0; padding: 10px 14px; font-size: .9rem; }
+.mistake ul { margin: 6px 0 0; padding-left: 1.2em; }
+code { font-family: var(--font-mono); font-size: .9em; }
+@media (prefers-reduced-motion: reduce) { .box, .slot { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>t04 Two Sum: «какое число мне нужно в пару, и видел ли я его?»</h1>
+    <p class="sub">Идём по списку один раз. Для текущего <b>x</b> нужная пара — <b>need = target − x</b>. Все пройденные числа лежат в «шкафу» <b>seen</b> (dict: число → индекс), поэтому «видел ли я need» проверяется за O(1), без второго цикла.</p>
+  </header>
+
+  <div class="controls">
+    <label for="inp">nums</label>
+    <input id="inp" type="text" value="2, 7, 11, 15" autocomplete="off" spellcheck="false">
+    <label for="tg">target</label>
+    <input id="tg" type="text" value="9" autocomplete="off" spellcheck="false">
+    <div class="presets">
+      <button data-n="2, 7, 11, 15" data-t="9">[2,7,11,15], 9</button>
+      <button data-n="3, 2, 4" data-t="6">[3,2,4], 6</button>
+      <button data-n="3, 3" data-t="6">[3,3], 6 — дубль</button>
+      <button data-n="1, 5, 8, 3, 9, 2" data-t="11">[1,5,8,3,9,2], 11</button>
+    </div>
+  </div>
+  <div class="controls">
+    <button id="prev">← Назад</button>
+    <button id="next" class="primary">Шаг →</button>
+    <button id="play">▶ Авто</button>
+    <button id="reset">В начало</button>
+    <button id="wrong" title="Сначала записать x в seen, потом спрашивать">Частая ошибка: сначала записать</button>
+  </div>
+
+  <div class="grid">
+    <section class="panel">
+      <div>
+        <p class="eyebrow">nums (подпись — индекс)</p>
+        <div class="cells" id="cells"></div>
+      </div>
+      <div>
+        <p class="eyebrow">seen — «шкаф»: число → индекс</p>
+        <div class="dict" id="dict"></div>
+      </div>
+      <div class="vars">
+        <div class="var" id="v-i"><div class="name">i</div><div class="val">—</div></div>
+        <div class="var" id="v-x"><div class="name">x</div><div class="val">—</div></div>
+        <div class="var" id="v-need"><div class="name">need</div><div class="val">—</div></div>
+        <div class="var" id="v-res"><div class="name">return</div><div class="val">—</div></div>
+      </div>
+      <div class="msg" id="msg"></div>
+      <div class="progress" id="stepno"></div>
+      <div class="mistake"><b>Где обычно ошибаются</b>
+        <ul>
+          <li>Пишут цикл в цикле: <code>for i ... for j ...</code>. Работает, но O(n²) — тест на скорость упадёт, интервьюер спросит «можно быстрее?».</li>
+          <li>Записывают <code>seen[x] = i</code> <b>до</b> проверки. На <code>[3, 3], 6</code> число находит само себя и возвращает <code>[0, 0]</code>. Нажми кнопку «Частая ошибка», чтобы увидеть.</li>
+          <li>Кладут в <code>set</code> вместо <code>dict</code>: узнаешь, что пара была, но не узнаешь её индекс.</li>
+          <li>Сортируют список: индексы перемешаются, а вернуть надо исходные.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div>
+        <p class="eyebrow">Код</p>
+        <div class="code" id="code"></div>
+      </div>
+      <div>
+        <p class="eyebrow">История шагов</p>
+        <div class="tablewrap"><table><thead><tr><th>i</th><th>x</th><th>need</th><th>need in seen?</th><th>seen после шага</th></tr></thead><tbody id="hist"></tbody></table></div>
+      </div>
+      <div class="note"><b>Сложность:</b> один проход, каждая операция с dict — O(1). Время <b>O(n)</b>, память <b>O(n)</b> на seen. На собесе: «обменял память на время: вместо второго цикла храню прошлое в словаре».</div>
+    </section>
+  </div>
+</div>
+
+<script>
+const CODE_OK = [
+  '<span class="kw">def</span> <span class="fn">two_sum</span>(nums, target):',
+  '    seen = {}                       <span class="cm"># число -> индекс</span>',
+  '    <span class="kw">for</span> i, x <span class="kw">in</span> <span class="fn">enumerate</span>(nums):',
+  '        need = target - x           <span class="cm"># какая пара нужна x</span>',
+  '        <span class="kw">if</span> need <span class="kw">in</span> seen:            <span class="cm"># видел раньше? O(1)</span>',
+  '            <span class="kw">return</span> [seen[need], i]',
+  '        seen[x] = i                 <span class="cm"># запомнить x на будущее</span>',
+  '    <span class="kw">return</span> []',
+];
+const CODE_BAD = [
+  CODE_OK[0], CODE_OK[1], CODE_OK[2],
+  '        seen[x] = i                 <span class="cm"># ОШИБКА: записали раньше</span>',
+  CODE_OK[3], CODE_OK[4], CODE_OK[5],
+  '    <span class="kw">return</span> []',
+];
+
+function build(nums, target, bad) {
+  const steps = [], hist = [], seen = new Map();
+  let res = null;
+  const snap = () => [...seen.entries()];
+  const push = (o) => steps.push({ seen: snap(), hist: hist.slice(), i: null, x: null, need: null, res, ask: null, miss: null, fresh: null, found: null, err: false, ...o });
+  push({ line: 0, msg: `Вход: <b>nums = [${nums.join(", ")}]</b>, <b>target = ${target}</b>. Ищем два индекса с суммой ${target}.` });
+  push({ line: 1, msg: '<b>seen = {}</b>: шкаф пустой. Сюда будем класть каждое пройденное число и его индекс.' });
+  const L = bad ? { write: 3, need: 4, ask: 5, ret: 6, end: 7 } : { need: 3, ask: 4, ret: 5, write: 6, end: 7 };
+  for (let i = 0; i < nums.length; i++) {
+    const x = nums[i];
+    push({ line: 2, i, x, msg: `<b>i = ${i}, x = ${x}</b>. Берём следующее число.` });
+    const doWrite = () => {
+      const had = seen.has(x);
+      seen.set(x, i);
+      push({ line: L.write, i, x, need: bad ? null : target - x, fresh: x,
+        msg: bad
+          ? `<b>seen[${x}] = ${i}</b> — записали x <b>до</b> проверки. Теперь x лежит в шкафу и может найти сам себя.`
+          : `Пары нет. <b>seen[${x}] = ${i}</b>: кладём x в шкаф — вдруг он станет парой для следующих чисел.${had ? ` (Ключ ${x} уже был — перезаписали индекс.)` : ""}` });
+    };
+    if (bad) doWrite();
+    const need = target - x;
+    push({ line: L.need, i, x, need, msg: `<b>need = ${target} − ${x} = ${need}</b>. Чтобы получить ${target}, к ${x} нужно прибавить ${need}.` });
+    const hit = seen.has(need);
+    push({ line: L.ask, i, x, need, ask: hit ? need : null, miss: hit ? null : need,
+      msg: hit
+        ? `<b>${need} in seen</b> → да, лежит под индексом ${seen.get(need)}. Проверка за O(1), без перебора.`
+        : `<b>${need} in seen</b> → нет. Такого числа слева ещё не было.` });
+    if (hit) {
+      res = [seen.get(need), i];
+      const self = res[0] === res[1];
+      hist.push({ i, x, need, hit: "да", seen: snap() });
+      push({ line: L.ret, i, x, need, ask: need, found: res, err: self,
+        msg: self
+          ? `<b>return [${res[0]}, ${res[1]}]</b> — НЕВЕРНО: один и тот же индекс. x = ${x} нашёл сам себя, потому что его записали в seen до проверки. Правильно: сначала спросить, потом записать.`
+          : `<b>return [${res[0]}, ${res[1]}]</b>: nums[${res[0]}] + nums[${res[1]}] = ${nums[res[0]]} + ${nums[res[1]]} = ${target}. Готово за один проход.` });
+      return steps;
+    }
+    if (!bad) doWrite();
+    hist.push({ i, x, need, hit: "нет", seen: snap() });
+    steps[steps.length - 1].hist = hist.slice();
+  }
+  push({ line: L.end, msg: '<b>return []</b>: пары не нашлось (в задаче LeetCode такого не бывает, ответ гарантирован).' });
+  return steps;
+}
+
+const $ = (id) => document.getElementById(id);
+let N = [], T = 0, steps = [], k = 0, timer = null, bad = false;
+const show = (v) => v === null || v === undefined ? "—" : Array.isArray(v) ? `[${v.join(", ")}]` : v;
+function setVar(id, val, prev, first) {
+  const el = $(id);
+  el.querySelector(".val").textContent = show(val);
+  el.classList.toggle("changed", !first && show(prev) !== show(val));
+}
+function render() {
+  const st = steps[k], pv = steps[k - 1] || {};
+  const code = bad ? CODE_BAD : CODE_OK;
+  $("code").innerHTML = code.map((c, n) => `<div class="ln${n === st.line ? " active" : ""}${bad && n === 3 ? " wrong" : ""}"><span class="no">${n + 1}</span>${c}</div>`).join("");
+  $("cells").innerHTML = N.map((v, d) => {
+    const cls = ["cell"];
+    if (st.i !== null && d < st.i) cls.push("past");
+    if (st.i !== null && d > st.i) cls.push("future");
+    if (st.i === d) cls.push("cur");
+    if (st.found && st.found.includes(d)) cls.push(st.err ? "bad" : "found");
+    return `<div class="${cls.join(" ")}">${st.i === d ? '<span class="tag">x</span>' : ""}<div class="box">${v}</div><div class="idx">${d}</div></div>`;
+  }).join("") || '<span style="color:var(--muted);font-style:italic">пустой список</span>';
+  const slots = st.seen.map(([key, val]) => {
+    const cls = ["slot"];
+    if (st.fresh === key) cls.push("new");
+    if (st.ask === key) cls.push("ask");
+    return `<div class="${cls.join(" ")}"><span class="k">${key}</span><span class="v">→ ${val}</span></div>`;
+  });
+  if (st.miss !== null) slots.push(`<div class="slot miss"><span class="k">${st.miss}?</span><span class="v">нет</span></div>`);
+  $("dict").innerHTML = slots.join("") || '<span style="color:var(--muted);font-style:italic">{} — пусто</span>';
+  setVar("v-i", st.i, pv.i, k === 0);
+  setVar("v-x", st.x, pv.x, k === 0);
+  setVar("v-need", st.need, pv.need, k === 0);
+  setVar("v-res", st.res, pv.res, k === 0);
+  $("msg").innerHTML = st.msg;
+  $("msg").classList.toggle("err", st.err);
+  $("stepno").textContent = `шаг ${k + 1} из ${steps.length}`;
+  $("hist").innerHTML = st.hist.map((h, n) => `<tr class="${n === st.hist.length - 1 ? "cur" : ""}"><td>${h.i}</td><td>${h.x}</td><td>${h.need}</td><td>${h.hit}</td><td>{${h.seen.map(([a, b]) => `${a}: ${b}`).join(", ")}}</td></tr>`).join("")
+    || '<tr><td colspan="5" style="color:var(--muted)">пока пусто</td></tr>';
+  $("prev").disabled = k === 0;
+  $("next").disabled = k === steps.length - 1;
+}
+function parse(s) { return s.split(",").map(x => x.trim()).filter(Boolean).map(Number).filter(n => !Number.isNaN(n)).slice(0, 10); }
+function load() {
+  stop();
+  N = parse($("inp").value);
+  T = Number($("tg").value) || 0;
+  steps = build(N, T, bad); k = 0; render();
+}
+function stop() { clearInterval(timer); timer = null; $("play").textContent = "▶ Авто"; }
+$("next").onclick = () => { if (k < steps.length - 1) { k++; render(); } };
+$("prev").onclick = () => { stop(); if (k > 0) { k--; render(); } };
+$("reset").onclick = () => { stop(); k = 0; render(); };
+$("play").onclick = () => {
+  if (timer) return stop();
+  if (k === steps.length - 1) k = 0;
+  $("play").textContent = "❚❚ Пауза";
+  timer = setInterval(() => { if (k < steps.length - 1) { k++; render(); } else stop(); }, 1400);
+};
+$("wrong").onclick = () => {
+  bad = !bad;
+  $("wrong").classList.toggle("on", bad);
+  $("wrong").textContent = bad ? "Вернуть правильный порядок" : "Частая ошибка: сначала записать";
+  load();
+};
+$("inp").addEventListener("input", load);
+$("tg").addEventListener("input", load);
+document.querySelectorAll("[data-n]").forEach(b => b.onclick = () => { $("inp").value = b.dataset.n; $("tg").value = b.dataset.t; load(); });
+document.addEventListener("keydown", (e) => {
+  if (e.target.tagName === "INPUT") return;
+  if (e.key === "ArrowRight") $("next").click();
+  if (e.key === "ArrowLeft") $("prev").click();
+});
+load();
+</script>

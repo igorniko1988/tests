@@ -1,0 +1,296 @@
+<title>Merge Sorted по шагам</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: слева две стопки a и b с указателями i, j и растущий result, справа код с подсветкой и история шагов */
+:root {
+  --bg: #f3f5f4; --panel: #ffffff; --ink: #17211f; --muted: #5b6965; --line: #d7dedb;
+  --accent: #0d6b5e; --accent-soft: #d5ece7; --hit: #f3c24b; --hit-soft: #fdf0cc;
+  --write: #2f4a8a; --write-soft: #e4e9f5; --swap: #b3261e; --swap-soft: #f8dedb;
+  --code-bg: #1d2523; --code-ink: #dfe7e4; --code-dim: #7f8f8a;
+  --font-body: "Golos Text", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121816; --panel: #1a2220; --ink: #e4ebe8; --muted: #94a39e; --line: #2c3734;
+    --accent: #4fc2ad; --accent-soft: #1f3d37; --hit: #f3c24b; --hit-soft: #3d3219;
+    --write: #a9bdf0; --write-soft: #232d45; --swap: #ff8a80; --swap-soft: #43201d;
+    --code-bg: #0c1110; --code-ink: #dfe7e4; --code-dim: #6c7b76; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121816; --panel: #1a2220; --ink: #e4ebe8; --muted: #94a39e; --line: #2c3734;
+  --accent: #4fc2ad; --accent-soft: #1f3d37; --hit: #f3c24b; --hit-soft: #3d3219;
+  --write: #a9bdf0; --write-soft: #232d45; --swap: #ff8a80; --swap-soft: #43201d;
+  --code-bg: #0c1110; --code-ink: #dfe7e4; --code-dim: #6c7b76; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 40px;
+}
+.wrap { max-width: 1080px; margin: 0 auto; display: grid; gap: 18px; }
+h1 { font-size: 1.6rem; margin: 0; text-wrap: balance; }
+.sub { color: var(--muted); margin: 4px 0 0; max-width: 72ch; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.controls label { font-size: .85rem; color: var(--muted); }
+input[type=text] { font: 600 .95rem var(--font-mono); padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--ink); width: 14rem; }
+button { font: 500 .95rem var(--font-body); padding: 8px 14px; border-radius: 6px; cursor: pointer; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+button:disabled { opacity: .45; cursor: default; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--hit); outline-offset: 2px; }
+.presets { display: flex; gap: 6px; flex-wrap: wrap; }
+.presets button { font-family: var(--font-mono); font-size: .82rem; padding: 4px 8px; }
+.grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 16px; min-width: 0; align-content: start; }
+.eyebrow { font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 6px; }
+.cells { display: flex; flex-wrap: wrap; gap: 6px; padding-block: 26px 28px; }
+.cell { position: relative; width: 46px; display: grid; gap: 2px; justify-items: center; }
+.box { width: 46px; height: 48px; display: grid; place-items: center; border-radius: 6px; font: 600 1.2rem var(--font-mono); border: 2px solid var(--line); background: var(--panel); transition: background .25s, border-color .25s; }
+.idx { font: .7rem var(--font-mono); color: var(--muted); }
+.cell.kept .box { background: var(--accent-soft); border-color: var(--accent); }
+.cell.swap .box { background: var(--swap-soft); border-color: var(--swap); }
+.cell.read .box { border-color: var(--hit); box-shadow: 0 0 0 2px var(--hit); }
+.tag { position: absolute; font: 600 .72rem var(--font-mono); padding: 0 6px; border-radius: 4px; white-space: nowrap; }
+.tag.r { top: -24px; background: var(--hit); color: #2a2000; }
+.tag.w { bottom: -26px; background: var(--write); color: var(--panel); }
+.vars { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 480px) { .vars { grid-template-columns: minmax(0, 1fr); } }
+.var { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; min-width: 0; }
+.var .name { font: .8rem var(--font-mono); color: var(--muted); }
+.var .val { font: 600 1.15rem var(--font-mono); }
+.var.changed { border-color: var(--hit); background: var(--hit-soft); }
+.msg { border-left: 3px solid var(--accent); padding: 10px 14px; background: var(--accent-soft); border-radius: 0 8px 8px 0; min-height: 4em; }
+.msg b { font-family: var(--font-mono); font-size: .92em; }
+.code { background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 14px 0; overflow-x: auto; font: .88rem/1.7 var(--font-mono); }
+.code .ln { display: flex; padding: 0 14px; white-space: pre; border-left: 3px solid transparent; }
+.code .ln .no { color: var(--code-dim); width: 2.2em; flex: none; user-select: none; }
+.code .ln.active { background: rgba(243, 194, 75, .18); border-left-color: var(--hit); }
+.kw { color: #f0a36b; } .fn { color: #8fd3c4; } .nu { color: #f3c24b; } .cm { color: var(--code-dim); }
+.progress { font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+table { border-collapse: collapse; width: 100%; font: .82rem var(--font-mono); font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { color: var(--muted); font-weight: 400; font-family: var(--font-body); }
+tr.cur td { background: var(--hit-soft); }
+.tablewrap { overflow-x: auto; }
+.legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: .8rem; color: var(--muted); }
+.legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; border: 2px solid var(--sw); background: var(--swbg); }
+.note { border: 1px dashed var(--line); border-radius: 8px; padding: 10px 14px; font-size: .9rem; }
+@media (prefers-reduced-motion: reduce) { .box { transition: none; } }
+.row { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr); align-items: center; gap: 8px; }
+.row .lbl { font: 600 .95rem var(--font-mono); color: var(--muted); }
+.row .cells { padding-block: 26px 10px; }
+.cell.used .box { opacity: .35; border-style: dashed; }
+.cell.pick .box { background: var(--hit-soft); border-color: var(--hit); }
+.cell.new .box { background: var(--accent-soft); border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.cell.res .box { background: var(--accent-soft); border-color: var(--accent); }
+.cell.rest .box { background: var(--write-soft); border-color: var(--write); }
+.mistake { border-left: 3px solid var(--swap); background: var(--swap-soft); border-radius: 0 8px 8px 0; padding: 10px 14px; font-size: .9rem; }
+.mistake ul { margin: 6px 0 0; padding-left: 1.2em; }
+.mistake code, .note code { font-family: var(--font-mono); font-size: .9em; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>t08 Merge Sorted: две стопки карт</h1>
+    <p class="sub">Оба списка уже отсортированы. Смотрим на верхнюю карту каждой стопки (<b>a[i]</b> и <b>b[j]</b>), меньшую кладём в <b>result</b>, в её стопке открываем следующую. Одна стопка кончилась: остаток другой докидываем целиком.</p>
+  </header>
+
+  <div class="controls">
+    <label for="ina">a</label>
+    <input id="ina" type="text" value="1, 3, 5" autocomplete="off" spellcheck="false">
+    <label for="inb">b</label>
+    <input id="inb" type="text" value="2, 4, 6, 8" autocomplete="off" spellcheck="false">
+  </div>
+  <div class="controls presets">
+    <button data-a="1, 3, 5" data-b="2, 4, 6, 8">[1,3,5] + [2,4,6,8]</button>
+    <button data-a="3, 4" data-b="1, 2">[3,4] + [1,2]</button>
+    <button data-a="1, 1" data-b="1">[1,1] + [1]</button>
+    <button data-a="" data-b="1">[] + [1]</button>
+    <button data-a="-3, 0, 10" data-b="-5, 7">[-3,0,10] + [-5,7]</button>
+  </div>
+  <div class="controls">
+    <button id="prev">← Назад</button>
+    <button id="next" class="primary">Шаг →</button>
+    <button id="play">▶ Авто</button>
+    <button id="reset">В начало</button>
+  </div>
+
+  <div class="grid">
+    <section class="panel">
+      <div>
+        <p class="eyebrow">Две стопки и результат</p>
+        <div class="row"><span class="lbl">a</span><div class="cells" id="ca"></div></div>
+        <div class="row"><span class="lbl">b</span><div class="cells" id="cb"></div></div>
+        <div class="row"><span class="lbl">result</span><div class="cells" id="cr"></div></div>
+        <div class="legend">
+          <span style="--sw:var(--hit);--swbg:var(--panel)">верхняя карта стопки (i или j)</span>
+          <span style="--sw:var(--hit);--swbg:var(--hit-soft)">меньшая: её и берём</span>
+          <span style="--sw:var(--line);--swbg:var(--panel)">уже взяли (бледная)</span>
+          <span style="--sw:var(--write);--swbg:var(--write-soft)">остаток после цикла</span>
+          <span style="--sw:var(--accent);--swbg:var(--accent-soft)">result</span>
+        </div>
+      </div>
+      <div class="vars">
+        <div class="var" id="v-i"><div class="name">i</div><div class="val">—</div></div>
+        <div class="var" id="v-j"><div class="name">j</div><div class="val">—</div></div>
+        <div class="var" id="v-cmp"><div class="name">a[i] &lt;= b[j]</div><div class="val">—</div></div>
+      </div>
+      <div class="msg" id="msg"></div>
+      <div class="progress" id="stepno"></div>
+      <div class="mistake"><b>Где сломалась твоя попытка</b>
+        <ul>
+          <li><code>result_list = a + b</code>: склеил стопки и выбросил главное, что обе уже отсортированы. Дальше пришлось бы сортировать заново.</li>
+          <li><code>x[c], x[c+1] = x[c], x[c+1]</code>: слева и справа одинаковый порядок, обмена нет. Нужно крест-накрест: <code>= x[c+1], x[c]</code>.</li>
+          <li>Даже с правильным обменом один проход пузырька не сортирует: <code>[3,4,1,2]</code> → <code>[3,1,2,4]</code>. Полная сортировка так стоит O(n²).</li>
+          <li><code>try / except IndexError: pass</code> останавливает цикл через исключение. Это антипаттерн: границу задаёт условие цикла.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div>
+        <p class="eyebrow">Код</p>
+        <div class="code" id="code"></div>
+      </div>
+      <div>
+        <p class="eyebrow">История шагов</p>
+        <div class="tablewrap"><table><thead><tr><th>#</th><th>i</th><th>j</th><th>a[i]</th><th>b[j]</th><th>берём</th><th>result</th></tr></thead><tbody id="hist"></tbody></table></div>
+      </div>
+      <div class="note"><b>Инвариант:</b> <code>result</code> всегда отсортирован и содержит самые маленькие элементы из обеих стопок. Меньшая из двух верхних карт меньше всех остальных карт в обеих стопках, поэтому её можно класть сразу. Каждая карта берётся один раз: время <b>O(n + m)</b>, память <b>O(n + m)</b> под новый список.</div>
+    </section>
+  </div>
+</div>
+
+<script>
+const CODE = [
+  '<span class="kw">def</span> <span class="fn">merge_sorted</span>(a, b):',
+  '    i = j = <span class="nu">0</span>                   <span class="cm"># верхние карты стопок</span>',
+  '    result = []',
+  '    <span class="kw">while</span> i < <span class="fn">len</span>(a) <span class="kw">and</span> j < <span class="fn">len</span>(b):   <span class="cm"># пока в обеих есть карты</span>',
+  '        <span class="kw">if</span> a[i] <= b[j]:',
+  '            result.append(a[i])',
+  '            i += <span class="nu">1</span>',
+  '        <span class="kw">else</span>:',
+  '            result.append(b[j])',
+  '            j += <span class="nu">1</span>',
+  '    result.extend(a[i:])        <span class="cm"># остаток a (может быть пустым)</span>',
+  '    result.extend(b[j:])        <span class="cm"># остаток b (может быть пустым)</span>',
+  '    <span class="kw">return</span> result',
+];
+
+function build(a, b) {
+  const steps = [], hist = [];
+  let i = 0, j = 0, result = [];
+  const push = (p) => steps.push(JSON.parse(JSON.stringify({ i, j, result: result.slice(), hist: hist.slice(), pick: null, fresh: 0, rest: null, cmp: null, loop: false, ...p })));
+  push({ line: 0, msg: `Вход: <b>a = [${a.join(", ")}]</b>, <b>b = [${b.join(", ")}]</b>. Оба отсортированы, это и есть подсказка.` });
+  push({ line: 1, loop: true, msg: "<b>i = j = 0</b>: смотрим на верхние (самые маленькие) карты обеих стопок." });
+  push({ line: 2, loop: true, msg: "<b>result = []</b>: сюда будем складывать карты по порядку." });
+  while (true) {
+    const ok = i < a.length && j < b.length;
+    push({ line: 3, loop: true, msg: ok
+      ? `<b>${i} < ${a.length}</b> и <b>${j} < ${b.length}</b>: в обеих стопках есть карты, сравниваем.`
+      : `Условие ложно: ${i >= a.length ? `<b>i = ${i}</b>, стопка a пуста` : `<b>j = ${j}</b>, стопка b пуста`}. Сравнивать не с чем, выходим из цикла.` });
+    if (!ok) break;
+    const takeA = a[i] <= b[j];
+    push({ line: 4, loop: true, cmp: takeA, pick: takeA ? "a" : "b", msg: takeA
+      ? `<b>${a[i]} <= ${b[j]}</b>: верх a не больше, берём из a.${a[i] === b[j] ? " При равенстве берём из a: так слияние <b>стабильное</b>." : ""}`
+      : `<b>${a[i]} <= ${b[j]}</b> ложно: верх b меньше, идём в else.` });
+    if (takeA) {
+      result.push(a[i]);
+      hist.push({ i, j, ai: a[i], bj: b[j], take: `${a[i]} из a`, r: result.slice() });
+      push({ line: 5, loop: true, cmp: true, pick: "a", fresh: 1, hist: hist.slice(), msg: `<b>result.append(${a[i]})</b> → [${result.join(", ")}].` });
+      i++;
+      push({ line: 6, loop: true, cmp: true, msg: `<b>i += 1</b> → ${i}: в стопке a открылась следующая карта${i < a.length ? ` (${a[i]})` : ", но стопка кончилась"}.` });
+    } else {
+      push({ line: 7, loop: true, cmp: false, pick: "b", msg: "<b>else</b>: берём из b." });
+      result.push(b[j]);
+      hist.push({ i, j, ai: a[i], bj: b[j], take: `${b[j]} из b`, r: result.slice() });
+      push({ line: 8, loop: true, cmp: false, pick: "b", fresh: 1, hist: hist.slice(), msg: `<b>result.append(${b[j]})</b> → [${result.join(", ")}].` });
+      j++;
+      push({ line: 9, loop: true, cmp: false, msg: `<b>j += 1</b> → ${j}: в стопке b открылась следующая карта${j < b.length ? ` (${b[j]})` : ", но стопка кончилась"}.` });
+    }
+  }
+  const ra = a.slice(i), rb = b.slice(j);
+  result.push(...ra);
+  if (ra.length) hist.push({ i, j, ai: "—", bj: "—", take: `остаток a [${ra.join(", ")}]`, r: result.slice() });
+  push({ line: 10, rest: "a", fresh: ra.length, hist: hist.slice(), msg: ra.length
+    ? `<b>a[${i}:] = [${ra.join(", ")}]</b>: в a остались карты, они уже отсортированы и больше всего в result. Докидываем целиком.`
+    : `<b>a[${i}:] = []</b>: стопка a пуста, extend пустого среза ничего не добавит. Проверять «какая стопка осталась» не нужно.` });
+  result.push(...rb);
+  if (rb.length) hist.push({ i, j, ai: "—", bj: "—", take: `остаток b [${rb.join(", ")}]`, r: result.slice() });
+  push({ line: 11, rest: "b", fresh: rb.length, hist: hist.slice(), msg: rb.length
+    ? `<b>b[${j}:] = [${rb.join(", ")}]</b>: остаток b докидываем целиком.`
+    : `<b>b[${j}:] = []</b>: стопка b пуста, ничего не добавилось.` });
+  push({ line: 12, msg: `<b>return [${result.join(", ")}]</b>. Каждую карту взяли один раз: <b>O(n + m)</b>, без сортировки.` });
+  return steps;
+}
+
+const $ = (id) => document.getElementById(id);
+let A = [], B = [], steps = [], k = 0, timer = null;
+
+function setVar(id, val, prev, first) {
+  const el = $(id);
+  el.querySelector(".val").textContent = val === null || val === undefined ? "—" : val;
+  el.classList.toggle("changed", !first && prev !== val);
+}
+function stack(arr, ptr, name, st) {
+  if (!arr.length) return '<span style="color:var(--muted);font-style:italic">пустая стопка</span>';
+  return arr.map((v, n) => {
+    const cls = ["cell"];
+    if (n < ptr) cls.push("used");
+    if (n === ptr && st.loop) cls.push("read");
+    if (n === ptr && st.pick === name) cls.push("pick");
+    if (st.rest === name && n >= ptr) cls.push("rest");
+    const tag = n === ptr && st.loop ? `<span class="tag r">${name === "a" ? "i" : "j"}</span>` : "";
+    return `<div class="${cls.join(" ")}">${tag}<div class="box">${v}</div><div class="idx">${n}</div></div>`;
+  }).join("") + (ptr === arr.length && st.loop ? `<div class="cell"><span class="tag r">${name === "a" ? "i" : "j"}</span><div class="box" style="border-style:dashed;color:var(--muted)">·</div><div class="idx">${arr.length}</div></div>` : "");
+}
+function render() {
+  const st = steps[k], pv = steps[k - 1] || {};
+  $("code").innerHTML = CODE.map((c, n) => `<div class="ln${n === st.line ? " active" : ""}"><span class="no">${n + 1}</span>${c}</div>`).join("");
+  $("ca").innerHTML = stack(A, st.i, "a", st);
+  $("cb").innerHTML = stack(B, st.j, "b", st);
+  $("cr").innerHTML = st.result.length
+    ? st.result.map((v, n) => `<div class="cell ${n >= st.result.length - st.fresh ? "new" : "res"}"><div class="box">${v}</div><div class="idx">${n}</div></div>`).join("")
+    : '<span style="color:var(--muted);font-style:italic">[]</span>';
+  setVar("v-i", st.i, pv.i, k === 0);
+  setVar("v-j", st.j, pv.j, k === 0);
+  setVar("v-cmp", st.cmp === null ? null : st.cmp ? "True → a" : "False → b", pv.cmp === null || pv.cmp === undefined ? null : pv.cmp ? "True → a" : "False → b", k === 0);
+  $("msg").innerHTML = st.msg;
+  $("stepno").textContent = `шаг ${k + 1} из ${steps.length}`;
+  $("hist").innerHTML = st.hist.map((h, n) => `<tr class="${n === st.hist.length - 1 && st.fresh ? "cur" : ""}"><td>${n + 1}</td><td>${h.i}</td><td>${h.j}</td><td>${h.ai}</td><td>${h.bj}</td><td>${h.take}</td><td>[${h.r.join(", ")}]</td></tr>`).join("")
+    || '<tr><td colspan="7" style="color:var(--muted)">пока пусто</td></tr>';
+  $("prev").disabled = k === 0;
+  $("next").disabled = k === steps.length - 1;
+}
+function parse(s) { return s.split(",").map(x => x.trim()).filter(Boolean).map(Number).filter(n => !Number.isNaN(n)).slice(0, 8); }
+function load() {
+  stop();
+  A = parse($("ina").value); B = parse($("inb").value);
+  steps = build(A, B); k = 0; render();
+}
+function stop() { clearInterval(timer); timer = null; $("play").textContent = "▶ Авто"; }
+$("next").onclick = () => { if (k < steps.length - 1) { k++; render(); } };
+$("prev").onclick = () => { stop(); if (k > 0) { k--; render(); } };
+$("reset").onclick = () => { stop(); k = 0; render(); };
+$("play").onclick = () => {
+  if (timer) return stop();
+  if (k === steps.length - 1) k = 0;
+  $("play").textContent = "❚❚ Пауза";
+  timer = setInterval(() => { if (k < steps.length - 1) { k++; render(); } else stop(); }, 1400);
+};
+$("ina").addEventListener("input", load);
+$("inb").addEventListener("input", load);
+document.querySelectorAll("[data-a]").forEach(btn => btn.onclick = () => { $("ina").value = btn.dataset.a; $("inb").value = btn.dataset.b; load(); });
+document.addEventListener("keydown", (e) => {
+  if (e.target.tagName === "INPUT") return;
+  if (e.key === "ArrowRight") $("next").click();
+  if (e.key === "ArrowLeft") $("prev").click();
+});
+load();
+</script>

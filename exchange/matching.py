@@ -14,7 +14,11 @@ from sqlalchemy import select
 from exchange.api.balances import lock_balance
 from exchange.config import settings
 from exchange.db import Order, OrderSide, OrderStatus, SessionLocal
+from exchange.events import build_event, send
+from exchange.metrics import MATCHING_DURATION, TRADES
+from exchange.orderbook import publish
 from exchange.schemas import SYMBOLS
+from exchange.webhooks import notify
 
 log = logging.getLogger(__name__)
 OPEN = (OrderStatus.NEW, OrderStatus.PARTIALLY_FILLED)
@@ -64,6 +68,10 @@ async def _trade(session, buy: Order, sell: Order) -> None:
 
 async def match_once() -> None:
     async with SessionLocal() as session:
+        changed = set()
+        trades = []
+        filled = []
+        events = []
         for symbol in SYMBOLS:
             while True:
                 buy = await _best(session, symbol, OrderSide.BUY)
@@ -72,13 +80,26 @@ async def match_once() -> None:
                     break
                 await _trade(session, buy, sell)
                 await session.flush()
+                trades.append(symbol)
+                changed.add(symbol)
+                filled += [o for o in (buy, sell) if o.status is OrderStatus.FILLED]
+                events += [build_event(o, f"order.{o.status.lower()}") for o in (buy, sell)]
         await session.commit()
+    for symbol in trades:
+        TRADES.labels(symbol).inc()
+    for symbol in changed:
+        await publish(symbol)
+    for order in filled:
+        notify(order, "order.filled")
+    for event in events:
+        await send(event)
 
 
 async def run_matching() -> None:
     while True:
         try:
-            await match_once()
+            with MATCHING_DURATION.time():
+                await match_once()
         except Exception:
             log.exception("matching failed")
         await asyncio.sleep(settings.matching_interval)

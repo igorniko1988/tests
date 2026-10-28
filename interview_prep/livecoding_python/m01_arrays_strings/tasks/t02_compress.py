@@ -12,4 +12,25 @@ compress("")        -> ""
 
 
 def compress(s: str) -> str:
-    raise NotImplementedError
+    result = ''
+    count = 0
+    previous = None
+
+    for symbol in s:
+        if symbol == previous:
+            count +=1
+        else:
+            if previous is None:
+                previous = symbol
+                count +=1
+            else:
+                result += previous + str(count)
+                previous = symbol
+                count = 1
+    if previous is not None:
+        result += previous + str(count)
+
+    return result
+
+
+print(compress('aabaa'))

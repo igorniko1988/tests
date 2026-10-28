@@ -1,0 +1,268 @@
+<title>Max Profit по шагам</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: слева цены столбиками по дням и две переменные, справа код с подсветкой и история шагов */
+:root {
+  --bg: #f3f5f4; --panel: #ffffff; --ink: #17211f; --muted: #5b6965; --line: #d7dedb;
+  --accent: #0d6b5e; --accent-soft: #d5ece7; --hit: #f3c24b; --hit-soft: #fdf0cc;
+  --write: #2f4a8a; --write-soft: #e4e9f5; --swap: #b3261e; --swap-soft: #f8dedb;
+  --code-bg: #1d2523; --code-ink: #dfe7e4; --code-dim: #7f8f8a;
+  --font-body: "Golos Text", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121816; --panel: #1a2220; --ink: #e4ebe8; --muted: #94a39e; --line: #2c3734;
+    --accent: #4fc2ad; --accent-soft: #1f3d37; --hit: #f3c24b; --hit-soft: #3d3219;
+    --write: #a9bdf0; --write-soft: #232d45; --swap: #ff8a80; --swap-soft: #43201d;
+    --code-bg: #0c1110; --code-ink: #dfe7e4; --code-dim: #6c7b76; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121816; --panel: #1a2220; --ink: #e4ebe8; --muted: #94a39e; --line: #2c3734;
+  --accent: #4fc2ad; --accent-soft: #1f3d37; --hit: #f3c24b; --hit-soft: #3d3219;
+  --write: #a9bdf0; --write-soft: #232d45; --swap: #ff8a80; --swap-soft: #43201d;
+  --code-bg: #0c1110; --code-ink: #dfe7e4; --code-dim: #6c7b76; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 40px;
+}
+.wrap { max-width: 1080px; margin: 0 auto; display: grid; gap: 18px; }
+h1 { font-size: 1.6rem; margin: 0; text-wrap: balance; }
+.sub { color: var(--muted); margin: 4px 0 0; max-width: 72ch; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.controls label { font-size: .85rem; color: var(--muted); }
+input[type=text] { font: 600 .95rem var(--font-mono); padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--ink); width: 14rem; }
+button { font: 500 .95rem var(--font-body); padding: 8px 14px; border-radius: 6px; cursor: pointer; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+button:disabled { opacity: .45; cursor: default; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--hit); outline-offset: 2px; }
+.presets { display: flex; gap: 6px; flex-wrap: wrap; }
+.presets button { font-family: var(--font-mono); font-size: .82rem; padding: 4px 8px; }
+.grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 16px; min-width: 0; align-content: start; }
+.eyebrow { font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 6px; }
+.cells { display: flex; flex-wrap: wrap; gap: 6px; padding-block: 26px 28px; }
+.cell { position: relative; width: 46px; display: grid; gap: 2px; justify-items: center; }
+.box { width: 46px; height: 48px; display: grid; place-items: center; border-radius: 6px; font: 600 1.2rem var(--font-mono); border: 2px solid var(--line); background: var(--panel); transition: background .25s, border-color .25s; }
+.idx { font: .7rem var(--font-mono); color: var(--muted); }
+.cell.kept .box { background: var(--accent-soft); border-color: var(--accent); }
+.cell.swap .box { background: var(--swap-soft); border-color: var(--swap); }
+.cell.read .box { border-color: var(--hit); box-shadow: 0 0 0 2px var(--hit); }
+.tag { position: absolute; font: 600 .72rem var(--font-mono); padding: 0 6px; border-radius: 4px; white-space: nowrap; }
+.tag.r { top: -24px; background: var(--hit); color: #2a2000; }
+.tag.w { bottom: -26px; background: var(--write); color: var(--panel); }
+.vars { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 480px) { .vars { grid-template-columns: minmax(0, 1fr); } }
+.var { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; min-width: 0; }
+.var .name { font: .8rem var(--font-mono); color: var(--muted); }
+.var .val { font: 600 1.15rem var(--font-mono); }
+.var.changed { border-color: var(--hit); background: var(--hit-soft); }
+.msg { border-left: 3px solid var(--accent); padding: 10px 14px; background: var(--accent-soft); border-radius: 0 8px 8px 0; min-height: 4em; }
+.msg b { font-family: var(--font-mono); font-size: .92em; }
+.code { background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 14px 0; overflow-x: auto; font: .88rem/1.7 var(--font-mono); }
+.code .ln { display: flex; padding: 0 14px; white-space: pre; border-left: 3px solid transparent; }
+.code .ln .no { color: var(--code-dim); width: 2.2em; flex: none; user-select: none; }
+.code .ln.active { background: rgba(243, 194, 75, .18); border-left-color: var(--hit); }
+.kw { color: #f0a36b; } .fn { color: #8fd3c4; } .nu { color: #f3c24b; } .cm { color: var(--code-dim); }
+.progress { font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+table { border-collapse: collapse; width: 100%; font: .82rem var(--font-mono); font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { color: var(--muted); font-weight: 400; font-family: var(--font-body); }
+tr.cur td { background: var(--hit-soft); }
+.tablewrap { overflow-x: auto; }
+.legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: .8rem; color: var(--muted); }
+.legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; border: 2px solid var(--sw); background: var(--swbg); }
+.note { border: 1px dashed var(--line); border-radius: 8px; padding: 10px 14px; font-size: .9rem; }
+@media (prefers-reduced-motion: reduce) { .box { transition: none; } }
+.bars { display: flex; align-items: flex-end; gap: 8px; height: 230px; padding-top: 28px; }
+.bar { position: relative; flex: 1 1 0; max-width: 56px; min-width: 28px; display: grid; justify-items: center; align-content: end; gap: 4px; height: 100%; }
+.bar .col { width: 100%; border-radius: 6px 6px 2px 2px; background: var(--line); border: 2px solid transparent; transition: background .25s, border-color .25s; }
+.bar .pv { font: 600 .95rem var(--font-mono); }
+.bar .idx { font: .7rem var(--font-mono); color: var(--muted); }
+.bar.past .col { background: var(--accent-soft); }
+.bar.future .col { opacity: .35; }
+.bar.min .col { background: var(--write-soft); border-color: var(--write); }
+.bar.today .col { border-color: var(--hit); box-shadow: 0 0 0 2px var(--hit); }
+.bar.best .col { background: var(--hit-soft); }
+.bar .tag.m { top: -24px; background: var(--write); color: var(--panel); }
+.bar .tag.t { top: -24px; background: var(--hit); color: #2a2000; }
+.bar.min.today .tag.m { top: -46px; }
+.mistake { border-left: 3px solid var(--swap); background: var(--swap-soft); border-radius: 0 8px 8px 0; padding: 10px 14px; font-size: .9rem; }
+.mistake ul { margin: 6px 0 0; padding-left: 1.2em; }
+.good { border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 0 8px 8px 0; padding: 10px 14px; font-size: .9rem; }
+.good ul { margin: 6px 0 0; padding-left: 1.2em; }
+code { font-family: var(--font-mono); font-size: .9em; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>t09 Max Profit: «продаю сегодня, где было дешевле всего?»</h1>
+    <p class="sub">Идём по дням слева направо. В кармане две записки: <b>min_price</b> (самая дешёвая цена, которую уже видели) и <b>best</b> (лучшая прибыль). Каждый день: «если продам сегодня, заработаю price − min_price», потом обновляем минимум.</p>
+  </header>
+
+  <div class="controls">
+    <label for="inp">prices</label>
+    <input id="inp" type="text" value="7, 1, 5, 3, 6, 4" autocomplete="off" spellcheck="false">
+    <div class="presets">
+      <button data-n="7, 1, 5, 3, 6, 4">[7,1,5,3,6,4]</button>
+      <button data-n="7, 6, 4, 3, 1">[7,6,4,3,1] только падает</button>
+      <button data-n="2, 4, 1">[2,4,1] минимум после пика</button>
+      <button data-n="3, 2, 6, 5, 0, 3">[3,2,6,5,0,3]</button>
+    </div>
+  </div>
+  <div class="controls">
+    <button id="prev">← Назад</button>
+    <button id="next" class="primary">Шаг →</button>
+    <button id="play">▶ Авто</button>
+    <button id="reset">В начало</button>
+  </div>
+
+  <div class="grid">
+    <section class="panel">
+      <div>
+        <p class="eyebrow">Цены по дням (индекс = день)</p>
+        <div class="bars" id="bars"></div>
+        <div class="legend">
+          <span style="--sw:var(--hit);--swbg:var(--panel)">сегодня (price)</span>
+          <span style="--sw:var(--write);--swbg:var(--write-soft)">min_price: самая дешёвая из пройденных</span>
+          <span style="--sw:var(--accent-soft);--swbg:var(--accent-soft)">уже прошли</span>
+          <span style="--sw:var(--hit-soft);--swbg:var(--hit-soft)">лучшая сделка</span>
+        </div>
+      </div>
+      <div class="vars">
+        <div class="var" id="v-price"><div class="name">price</div><div class="val">—</div></div>
+        <div class="var" id="v-min"><div class="name">min_price</div><div class="val">—</div></div>
+        <div class="var" id="v-best"><div class="name">best</div><div class="val">—</div></div>
+      </div>
+      <div class="msg" id="msg"></div>
+      <div class="progress" id="stepno"></div>
+      <div class="good"><b>Что в твоих попытках было правильно</b>
+        <ul>
+          <li><code>profit = best_sell - price</code>: прибыль = продажа − покупка. Во второй попытке знак уже верный.</li>
+          <li><code>prices[day:]</code>: продавать можно только в будущем. Это верная мысль, с ней получается рабочее решение в лоб за O(n²).</li>
+        </ul>
+      </div>
+      <div class="mistake"><b>Где была каша</b>
+        <ul>
+          <li><code>for price in prices</code> внутри <code>for day</code>: перебирал <b>все</b> цены, а покупка в день <code>day</code> одна, это <code>prices[day]</code>.</li>
+          <li><code>max(prices[day:])</code> в цикле: каждый раз проход по хвосту, всего O(n²).</li>
+          <li>Словари и списки <code>profits</code>, <code>prices_at_days</code>: хранил всё, а нужно одно лучшее число. Вернуть надо <code>int</code>.</li>
+          <li>Смотрел <b>вперёд</b> («куплю сегодня, когда продать?»). Будущее ещё не видели, поэтому понадобился <code>max</code>. Смотреть надо <b>назад</b>: прошлое уже пройдено, его минимум можно помнить.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div>
+        <p class="eyebrow">Код</p>
+        <div class="code" id="code"></div>
+      </div>
+      <div>
+        <p class="eyebrow">История шагов</p>
+        <div class="tablewrap"><table><thead><tr><th>день</th><th>price</th><th>price − min</th><th>best</th><th>min_price</th></tr></thead><tbody id="hist"></tbody></table></div>
+      </div>
+      <div class="note"><b>Почему хватает двух переменных:</b> лучшая продажа сегодня = сегодняшняя цена − самая дешёвая цена <b>до</b> сегодня. Всё прошлое сжимается в одно число <code>min_price</code>. Один проход: время <b>O(n)</b>, память <b>O(1)</b>. Порядок строк важен: сначала считаем прибыль, потом обновляем минимум, и тогда покупка всегда раньше продажи.</div>
+    </section>
+  </div>
+</div>
+
+<script>
+const CODE = [
+  '<span class="kw">def</span> <span class="fn">max_profit</span>(prices):',
+  '    min_price = <span class="fn">float</span>(<span class="nu">"inf"</span>)   <span class="cm"># дешевле всего, что уже видели</span>',
+  '    best = <span class="nu">0</span>                      <span class="cm"># лучшая прибыль; не торговать = 0</span>',
+  '    <span class="kw">for</span> price <span class="kw">in</span> prices:',
+  '        best = <span class="fn">max</span>(best, price - min_price)   <span class="cm"># продаю сегодня?</span>',
+  '        min_price = <span class="fn">min</span>(min_price, price)  <span class="cm"># может, сегодня дешевле всего</span>',
+  '    <span class="kw">return</span> best',
+];
+const fmt = (v) => v === Infinity ? "inf" : v === -Infinity ? "-inf" : v;
+
+function build(p) {
+  const steps = [], hist = [];
+  let mn = Infinity, best = 0, minDay = null, bestPair = null;
+  const push = (o) => steps.push({ mn, best, minDay, bestPair, day: null, hist: hist.slice(), ...o });
+  push({ line: 0, msg: `Вход: <b>prices = [${p.join(", ")}]</b>. Индекс — номер дня, число — цена в этот день.` });
+  push({ line: 1, msg: '<b>min_price = inf</b> (бесконечность): ещё ни одного дня не видели, любая цена будет меньше.' });
+  push({ line: 2, msg: '<b>best = 0</b>: если заработать нельзя, лучше вообще не торговать, ответ 0.' });
+  p.forEach((price, day) => {
+    push({ line: 3, day, msg: `<b>День ${day}</b>, цена <b>${price}</b>. Вопрос: если продам сегодня, сколько заработаю?` });
+    const profit = price - mn, old = best;
+    if (profit > best) { best = profit; bestPair = [minDay, day]; }
+    push({ line: 4, day, msg: mn === Infinity
+      ? `<b>price − min_price = ${price} − inf = -inf</b>: купить было не в какой день, продавать нечего. best остаётся <b>${best}</b>.`
+      : profit > old
+        ? `<b>${price} − ${mn} = ${profit}</b> больше прежнего best (${old}): новая лучшая сделка, купить в день ${minDay}, продать сегодня. <b>best = ${best}</b>.`
+        : `<b>${price} − ${mn} = ${profit}</b>, это не лучше best = ${old}. best не меняется.` });
+    const oldMn = mn;
+    if (price < mn) { mn = price; minDay = day; }
+    hist.push({ day, price, diff: oldMn === Infinity ? "-inf" : price - oldMn, best, mn });
+    push({ line: 5, day, hist: hist.slice(), msg: price < oldMn
+      ? `<b>${price} < ${fmt(oldMn)}</b>: сегодня дешевле всего, что видели. Запоминаем <b>min_price = ${price}</b>: для будущих дней это лучший день покупки.`
+      : `<b>${price}</b> не дешевле ${oldMn}: min_price остаётся <b>${mn}</b>.` });
+  });
+  push({ line: 6, msg: bestPair
+    ? `<b>return ${best}</b>: купить в день ${bestPair[0]} за ${p[bestPair[0]]}, продать в день ${bestPair[1]} за ${p[bestPair[1]]}. Один проход, O(n).`
+    : `<b>return 0</b>: ни один день не дал прибыли, торговать не стоит.` });
+  return steps;
+}
+
+const $ = (id) => document.getElementById(id);
+let P = [], steps = [], k = 0, timer = null;
+function setVar(id, val, prev, first) {
+  const el = $(id);
+  el.querySelector(".val").textContent = val === null || val === undefined ? "—" : fmt(val);
+  el.classList.toggle("changed", !first && prev !== val);
+}
+function render() {
+  const st = steps[k], pv = steps[k - 1] || {};
+  $("code").innerHTML = CODE.map((c, n) => `<div class="ln${n === st.line ? " active" : ""}"><span class="no">${n + 1}</span>${c}</div>`).join("");
+  const hi = Math.max(1, ...P.map(Math.abs));
+  $("bars").innerHTML = P.length ? P.map((v, d) => {
+    const cls = ["bar"];
+    if (st.day === null ? st.line === 6 : d < st.day) cls.push("past");
+    if (st.day !== null && d > st.day) cls.push("future");
+    if (st.minDay === d) cls.push("min");
+    if (st.day === d) cls.push("today");
+    if (st.line === 6 && st.bestPair && st.bestPair.includes(d)) cls.push("best");
+    const tags = (st.day === d ? '<span class="tag t">сегодня</span>' : "") + (st.minDay === d ? '<span class="tag m">min</span>' : "");
+    return `<div class="${cls.join(" ")}">${tags}<span class="pv">${v}</span><div class="col" style="height:${Math.max(6, Math.abs(v) / hi * 150)}px"></div><div class="idx">день ${d}</div></div>`;
+  }).join("") : '<span style="color:var(--muted);font-style:italic">пустой список: цикл не выполнится, ответ 0</span>';
+  setVar("v-price", st.day === null ? null : P[st.day], pv.day === null || pv.day === undefined ? null : P[pv.day], k === 0);
+  setVar("v-min", st.mn, pv.mn, k === 0);
+  setVar("v-best", st.best, pv.best, k === 0);
+  $("msg").innerHTML = st.msg;
+  $("stepno").textContent = `шаг ${k + 1} из ${steps.length}`;
+  $("hist").innerHTML = st.hist.map((h, n) => `<tr class="${n === st.hist.length - 1 && st.line === 5 ? "cur" : ""}"><td>${h.day}</td><td>${h.price}</td><td>${h.diff}</td><td>${h.best}</td><td>${h.mn}</td></tr>`).join("")
+    || '<tr><td colspan="5" style="color:var(--muted)">пока пусто</td></tr>';
+  $("prev").disabled = k === 0;
+  $("next").disabled = k === steps.length - 1;
+}
+function parse(s) { return s.split(",").map(x => x.trim()).filter(Boolean).map(Number).filter(n => !Number.isNaN(n)).slice(0, 10); }
+function load() { stop(); P = parse($("inp").value); steps = build(P); k = 0; render(); }
+function stop() { clearInterval(timer); timer = null; $("play").textContent = "▶ Авто"; }
+$("next").onclick = () => { if (k < steps.length - 1) { k++; render(); } };
+$("prev").onclick = () => { stop(); if (k > 0) { k--; render(); } };
+$("reset").onclick = () => { stop(); k = 0; render(); };
+$("play").onclick = () => {
+  if (timer) return stop();
+  if (k === steps.length - 1) k = 0;
+  $("play").textContent = "❚❚ Пауза";
+  timer = setInterval(() => { if (k < steps.length - 1) { k++; render(); } else stop(); }, 1400);
+};
+$("inp").addEventListener("input", load);
+document.querySelectorAll("[data-n]").forEach(b => b.onclick = () => { $("inp").value = b.dataset.n; load(); });
+document.addEventListener("keydown", (e) => {
+  if (e.target.tagName === "INPUT") return;
+  if (e.key === "ArrowRight") $("next").click();
+  if (e.key === "ArrowLeft") $("prev").click();
+});
+load();
+</script>

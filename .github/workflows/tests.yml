@@ -15,8 +15,8 @@ concurrency:                          # новый пуш отменяет ещ�
   cancel-in-progress: true
 
 env:
-  ENV: docker
-  UI_BASE_URL: http://localhost:8080
+  ENV: dev
+  BASE_URL: http://localhost:8080
   # в pyproject стоит --browser-channel chrome для macOS 12; в CI берём браузеры Playwright
   CI_ADDOPTS: -o addopts=-ra
 
@@ -44,7 +44,7 @@ jobs:
       - name: Поднять стенд из кода этого коммита
         run: |
           docker compose up -d --build
-          for i in $(seq 1 30); do curl -sf $UI_BASE_URL/health && exit 0; sleep 2; done
+          for i in $(seq 1 30); do curl -sf $BASE_URL/health && exit 0; sleep 2; done
           docker compose logs exchange; exit 1
       - run: uv sync --frozen
       # create_api зависит от new_context → pytest-playwright запускает браузер даже в API-тестах.
@@ -72,7 +72,7 @@ jobs:
       - name: Поднять стенд
         run: |
           docker compose up -d --build
-          for i in $(seq 1 30); do curl -sf $UI_BASE_URL/health && exit 0; sleep 2; done
+          for i in $(seq 1 30); do curl -sf $BASE_URL/health && exit 0; sleep 2; done
           docker compose logs exchange; exit 1
       - run: uv sync --frozen
       - run: uv run playwright install --with-deps chromium
@@ -111,7 +111,7 @@ jobs:
       - name: Поднять стенд
         run: |
           docker compose up -d --build
-          for i in $(seq 1 30); do curl -sf $UI_BASE_URL/health && exit 0; sleep 2; done
+          for i in $(seq 1 30); do curl -sf $BASE_URL/health && exit 0; sleep 2; done
           docker compose logs exchange; exit 1
       - run: uv sync --frozen
       - run: uv run playwright install --with-deps ${{ matrix.browser }}

@@ -3,7 +3,7 @@ import uuid
 from datetime import UTC, datetime
 from decimal import Decimal
 
-from sqlalchemy import JSON, DateTime, Enum, ForeignKey, Numeric, String, UniqueConstraint
+from sqlalchemy import JSON, DateTime, Enum, ForeignKey, Numeric, String, UniqueConstraint, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -30,6 +30,7 @@ class OrderSide(enum.StrEnum):
 
 class OrderType(enum.StrEnum):
     LIMIT = "LIMIT"
+    MARKET = "MARKET"
 
 
 class OrderStatus(enum.StrEnum):
@@ -45,6 +46,9 @@ class User(Base):
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     email: Mapped[str] = mapped_column(String(320), unique=True)
     password_hash: Mapped[str] = mapped_column(String(256))
+    display_name: Mapped[str | None] = mapped_column(String(64), default=None)
+    role: Mapped[str] = mapped_column(String(16), default="user", server_default="user")
+    blocked: Mapped[bool] = mapped_column(default=False, server_default="false")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
@@ -66,7 +70,7 @@ class Order(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
     symbol: Mapped[str] = mapped_column(String(20))
     side: Mapped[OrderSide] = mapped_column(Enum(OrderSide, native_enum=False))
-    type: Mapped[OrderType] = mapped_column(Enum(OrderType, native_enum=False))
+    type: Mapped[OrderType] = mapped_column(Enum(OrderType, native_enum=False, length=16))
     price: Mapped[Decimal] = mapped_column(AMOUNT)
     quantity: Mapped[Decimal] = mapped_column(AMOUNT)
     filled_quantity: Mapped[Decimal] = mapped_column(AMOUNT, default=Decimal(0))
@@ -94,6 +98,50 @@ class IdempotencyKey(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
+class Webhook(Base):
+    """Адрес пользователя, на который стенд шлёт события его ордеров."""
+
+    __tablename__ = "webhooks"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    url: Mapped[str] = mapped_column(String(2048))
+    secret: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class ProcessedMessage(Base):
+    """message_id уже обработанных сообщений очереди: повтор не зачисляется второй раз."""
+
+    __tablename__ = "processed_messages"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    message_id: Mapped[str] = mapped_column(String(255), unique=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class RefreshToken(Base):
+    """Выданные refresh-токены: по jti токен находится и отзывается при ротации."""
+
+    __tablename__ = "refresh_tokens"
+
+    jti: Mapped[uuid.UUID] = mapped_column(primary_key=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    revoked: Mapped[bool] = mapped_column(default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class ApiKey(Base):
+    """Ключ для подписанных запросов /v1/* (как API-ключи бирж): key открытый, secret — для HMAC."""
+
+    __tablename__ = "api_keys"
+
+    key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    secret: Mapped[str] = mapped_column(String(64))
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
 async def get_session():
     async with SessionLocal() as session:
         yield session
@@ -102,10 +150,20 @@ async def get_session():
 async def create_schema() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # Миграций нет: старые базы создавались с VARCHAR(5), а MARKET длиннее
+        await conn.execute(text("ALTER TABLE orders ALTER COLUMN type TYPE VARCHAR(16)"))
+        for column in (
+            "display_name VARCHAR(64)",
+            "role VARCHAR(16) NOT NULL DEFAULT 'user'",
+            "blocked BOOLEAN NOT NULL DEFAULT false",
+        ):
+            await conn.execute(text(f"ALTER TABLE users ADD COLUMN IF NOT EXISTS {column}"))
 
 
 __all__ = [
+    "ApiKey",
     "AsyncSession",
+    "RefreshToken",
     "Balance",
     "IdempotencyKey",
     "Order",

@@ -1,0 +1,357 @@
+<title>Какой паттерн выбрать</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: слева дерево решений вопрос за вопросом с пройденным путём, справа карточка паттерна с шаблоном кода */
+:root {
+  --bg: #f3f5f4; --panel: #ffffff; --ink: #17211f; --muted: #5b6965; --line: #d7dedb;
+  --accent: #0d6b5e; --accent-soft: #d5ece7; --hit: #f3c24b; --hit-soft: #fdf0cc;
+  --code-bg: #1d2523; --code-ink: #dfe7e4; --code-dim: #7f8f8a;
+  --font-body: "Golos Text", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121816; --panel: #1a2220; --ink: #e4ebe8; --muted: #94a39e; --line: #2c3734;
+    --accent: #4fc2ad; --accent-soft: #1f3d37; --hit: #f3c24b; --hit-soft: #3d3219;
+    --code-bg: #0c1110; --code-ink: #dfe7e4; --code-dim: #6c7b76; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121816; --panel: #1a2220; --ink: #e4ebe8; --muted: #94a39e; --line: #2c3734;
+  --accent: #4fc2ad; --accent-soft: #1f3d37; --hit: #f3c24b; --hit-soft: #3d3219;
+  --code-bg: #0c1110; --code-ink: #dfe7e4; --code-dim: #6c7b76; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 40px;
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 18px; }
+h1 { font-size: 1.6rem; margin: 0; text-wrap: balance; }
+h2 { font-size: 1.2rem; margin: 0; text-wrap: balance; }
+.sub { color: var(--muted); margin: 4px 0 0; max-width: 72ch; }
+.grid { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 20px; }
+@media (max-width: 880px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 14px; min-width: 0; align-content: start; }
+.eyebrow { font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 6px; }
+button { font: 500 .95rem var(--font-body); padding: 9px 14px; border-radius: 6px; cursor: pointer; border: 1px solid var(--line); background: var(--panel); color: var(--ink); text-align: left; }
+button.yes { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+button:focus-visible { outline: 2px solid var(--hit); outline-offset: 2px; }
+.q { font-size: 1.1rem; font-weight: 700; }
+.hint { color: var(--muted); font-size: .9rem; }
+.answers { display: flex; flex-wrap: wrap; gap: 8px; }
+.path { display: grid; gap: 6px; }
+.step { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; font-size: .88rem; align-items: start; }
+.step .n { font: 600 .75rem var(--font-mono); background: var(--hit-soft); border: 1px solid var(--hit); border-radius: 4px; padding: 0 6px; }
+.step .a { font-weight: 700; }
+.card { display: grid; gap: 12px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: .8rem; padding: 2px 9px; border-radius: 999px; background: var(--accent-soft); color: var(--ink); }
+.meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 480px) { .meta { grid-template-columns: minmax(0, 1fr); } }
+.meta div { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; min-width: 0; }
+.meta .k { font-size: .75rem; color: var(--muted); }
+.meta .v { font: 600 .9rem var(--font-mono); overflow-wrap: anywhere; }
+.code { background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 14px; overflow-x: auto; font: .84rem/1.65 var(--font-mono); white-space: pre; }
+.empty { color: var(--muted); font-style: italic; }
+.all { display: flex; flex-wrap: wrap; gap: 6px; }
+.all button { font-size: .82rem; padding: 5px 10px; }
+.all button[aria-pressed="true"] { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+.try { border: 1px dashed var(--line); border-radius: 8px; padding: 10px 14px; display: grid; gap: 8px; }
+.try .task { font-size: .92rem; }
+.try details summary { cursor: pointer; color: var(--accent); font-size: .88rem; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Какой паттерн выбрать</h1>
+    <p class="sub">Отвечай на вопросы про условие задачи сверху вниз. В конце получишь паттерн, структуру данных, сложность и шаблон кода. Справа внизу можно сразу открыть любой паттерн.</p>
+  </header>
+
+  <div class="grid">
+    <section class="panel">
+      <div>
+        <p class="eyebrow">Вопрос</p>
+        <div class="q" id="q"></div>
+        <p class="hint" id="hint"></p>
+      </div>
+      <div class="answers" id="answers"></div>
+      <div>
+        <p class="eyebrow">Пройденный путь</p>
+        <div class="path" id="path"></div>
+      </div>
+      <div class="answers"><button id="back">← Назад</button><button id="restart">Сначала</button></div>
+      <div class="try">
+        <p class="eyebrow" style="margin:0">Потренируйся: какой паттерн?</p>
+        <div class="task" id="task"></div>
+        <details id="taskans"><summary>показать ответ</summary><div id="taskansv"></div></details>
+        <div><button id="nexttask">Другая задача</button></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="card" id="card"><p class="empty">Ответь на вопросы слева, и здесь появится паттерн.</p></div>
+      <div>
+        <p class="eyebrow">Все паттерны</p>
+        <div class="all" id="all"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+const P = {
+  hash: { name: "Хеш-таблица", ds: "dict, set, Counter, defaultdict", cx: "O(n) время, O(n) память",
+    sig: ["найти пару", "дубль", "встречалось ли", "посчитать частоты", "сгруппировать"],
+    why: "Поиск в list стоит O(n), а в dict и set O(1). Если решение в лоб снова и снова ищет одно и то же, положи увиденное в хеш.",
+    ex: "two sum, group anagrams, first unique char, contains duplicate",
+    code: `seen = {}                      # значение -> индекс
+for i, x in enumerate(nums):
+    need = target - x
+    if need in seen:           # O(1)
+        return seen[need], i
+    seen[x] = i` },
+  two: { name: "Два указателя", ds: "индексы в list / str", cx: "O(n) время, O(1) память",
+    sig: ["отсортированный массив", "пара с суммой", "палиндром", "на месте", "O(1) памяти"],
+    why: "Два индекса двигаются навстречу (с концов) или в одну сторону (read и write). Каждый шаг отбрасывает часть вариантов, поэтому один проход вместо всех пар.",
+    ex: "valid palindrome, two sum II, move zeroes, remove duplicates, 3sum, container with most water",
+    code: `left, right = 0, len(nums) - 1
+while left < right:
+    s = nums[left] + nums[right]
+    if s == target:
+        return left, right
+    if s < target:
+        left += 1              # нужно больше
+    else:
+        right -= 1             # нужно меньше` },
+  window: { name: "Скользящее окно", ds: "dict / set / Counter для окна", cx: "O(n)",
+    sig: ["подстрока", "подмассив подряд", "самый длинный с условием", "k подряд"],
+    why: "Окно [left, right] расширяем вправо, а когда условие нарушено, сжимаем слева. Каждый элемент входит и выходит один раз.",
+    ex: "longest substring without repeating, max sum of k, minimum window substring",
+    code: `left = 0
+seen = set()
+best = 0
+for right, ch in enumerate(s):
+    while ch in seen:          # окно сломалось: сжимаем слева
+        seen.remove(s[left])
+        left += 1
+    seen.add(ch)
+    best = max(best, right - left + 1)` },
+  prefix: { name: "Префиксные суммы", ds: "list + dict", cx: "O(n)",
+    sig: ["сумма подмассива = k", "сумма на отрезке", "много запросов"],
+    why: "sum(a[i:j]) = prefix[j] - prefix[i]. Если есть отрицательные числа, окно не работает, а префиксы с dict работают.",
+    ex: "subarray sum equals k, range sum query, pivot index",
+    code: `count, total = 0, 0
+seen = {0: 1}                  # сумма префикса -> сколько раз
+for x in nums:
+    total += x
+    count += seen.get(total - k, 0)
+    seen[total] = seen.get(total, 0) + 1` },
+  stack: { name: "Стек", ds: "list: append / pop", cx: "O(n)",
+    sig: ["скобки", "вложенность", "отменить последнее", "ближайший больший"],
+    why: "Работает правило «последним пришёл, первым ушёл». Нужен, когда важен последний открытый элемент.",
+    ex: "valid parentheses, min stack, daily temperatures, evaluate RPN",
+    code: `pairs = {")": "(", "]": "[", "}": "{"}
+stack = []
+for ch in s:
+    if ch in pairs:
+        if not stack or stack.pop() != pairs[ch]:
+            return False
+    else:
+        stack.append(ch)
+return not stack` },
+  bfs: { name: "BFS и очередь", ds: "collections.deque + visited set", cx: "O(V + E)",
+    sig: ["по уровням", "кратчайший путь без весов", "минимум шагов"],
+    why: "Очередь обходит граф или сетку волнами. Первый раз, когда дошли до цели, это и есть кратчайший путь.",
+    ex: "binary tree level order, shortest path in grid, word ladder",
+    code: `from collections import deque
+queue = deque([(start, 0)])
+visited = {start}
+while queue:
+    node, dist = queue.popleft()
+    if node == goal:
+        return dist
+    for nxt in neighbors(node):
+        if nxt not in visited:
+            visited.add(nxt)
+            queue.append((nxt, dist + 1))` },
+  dfs: { name: "DFS: дерево, граф, сетка", ds: "рекурсия + visited set", cx: "O(V + E)",
+    sig: ["дерево", "глубина", "острова", "связность", "путь существует"],
+    why: "Идём вглубь, пока можно, потом возвращаемся. На деревьях ответ собирается из ответов детей.",
+    ex: "max depth, number of islands, validate BST, path sum",
+    code: `def depth(node):
+    if node is None:
+        return 0
+    return 1 + max(depth(node.left), depth(node.right))` },
+  bsearch: { name: "Бинарный поиск", ds: "индексы, bisect", cx: "O(log n)",
+    sig: ["отсортировано", "O(log n)", "минимальное X, при котором"],
+    why: "Каждый шаг отбрасывает половину. Работает и на массиве, и на ответе, если проверка «подходит ли X» монотонна.",
+    ex: "binary search, search insert position, rotated array, koko eating bananas",
+    code: `lo, hi = 0, len(nums) - 1
+while lo <= hi:
+    mid = (lo + hi) // 2
+    if nums[mid] == target:
+        return mid
+    if nums[mid] < target:
+        lo = mid + 1
+    else:
+        hi = mid - 1
+return -1` },
+  intervals: { name: "Сортировка + интервалы", ds: "sorted(key=...)", cx: "O(n log n)",
+    sig: ["интервалы", "встречи", "пересечения", "слить отрезки"],
+    why: "После сортировки по началу пересекающиеся интервалы оказываются рядом. Остаётся один проход.",
+    ex: "merge intervals, meeting rooms, insert interval",
+    code: `intervals.sort(key=lambda x: x[0])
+merged = [intervals[0]]
+for start, end in intervals[1:]:
+    if start <= merged[-1][1]:            # пересекаются
+        merged[-1][1] = max(merged[-1][1], end)
+    else:
+        merged.append([start, end])` },
+  heap: { name: "Куча (heapq)", ds: "heapq", cx: "O(n log k)",
+    sig: ["top-k", "k-й наибольший", "слить k списков", "медиана потока"],
+    why: "Куча за O(log n) отдаёт минимум. Держишь кучу размером k и не сортируешь всё.",
+    ex: "kth largest, top k frequent, merge k sorted lists",
+    code: `import heapq
+heap = []
+for x in nums:
+    heapq.heappush(heap, x)
+    if len(heap) > k:
+        heapq.heappop(heap)    # выкидываем самый маленький
+return heap[0]                 # k-й наибольший` },
+  backtrack: { name: "Backtracking", ds: "рекурсия + список-путь", cx: "O(2ⁿ) или O(n!)",
+    sig: ["все варианты", "подмножества", "перестановки", "комбинации"],
+    why: "Строим ответ по шагу: выбрали, ушли глубже, отменили выбор. Нужен, когда просят перечислить все варианты.",
+    ex: "subsets, permutations, combination sum, n-queens",
+    code: `result = []
+def go(start, path):
+    result.append(path[:])     # копия!
+    for i in range(start, len(nums)):
+        path.append(nums[i])   # выбрали
+        go(i + 1, path)
+        path.pop()             # отменили
+go(0, [])` },
+  dp: { name: "Динамическое программирование", ds: "list / dict, functools.cache", cx: "обычно O(n) или O(n·m)",
+    sig: ["количество способов", "минимальная стоимость", "можно ли собрать", "максимальная сумма без соседних"],
+    why: "Ответ складывается из ответов на меньшие подзадачи, и они повторяются. Каждую считаем один раз и запоминаем.",
+    ex: "climbing stairs, house robber, coin change, longest increasing subsequence",
+    code: `dp = [0] * (n + 1)
+dp[0], dp[1] = 1, 1
+for i in range(2, n + 1):
+    dp[i] = dp[i - 1] + dp[i - 2]   # пришли с i-1 или с i-2
+return dp[n]` },
+  fastslow: { name: "Быстрый и медленный указатель", ds: "два указателя по списку", cx: "O(n), O(1) память",
+    sig: ["связный список", "середина", "цикл"],
+    why: "Быстрый идёт через шаг. Когда он дошёл до конца, медленный в середине. Если есть цикл, они встретятся.",
+    ex: "middle of linked list, linked list cycle, happy number",
+    code: `slow = fast = head
+while fast and fast.next:
+    slow = slow.next
+    fast = fast.next.next
+    if slow is fast:
+        return True            # цикл
+return False` },
+  run: { name: "Текущее значение + счётчик", ds: "две переменные", cx: "O(n), O(1)",
+    sig: ["подряд идущие", "серии", "сжатие строки"],
+    why: "Помним текущий элемент и сколько раз он подряд. При смене закрываем группу, после цикла закрываем последнюю.",
+    ex: "string compression (t02), max consecutive ones, longest run",
+    code: `current, count = s[0], 1
+for ch in s[1:]:
+    if ch == current:
+        count += 1
+    else:
+        parts.append(f"{current}{count}")
+        current, count = ch, 1
+parts.append(f"{current}{count}")   # последняя группа!` },
+  scan: { name: "Один проход с запоминанием", ds: "одна-две переменные", cx: "O(n), O(1)",
+    sig: ["максимум прибыли", "лучший до сих пор", "один проход"],
+    why: "Идём слева направо и помним лучшее «до сегодня» (минимум, максимум, сумму). Сравниваем текущий элемент с запомненным.",
+    ex: "best time to buy and sell stock (t09), maximum subarray (Kadane), missing number (t05)",
+    code: `best, min_price = 0, float("inf")
+for p in prices:
+    min_price = min(min_price, p)
+    best = max(best, p - min_price)` },
+};
+
+const TREE = {
+  start: { q: "Нужно перечислить ВСЕ варианты (подмножества, перестановки, комбинации)?", hint: "Слова «все возможные», «сгенерируй».", a: [["Да", "backtrack"], ["Нет", "opt"]] },
+  opt: { q: "Ищем количество способов или оптимум, и задача разбивается на похожие меньшие?", hint: "«Сколько способов», «минимальная стоимость», «можно ли собрать сумму».", a: [["Да", "dp"], ["Нет", "struct"]] },
+  struct: { q: "Что на входе?", hint: "Структура входа сильно сужает выбор.", a: [["Массив или строка", "sorted"], ["Дерево", "dfs"], ["Граф или сетка", "graph"], ["Связный список", "fastslow"], ["Интервалы [start, end]", "intervals"]] },
+  graph: { q: "Нужен кратчайший путь или минимум шагов?", hint: "Без весов на рёбрах.", a: [["Да", "bfs"], ["Нет, просто обойти, посчитать компоненты", "dfs"]] },
+  sorted: { q: "Массив отсортирован (или его можно отсортировать без потери смысла)?", hint: "Если нужны исходные индексы, сортировка может мешать.", a: [["Да", "sorted_what"], ["Нет", "contig"]] },
+  sorted_what: { q: "Что ищем в отсортированном?", hint: "", a: [["Элемент или позицию за O(log n)", "bsearch"], ["Пару или тройку с условием", "two"]] },
+  contig: { q: "Нужен непрерывный кусок (подстрока, подмассив подряд)?", hint: "«Самая длинная подстрока», «подмассив с суммой».", a: [["Да", "contig_kind"], ["Нет", "topk"]] },
+  contig_kind: { q: "Какое условие на кусок?", hint: "", a: [["Длина с условием «без повторов», «не больше k разных»", "window"], ["Сумма = k (есть отрицательные числа)", "prefix"], ["Подряд одинаковые элементы, серии", "run"]] },
+  topk: { q: "Нужны k наибольших, наименьших или k-й элемент?", hint: "", a: [["Да", "heap"], ["Нет", "nest"]] },
+  nest: { q: "Есть вложенность, скобки или «ближайший больший справа»?", hint: "", a: [["Да", "stack"], ["Нет", "seen"]] },
+  seen: { q: "Нужно помнить, что уже встречалось (пара, дубль, частоты, группировка)?", hint: "", a: [["Да", "hash"], ["Нет", "inplace"]] },
+  inplace: { q: "Просят изменить на месте или O(1) памяти?", hint: "«Переставь», «удали», «перенеси в конец».", a: [["Да", "two"], ["Нет, достаточно одного прохода и запомнить лучшее", "scan"]] },
+};
+
+const TASKS = [
+  ["Дан массив цен по дням. Купи один раз и продай позже с максимальной прибылью.", "scan"],
+  ["Найди длину самой длинной подстроки без повторяющихся символов.", "window"],
+  ["Сгруппируй слова-анаграммы вместе.", "hash"],
+  ["Проверь, что скобки в строке «({[]})» расставлены правильно.", "stack"],
+  ["Верни все подмножества массива [1, 2, 3].", "backtrack"],
+  ["Посчитай, сколькими способами можно подняться на n ступенек шагами по 1 или 2.", "dp"],
+  ["Отсортированный массив: найди индекс target за O(log n).", "bsearch"],
+  ["Слей пересекающиеся интервалы [[1,3],[2,6],[8,10]].", "intervals"],
+  ["Верни k самых частых элементов.", "heap"],
+  ["Посчитай количество островов в сетке из 0 и 1.", "dfs"],
+  ["Перенеси все нули в конец массива на месте.", "two"],
+  ["Посчитай количество подмассивов с суммой k (числа могут быть отрицательными).", "prefix"],
+  ["Сожми строку aaabcc в a3b1c2.", "run"],
+  ["Найди середину связного списка за один проход.", "fastslow"],
+  ["Минимальное число ходов коня от клетки A до клетки B.", "bfs"],
+];
+
+const $ = (id) => document.getElementById(id);
+let path = [], node = "start", task = 0;
+
+function showCard(key) {
+  const p = P[key];
+  $("card").innerHTML = `
+    <p class="eyebrow" style="margin:0">Паттерн</p>
+    <h2>${p.name}</h2>
+    <div class="chips">${p.sig.map(s => `<span class="chip">${s}</span>`).join("")}</div>
+    <p style="margin:0">${p.why}</p>
+    <div class="meta"><div><div class="k">структура</div><div class="v">${p.ds}</div></div><div><div class="k">сложность</div><div class="v">${p.cx}</div></div></div>
+    <div><p class="eyebrow">Шаблон</p><div class="code"></div></div>
+    <p class="hint" style="margin:0"><b>Задачи:</b> ${p.ex}</p>`;
+  $("card").querySelector(".code").textContent = p.code;
+  document.querySelectorAll("#all button").forEach(b => b.setAttribute("aria-pressed", b.dataset.k === key));
+}
+
+function render() {
+  const n = TREE[node];
+  if (n) {
+    $("q").textContent = n.q; $("hint").textContent = n.hint;
+    $("answers").innerHTML = n.a.map(([label, to], i) => `<button class="${i === 0 ? "yes" : ""}" data-to="${to}" data-label="${label}">${label}</button>`).join("");
+    $("answers").querySelectorAll("button").forEach(b => b.onclick = () => { path.push({ node, label: b.dataset.label }); node = b.dataset.to; render(); });
+  } else {
+    $("q").textContent = `Ответ: ${P[node].name}`; $("hint").textContent = "Шаблон справа. Нажми «Назад», чтобы проверить другую ветку.";
+    $("answers").innerHTML = "";
+    showCard(node);
+  }
+  $("path").innerHTML = path.length ? path.map((s, i) => `<div class="step"><span class="n">${i + 1}</span><span>${TREE[s.node].q} <span class="a">→ ${s.label}</span></span></div>`).join("") : `<p class="empty" style="margin:0">пока пусто</p>`;
+  $("back").disabled = !path.length;
+}
+$("back").onclick = () => { if (path.length) { node = path.pop().node; render(); } };
+$("restart").onclick = () => { path = []; node = "start"; render(); };
+$("all").innerHTML = Object.entries(P).map(([k, p]) => `<button data-k="${k}" aria-pressed="false">${p.name}</button>`).join("");
+$("all").querySelectorAll("button").forEach(b => b.onclick = () => showCard(b.dataset.k));
+
+function showTask() {
+  const [t, k] = TASKS[task];
+  $("task").textContent = t;
+  $("taskansv").innerHTML = `<b>${P[k].name}</b>. ${P[k].why}`;
+  $("taskans").open = false;
+}
+$("nexttask").onclick = () => { task = (task + 1) % TASKS.length; showTask(); };
+
+render(); showTask();
+</script>

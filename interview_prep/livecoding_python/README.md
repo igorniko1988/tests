@@ -63,3 +63,14 @@
 
 Решил задачу — пиши в чат «готово t03». Claude прогонит тесты, сделает
 ревью как интервьюер и задаст 1–2 вопроса, которые задали бы на собесе.
+
+## Визуализации
+
+Разбор решения идёт с пошаговым визуализатором: подсвечена строка кода,
+видны переменные и история шагов. Файлы лежат в `<модуль>/visual/`,
+открываются в браузере (`open visual/t02_compress.html`).
+
+- t02 compress: https://claude.ai/artifact/Az7JJPTVcBMREakNebWSbo
+- m02 t04 two sum: https://claude.ai/artifact/PZ5mxKP5mFpfF8XpcMdVCS
+
+Шпаргалка по выбору паттерна: `PATTERNS.md`, интерактивное дерево решений: `pattern_picker.html` (https://claude.ai/artifact/WHT6kR9Rphaw4pznTSNQAk).

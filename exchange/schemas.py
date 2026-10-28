@@ -42,10 +42,49 @@ class UserOut(BaseModel):
     created_at: datetime
 
 
+class ProfileOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    email: str
+    display_name: str | None
+    role: str
+    created_at: datetime
+
+
+class UpdateProfileRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    display_name: str = Field(min_length=1, max_length=64)
+
+
 class TokenOut(BaseModel):
     access_token: str
+    refresh_token: str
     token_type: str = "Bearer"
     expires_in: int
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+
+class AdminUserOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    email: str
+    role: str
+    blocked: bool
+    created_at: datetime
+
+
+class ApiKeyOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    key: str
+    secret: str
+    created_at: datetime
 
 
 class BalanceOut(BaseModel):
@@ -65,7 +104,8 @@ class CreateOrderRequest(BaseModel):
     symbol: str = Field(pattern="^(BTC-USDT|ETH-USDT)$")
     side: OrderSide
     type: OrderType = OrderType.LIMIT
-    price: PositiveAmount
+    # LIMIT — цена обязательна; MARKET — цену не передают, её даёт провайдер цен
+    price: PositiveAmount | None = None
     quantity: PositiveAmount
 
 
@@ -82,3 +122,22 @@ class OrderOut(BaseModel):
     status: OrderStatus
     created_at: datetime
     updated_at: datetime
+
+
+class CreateWebhookRequest(BaseModel):
+    url: str = Field(pattern="^https?://", max_length=2048)
+
+
+class WebhookOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    url: str
+    secret: str
+    created_at: datetime
+
+
+class DepositMessage(BaseModel):
+    user_id: uuid.UUID
+    asset: str = Field(pattern="^(BTC|ETH|USDT)$")
+    amount: PositiveAmount

@@ -12,12 +12,15 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 
-from exchange.api import auth, balances, orders
+from exchange import events, orderbook, webhooks
+from exchange.api import admin, auth, balances, orders, signed
 from exchange.chaos import install_chaos
 from exchange.db import SessionLocal, create_schema
+from exchange.deposits import run_deposit_consumer
 from exchange.errors import install_error_handlers
 from exchange.matching import run_matching
-
+from exchange.metrics import install_metrics
+from exchange.tracing import current_trace_id, install_tracing
 
 # Одна JSON-строка на запрос: по request_id запрос находится в логах (docker compose logs | grep <id>)
 access_log = logging.getLogger("exchange.access")
@@ -31,9 +34,16 @@ logging.getLogger("exchange").propagate = False
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     await create_schema()
-    matching = asyncio.create_task(run_matching())
+    await auth.ensure_admin()
+    tasks = [
+        asyncio.create_task(run_matching()),
+        asyncio.create_task(events.start_producer()),
+        asyncio.create_task(run_deposit_consumer()),
+    ]
     yield
-    matching.cancel()
+    for task in tasks:
+        task.cancel()
+    await events.stop_producer()
 
 
 app = FastAPI(title="Mini Exchange", version="0.1.0", lifespan=lifespan)
@@ -58,6 +68,9 @@ async def request_id(request: Request, call_next):
         elif response.status_code >= 400:
             entry["level"] = "WARNING"
         response.headers["X-Request-ID"] = rid
+        if trace_id := current_trace_id():
+            entry["trace_id"] = trace_id
+            response.headers["X-Trace-ID"] = trace_id
         return response
     finally:
         entry["duration_ms"] = round((time.perf_counter() - start) * 1000, 1)
@@ -77,8 +90,17 @@ async def health():
     return {"status": "ok"}
 
 
+# Последним добавленный middleware — внешний: метрики видят и 503 от режима сбоев
+install_metrics(app)
+
 app.include_router(auth.router)
 app.include_router(balances.router)
 app.include_router(orders.router)
+app.include_router(orderbook.router)
+app.include_router(webhooks.router)
+app.include_router(admin.router)
+app.include_router(signed.router)
+
+install_tracing(app)
 
 app.mount("/app", StaticFiles(directory=Path(__file__).parent / "web", html=True), name="web")

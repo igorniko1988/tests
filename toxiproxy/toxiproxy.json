@@ -1,0 +1,8 @@
+[
+  {
+    "name": "price_feed",
+    "listen": "0.0.0.0:8666",
+    "upstream": "price-feed:8080",
+    "enabled": true
+  }
+]

@@ -1,13 +1,16 @@
 import os
 from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-ENV = os.getenv("ENV", "docker")
-ENV_FILE = Path(__file__).parents[2] / "envs" / f"{ENV}.env"
+# Один файл окружения на оба фреймворка: framework/envs/<ENV>.env (BASE_URL, TIMEOUT …)
+ENV = os.getenv("ENV", "dev")
+ENV_FILE = Path(__file__).parents[2] / "framework" / "envs" / f"{ENV}.env"
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="UI_", env_file=ENV_FILE)
+    # extra="ignore": в общем env-файле есть ключи API-фреймворка (TIMEOUT), UI они не нужны
+    model_config = SettingsConfigDict(env_file=ENV_FILE, extra="ignore")
 
     env: str = ENV
     base_url: str

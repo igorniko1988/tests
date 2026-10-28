@@ -19,11 +19,94 @@ services:
       EXCHANGE_DATABASE_URL: postgresql+asyncpg://exchange:exchange@db:5432/exchange
       EXCHANGE_JWT_SECRET: docker-secret-change-me-at-least-32-bytes
       EXCHANGE_CHAOS_RATE: ${EXCHANGE_CHAOS_RATE:-0}
+      EXCHANGE_KAFKA_BOOTSTRAP: redpanda:9092
+      EXCHANGE_RABBITMQ_URL: amqp://exchange:exchange@rabbitmq:5672/
+      EXCHANGE_PRICE_FEED_URL: http://toxiproxy:8666
+      EXCHANGE_OTEL_ENDPOINT: http://jaeger:4318
+      # без лишних рядов *_created у каждого счётчика
+      PROMETHEUS_DISABLE_CREATED_SERIES: "True"
     ports:
       - "8080:8000"
     depends_on:
       db:
         condition: service_healthy
+
+  # Брокер событий, совместимый с Kafka: стенд пишет в orders.events,
+  # тесты читают с хоста через localhost:19092
+  redpanda:
+    image: redpandadata/redpanda:v24.2.7
+    command:
+      - redpanda start
+      - --mode dev-container
+      - --smp 1
+      - --kafka-addr internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr internal://redpanda:9092,external://localhost:19092
+    ports:
+      - "19092:19092"
+
+  # Очередь депозитов: тесты кладут сообщения в deposits, стенд зачисляет.
+  # Веб-консоль: http://localhost:15672 (exchange / exchange)
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: exchange
+      RABBITMQ_DEFAULT_PASS: exchange
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  # Внешний провайдер цен для MARKET-ордеров — в тестах это WireMock.
+  # Цены по умолчанию — wiremock/mappings; стабы тестов: http://localhost:8089/__admin
+  price-feed:
+    image: wiremock/wiremock:3.9.1
+    # {{now}} и другие шаблоны в ответах работают во всех стабах
+    command: ["--global-response-templating"]
+    volumes:
+      - ./wiremock:/home/wiremock
+    ports:
+      - "8089:8080"
+
+  # Сеть между стендом и провайдером цен: стенд → toxiproxy:8666 → price-feed:8080.
+  # Задержки и обрывы: HTTP API http://localhost:8474 (прокси price_feed)
+  toxiproxy:
+    image: ghcr.io/shopify/toxiproxy:2.9.0
+    command: ["-host=0.0.0.0", "-config=/config/toxiproxy.json"]
+    volumes:
+      - ./toxiproxy:/config
+    ports:
+      - "8474:8474"
+    depends_on:
+      - price-feed
+
+  # Трейсы OpenTelemetry: стенд шлёт OTLP на jaeger:4318, UI — http://localhost:16686
+  jaeger:
+    image: jaegertracing/all-in-one:1.62.0
+    ports:
+      - "16686:16686"
+
+  # Метрики: Prometheus забирает GET /metrics у стенда раз в 5 с, правила алертов — prometheus/alerts.yml
+  prometheus:
+    image: prom/prometheus:v3.1.0
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+    ports:
+      - "9090:9090"
+
+  # Дашборд «Mini Exchange» и источник Prometheus подключаются из grafana/ при старте; вход без пароля
+  grafana:
+    image: grafana/grafana:11.4.0
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
 
   # Второй экземпляр стенда, имитирует общий stage: своя база, свой секрет,
   # немного нестабильности. Запуск: docker compose --profile stage up -d

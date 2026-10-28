@@ -35,6 +35,26 @@ def create_access_token(user_id: uuid.UUID) -> tuple[str, int]:
     return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm), ttl
 
 
+def create_refresh_token(user_id: uuid.UUID) -> tuple[str, uuid.UUID]:
+    jti = uuid.uuid4()
+    now = datetime.now(UTC)
+    payload = {
+        "sub": str(user_id),
+        "jti": str(jti),
+        "iat": now,
+        "exp": now + timedelta(seconds=settings.refresh_token_ttl_seconds),
+        "type": "refresh",
+    }
+    return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm), jti
+
+
+def decode_refresh_token(token: str) -> tuple[uuid.UUID, uuid.UUID]:
+    payload = jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
+    if payload.get("type") != "refresh":
+        raise jwt.InvalidTokenError("wrong token type")
+    return uuid.UUID(payload["sub"]), uuid.UUID(payload["jti"])
+
+
 def decode_access_token(token: str) -> uuid.UUID:
     payload = jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
     if payload.get("type") != "access":

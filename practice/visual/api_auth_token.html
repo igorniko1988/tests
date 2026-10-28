@@ -1,0 +1,247 @@
+<title>Авторизация в API-клиенте</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: слева код теста с подсветкой, справа состояние сессии, HTTP-запрос и ответ; на телефоне в одну колонку */
+:root {
+  --bg: #f3f5f4; --panel: #ffffff; --ink: #17211f; --muted: #5b6965; --line: #d7dedb;
+  --accent: #0d6b5e; --accent-soft: #d5ece7; --hit: #f3c24b; --hit-soft: #fdf0cc;
+  --ok: #1f7a3d; --ok-soft: #dcf1e2; --bad: #b3261e; --bad-soft: #f8dedb;
+  --code-bg: #1d2523; --code-ink: #dfe7e4; --code-dim: #7f8f8a;
+  --font-body: "Golos Text", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121816; --panel: #1a2220; --ink: #e4ebe8; --muted: #94a39e; --line: #2c3734;
+    --accent: #4fc2ad; --accent-soft: #1f3d37; --hit: #f3c24b; --hit-soft: #3d3219;
+    --ok: #6fd08f; --ok-soft: #1d3a26; --bad: #ff8a80; --bad-soft: #43201d;
+    --code-bg: #0c1110; --code-ink: #dfe7e4; --code-dim: #6c7b76; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121816; --panel: #1a2220; --ink: #e4ebe8; --muted: #94a39e; --line: #2c3734;
+  --accent: #4fc2ad; --accent-soft: #1f3d37; --hit: #f3c24b; --hit-soft: #3d3219;
+  --ok: #6fd08f; --ok-soft: #1d3a26; --bad: #ff8a80; --bad-soft: #43201d;
+  --code-bg: #0c1110; --code-ink: #dfe7e4; --code-dim: #6c7b76; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 40px;
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 1.6rem; margin: 0; text-wrap: balance; }
+.sub { color: var(--muted); margin: 4px 0 0; max-width: 70ch; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; }
+button {
+  font: 500 .95rem var(--font-body); padding: 8px 14px; border-radius: 6px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--panel); color: var(--ink);
+}
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+button:disabled { opacity: .45; cursor: default; }
+button:focus-visible { outline: 2px solid var(--hit); outline-offset: 2px; }
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 16px; min-width: 0; align-content: start; }
+.eyebrow { font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 6px; }
+.code { background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 14px 0; overflow-x: auto; font: .85rem/1.7 var(--font-mono); }
+.code .ln { display: flex; padding: 0 14px; white-space: pre; border-left: 3px solid transparent; }
+.code .ln .no { color: var(--code-dim); width: 2.2em; flex: none; user-select: none; }
+.code .ln.active { background: rgba(243, 194, 75, .18); border-left-color: var(--hit); }
+.kw { color: #f0a36b; } .fn { color: #8fd3c4; } .st { color: #c3e88d; } .cm { color: var(--code-dim); }
+.msg { border-left: 3px solid var(--accent); padding: 10px 14px; background: var(--accent-soft); border-radius: 0 8px 8px 0; min-height: 4.5em; }
+.msg b, .msg code { font-family: var(--font-mono); font-size: .92em; }
+.msg.warn { border-left-color: var(--bad); background: var(--bad-soft); }
+.objs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 480px) { .objs { grid-template-columns: minmax(0, 1fr); } }
+.obj { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; min-width: 0; font: .82rem/1.55 var(--font-mono); }
+.obj .name { font-family: var(--font-body); font-weight: 700; font-size: .85rem; margin-bottom: 4px; }
+.obj .kv { overflow-wrap: anywhere; }
+.obj .none { color: var(--muted); font-style: italic; }
+.obj.changed { border-color: var(--hit); background: var(--hit-soft); }
+.obj.dim { opacity: .45; }
+.wire { display: grid; gap: 10px; }
+.http { border-radius: 8px; padding: 10px 12px; font: .82rem/1.55 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; border: 1px solid var(--line); min-height: 3.2em; }
+.http .auth { background: var(--hit-soft); outline: 1px solid var(--hit); border-radius: 3px; }
+.http.req { background: var(--panel); }
+.http.ok { background: var(--ok-soft); border-color: var(--ok); }
+.http.bad { background: var(--bad-soft); border-color: var(--bad); }
+.http.idle { color: var(--muted); font-style: italic; }
+.arrow { text-align: center; color: var(--muted); font-size: .85rem; }
+.progress { font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+table { border-collapse: collapse; width: 100%; font: .82rem var(--font-mono); font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { color: var(--muted); font-weight: 400; font-family: var(--font-body); }
+tr.cur td { background: var(--hit-soft); }
+.s2 { color: var(--ok); font-weight: 600; } .s4 { color: var(--bad); font-weight: 600; }
+.tablewrap { overflow-x: auto; }
+.rule { border: 1px solid var(--accent); border-radius: 10px; padding: 14px 18px; background: var(--panel); }
+.rule ol { margin: 6px 0 0; padding-left: 1.3em; display: grid; gap: 4px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Как токен попадает в каждый запрос</h1>
+    <p class="sub">Стенд «мини-биржа», реальные ответы. Сервер не помнит тебя между запросами: доказательство «это я» (токен) должно ехать в заголовке каждого запроса. Сессия кладёт его туда сама.</p>
+  </header>
+
+  <div class="rule">
+    <strong>Запомни три вопроса про авторизацию</strong>
+    <ol>
+      <li><b>Откуда токен?</b> Из ответа <code>POST /auth/login</code>, поле <code>access_token</code>.</li>
+      <li><b>Где он хранится?</b> В <code>session.headers["Authorization"]</code> одного объекта клиента.</li>
+      <li><b>Кто решает, авторизован ли клиент?</b> Фикстура: <code>api</code> без токена, <code>auth_api</code> с токеном.</li>
+    </ol>
+  </div>
+
+  <div class="controls">
+    <button id="prev">← Назад</button>
+    <button id="next" class="primary">Шаг →</button>
+    <button id="play">▶ Авто</button>
+    <button id="reset">В начало</button>
+  </div>
+
+  <div class="grid">
+    <section class="panel">
+      <div>
+        <p class="eyebrow">Код теста</p>
+        <div class="code" id="code"></div>
+      </div>
+      <div class="msg" id="msg"></div>
+      <div class="progress" id="stepno"></div>
+    </section>
+
+    <section class="panel">
+      <div>
+        <p class="eyebrow">Объекты в памяти</p>
+        <div class="objs">
+          <div class="obj" id="o-api"></div>
+          <div class="obj" id="o-other"></div>
+        </div>
+      </div>
+      <div class="wire">
+        <p class="eyebrow" style="margin:0">Что ушло на сервер</p>
+        <div class="http" id="req"></div>
+        <div class="arrow">ответ сервера ↓</div>
+        <div class="http" id="res"></div>
+      </div>
+    </section>
+  </div>
+
+  <section class="panel">
+    <p class="eyebrow" style="margin:0">История запросов</p>
+    <div class="tablewrap"><table><thead><tr><th>#</th><th>клиент</th><th>запрос</th><th>Authorization</th><th>статус</th></tr></thead><tbody id="hist"></tbody></table></div>
+  </section>
+</div>
+
+<script>
+const TOKEN = "eyJhbGciOiJIUzI1NiIs…NANM";
+const CODE = [
+  '<span class="cm"># клиент: base_url, таймаут, Session</span>',
+  'api = <span class="fn">Api</span>(<span class="st">"http://localhost:8080"</span>)',
+  '',
+  'r = api.<span class="fn">get</span>(<span class="st">"/me"</span>)                       <span class="cm"># без токена</span>',
+  '',
+  'api.<span class="fn">post</span>(<span class="st">"/auth/register"</span>, json=creds)',
+  'r = api.<span class="fn">post</span>(<span class="st">"/auth/login"</span>, json=creds)',
+  'token = r.<span class="fn">json</span>()[<span class="st">"access_token"</span>]',
+  '',
+  'api.<span class="fn">set_token</span>(token)   <span class="cm"># session.headers["Authorization"] = f"Bearer {token}"</span>',
+  '',
+  'r = api.<span class="fn">get</span>(<span class="st">"/me"</span>)',
+  'r = api.<span class="fn">get</span>(<span class="st">"/balances"</span>)',
+  '',
+  'other = <span class="fn">Api</span>(<span class="st">"http://localhost:8080"</span>)   <span class="cm"># второй клиент</span>',
+  'r = other.<span class="fn">get</span>(<span class="st">"/balances"</span>)',
+];
+
+const EMPTY_API = { base_url: null, timeout: null, headers: null };
+const S = [
+  { line: 1, api: { base_url: '"http://localhost:8080"', timeout: "10", headers: {} }, changed: "api",
+    msg: "Создали клиента. Внутри него живёт <b>Session</b>: она держит общие настройки и TCP-соединение для всех запросов. Заголовков авторизации пока нет. Обрати внимание: адрес берётся из <b>self.base_url</b>, а не из глобальной <b>BASE_URL</b>, как у тебя сейчас.", warn: true },
+  { line: 3, req: "GET http://localhost:8080/me", res: { code: 401, text: '401 Unauthorized\n{"error": {"code": "unauthorized", "message": "Missing bearer token"}}' }, client: "api",
+    msg: "Запрос без токена. Сервер не знает, кто ты, и отвечает <b>401</b>. Это не баг, а ожидаемое поведение. На это пишут негативный тест «эндпоинт закрыт без авторизации»." },
+  { line: 5, req: 'POST http://localhost:8080/auth/register\nContent-Type: application/json\n\n{"email": "viz_15553@test.io", "password": "Passw0rd!"}', res: { code: 201, text: '201 Created\n{"id": "89a06b12-…", "email": "viz_15553@test.io"}' }, client: "api",
+    msg: "Регистрация открыта для всех, токен не нужен. Пользователь создан, но токена у нас всё ещё нет." },
+  { line: 6, req: 'POST http://localhost:8080/auth/login\nContent-Type: application/json\n\n{"email": "viz_15553@test.io", "password": "Passw0rd!"}', res: { code: 200, text: '200 OK\n{"access_token": "' + TOKEN + '",\n "token_type": "Bearer", "expires_in": 900}' }, client: "api",
+    msg: "Логин. Ответ <b>200</b>, в теле лежит <b>access_token</b>. Это и есть ответ на вопрос 1 «откуда токен». <b>expires_in: 900</b> значит, что токен живёт 15 минут." },
+  { line: 7, token: true,
+    msg: "Достали токен из JSON. Это пока просто строка в переменной. Сессия о нём ничего не знает, и следующие запросы без него тоже получат 401." },
+  { line: 9, api: { headers: { Authorization: "Bearer " + TOKEN } }, changed: "api",
+    msg: "Ключевой шаг. Кладём токен в <b>session.headers</b>. С этого момента Session <b>сама</b> добавляет заголовок к каждому запросу этого клиента. Передавать <b>headers=</b> в каждом вызове вручную не нужно, и это главная причина использовать Session." },
+  { line: 11, req: "GET http://localhost:8080/me\n§Authorization: Bearer " + TOKEN + "§", res: { code: 200, text: '200 OK\n{"id": "89a06b12-…", "email": "viz_15553@test.io"}' }, client: "api",
+    msg: "Тот же <b>GET /me</b>, что на шаге 2, но теперь заголовок подставлен автоматически (выделен жёлтым). Сервер проверил подпись токена, достал из него id пользователя (поле <b>sub</b>) и ответил <b>200</b>." },
+  { line: 12, req: "GET http://localhost:8080/balances\n§Authorization: Bearer " + TOKEN + "§", res: { code: 200, text: "200 OK\n[]" }, client: "api",
+    msg: "Любой следующий запрос этого клиента уже с токеном. Код теста не меняется, авторизация работает «под капотом»." },
+  { line: 14, other: { base_url: '"http://localhost:8080"', timeout: "10", headers: {} }, changed: "other",
+    msg: "Создали второго клиента. У него <b>своя</b> Session и свои заголовки. Токен первого сюда не попал. Так в тестах делают «пользователя A» и «пользователя B»." },
+  { line: 15, req: "GET http://localhost:8080/balances", res: { code: 401, text: '401 Unauthorized\n{"error": {"code": "unauthorized", "message": "Missing bearer token"}}' }, client: "other",
+    msg: "Второй клиент без токена получает <b>401</b>. Вывод: токен принадлежит объекту клиента, а не всей программе. Поэтому фикстуры <b>api</b> (без токена) и <b>auth_api</b> (с токеном) не мешают друг другу. И ни в коем случае не храни токен в глобальной переменной или атрибуте класса." },
+];
+
+// накапливаем состояние шагов
+const states = [];
+let api = { ...EMPTY_API }, other = { ...EMPTY_API }, hist = [];
+for (const st of S) {
+  if (st.api) api = { ...api, ...st.api, headers: { ...(api.headers || {}), ...(st.api.headers || {}) } };
+  if (st.other) other = { ...other, ...st.other };
+  if (st.req) hist = hist.concat([{ client: st.client, req: st.req.split("\n")[0], auth: st.req.includes("Authorization") ? "Bearer …" : "—", code: st.res.code }]);
+  states.push({ ...st, apiS: JSON.parse(JSON.stringify(api)), otherS: JSON.parse(JSON.stringify(other)), hist: hist.slice() });
+}
+
+const $ = (id) => document.getElementById(id);
+let k = 0, timer = null;
+const esc = (t) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+
+function objHtml(title, o, highlight) {
+  if (!o.base_url) return `<div class="name">${title}</div><div class="none">ещё не создан</div>`;
+  const h = Object.keys(o.headers).length
+    ? Object.entries(o.headers).map(([k, v]) => `<div class="kv">  "${k}": "${esc(v)}"</div>`).join("")
+    : `<div class="kv none">  {} пусто</div>`;
+  return `<div class="name">${title}</div><div class="kv">base_url = ${o.base_url}</div><div class="kv">timeout = ${o.timeout}</div><div class="kv">session.headers =</div>${h}`;
+}
+
+function render() {
+  const st = states[k];
+  $("code").innerHTML = CODE.map((c, n) => `<div class="ln${n === st.line ? " active" : ""}"><span class="no">${n + 1}</span>${c || " "}</div>`).join("");
+  $("msg").innerHTML = st.msg;
+  $("msg").classList.toggle("warn", !!st.warn);
+  $("o-api").innerHTML = objHtml("api", st.apiS);
+  $("o-other").innerHTML = objHtml("other", st.otherS);
+  $("o-api").classList.toggle("changed", st.changed === "api");
+  $("o-other").classList.toggle("changed", st.changed === "other");
+  $("o-api").classList.toggle("dim", st.client === "other");
+  if (st.req) {
+    $("req").className = "http req";
+    $("req").innerHTML = esc(st.req).replace(/§(.*?)§/, '<span class="auth">$1</span>');
+    $("res").className = "http " + (st.res.code < 400 ? "ok" : "bad");
+    $("res").textContent = st.res.text;
+  } else {
+    $("req").className = "http idle"; $("req").textContent = st.token ? `token = "${TOKEN}"  (только переменная, в сессии его нет)` : "на этом шаге запросов нет";
+    $("res").className = "http idle"; $("res").textContent = "—";
+  }
+  $("hist").innerHTML = st.hist.map((h, n) => `<tr class="${st.req && n === st.hist.length - 1 ? "cur" : ""}"><td>${n + 1}</td><td>${h.client}</td><td>${esc(h.req)}</td><td>${h.auth}</td><td class="${h.code < 400 ? "s2" : "s4"}">${h.code}</td></tr>`).join("")
+    || `<tr><td colspan="5" style="color:var(--muted)">запросов пока не было</td></tr>`;
+  $("stepno").textContent = `шаг ${k + 1} из ${states.length}`;
+  $("prev").disabled = k === 0;
+  $("next").disabled = k === states.length - 1;
+}
+function stop() { clearInterval(timer); timer = null; $("play").textContent = "▶ Авто"; }
+$("next").onclick = () => { if (k < states.length - 1) { k++; render(); } };
+$("prev").onclick = () => { stop(); if (k > 0) { k--; render(); } };
+$("reset").onclick = () => { stop(); k = 0; render(); };
+$("play").onclick = () => {
+  if (timer) return stop();
+  if (k === states.length - 1) k = 0;
+  $("play").textContent = "❚❚ Пауза";
+  timer = setInterval(() => { if (k < states.length - 1) { k++; render(); } else stop(); }, 2600);
+};
+document.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowRight") $("next").click();
+  if (e.key === "ArrowLeft") $("prev").click();
+});
+render();
+</script>

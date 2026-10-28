@@ -31,6 +31,15 @@
 - **Режим «делаем вместе» (с U4.3):** Claude показывает код в чате маленькими шагами и объясняет
   каждую строку, даёт команду проверки; пользователь перепечатывает, пишет «готово» или вопрос.
   В файлы Claude сам не пишет. Темп: сначала то, что спрашивают на собесе, второстепенное — кратко.
+- **Формат теории в чате — тот же, что у заданий (ниже):** абзац «**Смысл темы.**» → `---` →
+  `### N. Тема` → блок кода на стенде → 3–5 маркеров `- **ключ:** одно предложение` → `---`.
+  В конце «### Собес» маркерами `- **вопрос?** ответ`. Таблица максимум одна (например, коды ответа).
+- **Формат ответа в «делаем вместе»:** абзац «**Смысл задачи.**» (2–4 предложения, ссылки
+  `exchange/...:строка`) → `---` → `### Шаг N. Название` и одна фраза «куда положить» → блок кода →
+  3–5 маркеров `- **ключ:** пояснение в одно предложение` → `---` → следующий шаг. Задача целиком
+  за 2–3 шага (код, потом тест), в конце «**Проверка:**» с командой и ожидаемым итогом, затем
+  «Напиши „готово“» и что дальше. Без сплошного текста и без таблиц подряд — таблица максимум одна,
+  только для настоящего сравнения.
 - **Стиль Page Object пользователя:** страницы через фасад `Application` (`app.auth_page`,
   `app.dashboard_page`), фикстуры только готовят состояние (`app`, `logged_user` …). Методы PO
   не возвращают другие страницы; один метод на позитив и негатив — ждёт ответ сервера и возвращает
@@ -39,6 +48,12 @@
   чужие ордера ломают тест сделки.
 - **framework2** (requests, ветка `feat/framework2`) и **лайвкодинг** (ветка `livecoding`,
   тренажёр `trainer/` на :8090 из ветки `stand/trainer`, без багов) — код пишет пользователь, Claude ставит задачи и разбирает решения.
+- **Визуализация по шагам — для всей учёбы** (алгоритмы, Python, API, UI, pytest, фреймворк, CI):
+  объяснение темы и разбор решения идут с интерактивной HTML-страницей (Artifact). На ней шаги
+  «Шаг / Назад / Авто», код с подсветкой текущей строки, состояние (переменные, объекты, запрос и ответ,
+  DOM, фикстуры) с выделением изменённого, пояснение простыми словами на каждом шаге, история шагов,
+  свой ввод или примеры. Места, где пользователь ошибся, подсвечиваются отдельно. Копия страницы
+  кладётся в репозиторий, каталог и правила — `practice/visual/README.md`. Образец — `t02_compress.html`.
 
 ## Git-процесс
 
@@ -81,6 +96,40 @@
   Поиск: `docker compose logs exchange | grep <request_id>`.
 - Kubernetes (Docker Desktop): `kubectl apply -f k8s/exchange.yaml`, затем
   `kubectl -n exchange port-forward svc/exchange 8082:8000`. Образ — локальный `api_learning-exchange:latest`.
+- WebSocket `/ws/orderbook/{symbol}`: сначала `snapshot`, затем `update` на каждое изменение стакана;
+  `sequence` растёт на 1. Неизвестный символ — закрытие с кодом 4004.
+- Вебхуки: `POST /webhooks {url}` → `secret`; на `order.filled` и `order.canceled` стенд шлёт POST
+  с `X-Event-Id`, `X-Event-Type`, `X-Delivery-Attempt` и `X-Signature: sha256=<HMAC тела секретом>`.
+  Не 2xx — повтор через 1, 2, 4 с (всего 4 попытки, `EXCHANGE_WEBHOOK_MAX_ATTEMPTS`). Из Docker
+  приёмник на хосте доступен как `host.docker.internal`.
+- Kafka (Redpanda, `localhost:19092`): стенд пишет в `orders.events` (3 партиции, ключ — id ордера)
+  события `order.created`, `order.partially_filled`, `order.filled`, `order.canceled`.
+  Смотреть: `docker compose exec redpanda rpk topic consume orders.events -n 5`.
+- RabbitMQ (`localhost:5672`, консоль `:15672`, `exchange`/`exchange`): очередь `deposits`,
+  тело `{"user_id", "asset", "amount"}` + обязательный `message_id`; повтор с тем же id не зачисляется,
+  битые сообщения уходят в `deposits.dlq`. Без `EXCHANGE_KAFKA_BOOTSTRAP` / `EXCHANGE_RABBITMQ_URL` выключены.
+- Провайдер цен (WireMock `price-feed`, `localhost:8089`, админка `/__admin`): `type: MARKET` без `price`
+  берёт цену из `GET /prices/{symbol}` → `{"symbol", "price", "timestamp"}`. Ошибка, таймаут
+  (`EXCHANGE_PRICE_FEED_TIMEOUT`, 2 с) или цена старше `EXCHANGE_PRICE_MAX_AGE` (10 с) — 503
+  `price_unavailable` / `price_stale`, деньги не блокируются. Цены по умолчанию — `wiremock/mappings/`,
+  `POST /__admin/reset` возвращает к ним.
+- Toxiproxy (`localhost:8474`): стенд ходит к провайдеру цен через прокси `price_feed`
+  (`toxiproxy:8666` → `price-feed:8080`). Сбои сети — `POST /proxies/price_feed/toxics`,
+  `POST /reset` убирает все toxics и включает прокси.
+- Безопасность: `login` отдаёт `access_token` + `refresh_token`, `POST /auth/refresh` выдаёт новую пару
+  (ротация). 5 неудачных входов на email за 60 с — 429 с `Retry-After`. `GET/PATCH /me` (профиль, `display_name`).
+  Роль `admin` (сид `admin@mini-exchange.io` / `admin-password`, `EXCHANGE_ADMIN_*`): `GET /admin/users`,
+  `POST /admin/users/{id}/block|unblock`; заблокированный не входит (403 `user_blocked`).
+  Подписанный API как у бирж: `POST /api-keys` → `{key, secret}`, `GET /v1/account`, `POST /v1/orders` —
+  заголовок `X-API-KEY`, параметры в query, последним `signature` = HMAC-SHA256(secret, query без signature),
+  `timestamp` в мс и `recvWindow` (по умолчанию 5000); `GET /time` — время сервера.
+- Трейсы: OpenTelemetry → Jaeger (UI http://localhost:16686, сервис `exchange`). Стенд продолжает
+  входящий `traceparent`, отдаёт `X-Trace-ID` и пишет `trace_id` в строку лога. Без `EXCHANGE_OTEL_ENDPOINT` выключено.
+- Метрики: `GET /metrics` (Prometheus-формат) — `exchange_http_requests_total{method,route,status}`,
+  `exchange_http_request_duration_seconds` (histogram), `exchange_http_requests_in_progress`,
+  `exchange_orders_created_total{symbol,side,type}`, `exchange_trades_total{symbol}`,
+  `exchange_price_feed_errors_total{reason}`, `exchange_matching_cycle_seconds`. Prometheus http://localhost:9090
+  (скрейп 5 с, алерты `prometheus/alerts.yml`), Grafana http://localhost:3000 без логина, дашборд «Mini Exchange».
 - Stage-экземпляр: `docker compose --profile stage up -d` → http://localhost:8081.
   Своя база и JWT-секрет, 5% сбоев (`EXCHANGE_STAGE_CHAOS_RATE`). Обычный `up` его не трогает.
 

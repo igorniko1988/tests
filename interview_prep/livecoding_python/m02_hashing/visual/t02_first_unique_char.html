@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>First Unique по шагам</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: слева строка и счётчик сравнений, справа код с подсветкой и история шагов */
+:root {
+  --bg: #f3f5f4; --panel: #ffffff; --ink: #17211f; --muted: #5b6965; --line: #d7dedb;
+  --accent: #0d6b5e; --accent-soft: #d5ece7; --hit: #f3c24b; --hit-soft: #fdf0cc;
+  --write: #2f4a8a; --write-soft: #e4e9f5; --swap: #b3261e; --swap-soft: #f8dedb;
+  --code-bg: #1d2523; --code-ink: #dfe7e4; --code-dim: #7f8f8a;
+  --font-body: "Golos Text", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121816; --panel: #1a2220; --ink: #e4ebe8; --muted: #94a39e; --line: #2c3734;
+    --accent: #4fc2ad; --accent-soft: #1f3d37; --hit: #f3c24b; --hit-soft: #3d3219;
+    --write: #a9bdf0; --write-soft: #232d45; --swap: #ff8a80; --swap-soft: #43201d;
+    --code-bg: #0c1110; --code-ink: #dfe7e4; --code-dim: #6c7b76; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121816; --panel: #1a2220; --ink: #e4ebe8; --muted: #94a39e; --line: #2c3734;
+  --accent: #4fc2ad; --accent-soft: #1f3d37; --hit: #f3c24b; --hit-soft: #3d3219;
+  --write: #a9bdf0; --write-soft: #232d45; --swap: #ff8a80; --swap-soft: #43201d;
+  --code-bg: #0c1110; --code-ink: #dfe7e4; --code-dim: #6c7b76; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-body);
+  padding: 24px 16px 40px;
+}
+.wrap { max-width: 1080px; margin: 0 auto; display: grid; gap: 18px; }
+h1 { font-size: 1.6rem; margin: 0; text-wrap: balance; }
+.sub { color: var(--muted); margin: 4px 0 0; max-width: 72ch; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.controls label { font-size: .85rem; color: var(--muted); }
+input[type=text] { font: 600 .95rem var(--font-mono); padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--ink); width: 13rem; }
+button { font: 500 .95rem var(--font-body); padding: 8px 14px; border-radius: 6px; cursor: pointer; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+button:disabled { opacity: .45; cursor: default; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--hit); outline-offset: 2px; }
+.presets { display: flex; gap: 6px; flex-wrap: wrap; }
+.presets button { font-family: var(--font-mono); font-size: .82rem; padding: 4px 8px; }
+.grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 16px; min-width: 0; align-content: start; }
+.eyebrow { font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 6px; }
+.cells { display: flex; flex-wrap: wrap; gap: 6px; padding-block: 26px 6px; }
+.cell { position: relative; width: 40px; display: grid; gap: 2px; justify-items: center; }
+.box { width: 40px; height: 44px; display: grid; place-items: center; border-radius: 6px; font: 600 1.1rem var(--font-mono); border: 2px solid var(--line); background: var(--panel); transition: background .25s, border-color .25s; }
+.idx { font: .7rem var(--font-mono); color: var(--muted); }
+.cell.past .box { background: var(--accent-soft); }
+.cell.cur .box { border-color: var(--hit); box-shadow: 0 0 0 2px var(--hit); }
+.cell.scan .box { border-color: var(--swap); border-style: dashed; }
+.cell.match .box { background: var(--write-soft); border-color: var(--write); }
+.cell.found .box { background: var(--hit-soft); border-color: var(--hit); }
+.tag { position: absolute; top: -24px; font: 600 .68rem var(--font-mono); padding: 0 5px; border-radius: 4px; white-space: nowrap; background: var(--hit); color: #2a2000; }
+.tag.j { background: var(--swap); color: #fff; top: auto; bottom: -22px; }
+.vars { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; padding-top: 8px; }
+@media (max-width: 560px) { .vars { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.var { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; min-width: 0; }
+.var .name { font: .8rem var(--font-mono); color: var(--muted); }
+.var .val { font: 600 1.15rem var(--font-mono); }
+.var.changed { border-color: var(--hit); background: var(--hit-soft); }
+.var.cost .val { color: var(--swap); }
+.meter { display: grid; gap: 4px; font-size: .85rem; }
+.bar { height: 10px; border-radius: 5px; background: var(--line); overflow: hidden; }
+.bar > span { display: block; height: 100%; background: var(--swap); transition: width .25s; }
+.bar.good > span { background: var(--accent); }
+.msg { border-left: 3px solid var(--accent); padding: 10px 14px; background: var(--accent-soft); border-radius: 0 8px 8px 0; min-height: 4em; }
+.msg.err { border-left-color: var(--swap); background: var(--swap-soft); }
+.msg b { font-family: var(--font-mono); font-size: .92em; }
+.code { background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 14px 0; overflow-x: auto; font: .88rem/1.7 var(--font-mono); }
+.code .ln { display: flex; padding: 0 14px; white-space: pre; border-left: 3px solid transparent; }
+.code .ln .no { color: var(--code-dim); width: 2.2em; flex: none; user-select: none; }
+.code .ln.wrong { background: rgba(255, 138, 128, .14); }
+.code .ln.active { background: rgba(243, 194, 75, .2); border-left-color: var(--hit); }
+.kw { color: #f0a36b; } .fn { color: #8fd3c4; } .nu { color: #f3c24b; } .cm { color: var(--code-dim); }
+.progress { font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+table { border-collapse: collapse; width: 100%; font: .82rem var(--font-mono); font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { color: var(--muted); font-weight: 400; font-family: var(--font-body); }
+tr.cur td { background: var(--hit-soft); }
+.tablewrap { overflow-x: auto; }
+.note { border: 1px dashed var(--line); border-radius: 8px; padding: 10px 14px; font-size: .9rem; }
+.mistake { border-left: 3px solid var(--swap); background: var(--swap-soft); border-radius: 0 8px 8px 0; padding: 10px 14px; font-size: .9rem; }
+.mistake ul, .note ol { margin: 6px 0 0; padding-left: 1.2em; }
+code { font-family: var(--font-mono); font-size: .9em; }
+@media (prefers-reduced-motion: reduce) { .box, .bar > span { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>t02 First Unique Character: где прячется второй цикл</h1>
+    <p class="sub">Это твоё решение. Тесты оно проходит, но <b>s.count(char)</b> каждый раз заново проходит всю строку. Красная пунктирная рамка <b>j</b> показывает этот скрытый проход, а счётчик сравнений внизу растёт как n².</p>
+  </header>
+
+  <div class="controls">
+    <label for="inp">s</label>
+    <input id="inp" type="text" value="loveleetcode" maxlength="14" autocomplete="off" spellcheck="false">
+    <div class="presets">
+      <button data-s="leetcode">"leetcode"</button>
+      <button data-s="loveleetcode">"loveleetcode"</button>
+      <button data-s="aabb">"aabb"</button>
+      <button data-s="">"" пустая</button>
+      <button data-s="aabbccddeeffz">"aabbccddeeffz" — худший</button>
+    </div>
+  </div>
+  <div class="controls">
+    <button id="prev">← Назад</button>
+    <button id="next" class="primary">Шаг →</button>
+    <button id="play">▶ Авто</button>
+    <button id="reset">В начало</button>
+    <button id="end">В конец</button>
+  </div>
+
+  <div class="grid">
+    <section class="panel">
+      <div>
+        <p class="eyebrow">s (подпись — индекс; жёлтая рамка — index, красная — j внутри count)</p>
+        <div class="cells" id="cells"></div>
+      </div>
+      <div class="vars">
+        <div class="var" id="v-index"><div class="name">index</div><div class="val">—</div></div>
+        <div class="var" id="v-char"><div class="name">char</div><div class="val">—</div></div>
+        <div class="var" id="v-j"><div class="name">j в count</div><div class="val">—</div></div>
+        <div class="var" id="v-cnt"><div class="name">count</div><div class="val">—</div></div>
+        <div class="var cost" id="v-ops"><div class="name">сравнений</div><div class="val">0</div></div>
+      </div>
+      <div class="meter">
+        <div>Твоё решение: <b id="m-bad">0</b> сравнений (худший случай n² = <span id="m-n2">0</span>)</div>
+        <div class="bar"><span id="b-bad" style="width:0"></span></div>
+        <div>Решение «сначала посчитать, потом искать»: не больше <b id="m-good">0</b> (2n)</div>
+        <div class="bar good"><span id="b-good" style="width:0"></span></div>
+      </div>
+      <div class="msg" id="msg"></div>
+      <div class="progress" id="stepno"></div>
+      <div class="mistake"><b>Где тут ошибка (и где обычно ошибаются)</b>
+        <ul>
+          <li><b>Твоё место:</b> <code>s.count(char)</code> внутри <code>for</code>. Это не «одна операция», а цикл по всей строке. Цикл в цикле даёт O(n²). На строке из 100 000 букв это 10¹⁰ сравнений, тест на время упадёт.</li>
+          <li>Так же прячутся <code>x in list</code>, <code>list.index(x)</code>, <code>list.remove(x)</code>: каждый из них O(n).</li>
+          <li>Если считать буквы в <code>set</code>, теряется количество: set знает только «было или нет».</li>
+          <li>Если возвращать саму букву, а не индекс, тест упадёт: нужен индекс.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div>
+        <p class="eyebrow">Твой код</p>
+        <div class="code" id="code"></div>
+      </div>
+      <div>
+        <p class="eyebrow">История шагов</p>
+        <div class="tablewrap"><table><thead><tr><th>index</th><th>char</th><th>s.count(char)</th><th>сравнений за шаг</th><th>всего</th></tr></thead><tbody id="hist"></tbody></table></div>
+      </div>
+      <div class="note"><b>Как сделать O(n): идея без кода</b>
+        <ol>
+          <li><b>Первый проход:</b> посчитать, сколько раз встречается каждая буква, в «шкаф» буква → количество (dict, <code>Counter</code> или <code>defaultdict(int)</code> из lesson.py, часть 4).</li>
+          <li><b>Второй проход:</b> снова идти по строке с <code>enumerate</code> и спрашивать у шкафа, а не у строки. Шкаф отвечает за O(1).</li>
+        </ol>
+        Два прохода подряд, а не вложенные: n + n = 2n, то есть <b>O(n)</b>. Память O(1): букв не больше алфавита. На собесе: «count внутри цикла — скрытый O(n²); посчитал заранее одним проходом».
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+const esc = (c) => c.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+const CODE = [
+  '<span class="kw">def</span> <span class="fn">first_unique_char</span>(s: str) -> int:',
+  '    <span class="kw">for</span> index, char <span class="kw">in</span> <span class="fn">enumerate</span>(s):',
+  '        <span class="kw">if</span> s.<span class="fn">count</span>(char) == <span class="nu">1</span>:   <span class="cm"># скрытый цикл по всей s!</span>',
+  '            <span class="kw">return</span> index',
+  '    <span class="kw">return</span> -<span class="nu">1</span>',
+];
+
+function build(s) {
+  const steps = [], hist = [];
+  let ops = 0;
+  const push = (o) => steps.push({ index: null, char: null, j: null, cnt: null, matches: [], found: null, err: false, ops, hist: hist.slice(), ...o });
+  push({ line: 0, msg: `Вход: <b>s = "${esc(s)}"</b>, длина n = ${s.length}. Ищем индекс первой буквы, которая встречается ровно один раз.` });
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    push({ line: 1, index: i, char: ch, msg: `<b>index = ${i}, char = '${esc(ch)}'</b>. Внешний цикл берёт следующую букву.` });
+    let cnt = 0;
+    const matches = [];
+    const before = ops;
+    for (let j = 0; j < s.length; j++) {
+      ops++;
+      const eq = s[j] === ch;
+      if (eq) { cnt++; matches.push(j); }
+      push({ line: 2, index: i, char: ch, j, cnt, matches: matches.slice(), ops, err: true,
+        msg: j === 0
+          ? `Вызвали <b>s.count('${esc(ch)}')</b>. Внутри Python запускает свой цикл с самого начала строки: s[0] = '${esc(s[0])}' ${eq ? "совпало" : "не совпало"}. Этот цикл в коде не виден, но он есть.`
+          : `count идёт дальше: <b>s[${j}] = '${esc(s[j])}'</b> ${eq ? "== '" + esc(ch) + "', count = " + cnt : "≠ '" + esc(ch) + "'"}.${j === s.length - 1 ? ` Дошли до конца строки: ${s.length} сравнений ради одной буквы.` : ""}` });
+    }
+    hist.push({ i, ch, cnt, step: ops - before, ops });
+    if (cnt === 1) {
+      push({ line: 3, index: i, char: ch, cnt, matches, found: i, ops,
+        msg: `<b>s.count('${esc(ch)}') == 1</b> → да. <b>return ${i}</b>. Ответ верный, но потратили ${ops} сравнений на строку из ${s.length} букв.` });
+      return steps;
+    }
+    push({ line: 2, index: i, char: ch, cnt, matches, ops,
+      msg: `<b>s.count('${esc(ch)}') = ${cnt}</b>, не 1. Идём к следующей букве, и count снова пройдёт всю строку с нуля: прошлый подсчёт нигде не сохранился.` });
+  }
+  push({ line: 4, ops, msg: s.length
+    ? `<b>return -1</b>: уникальной буквы нет. Итого ${ops} сравнений = n × n = ${s.length} × ${s.length}. Это и есть O(n²).`
+    : '<b>return -1</b>: строка пустая, цикл не выполнился ни разу. Граничный случай обработан верно.' });
+  return steps;
+}
+
+const $ = (id) => document.getElementById(id);
+let S = "", steps = [], k = 0, timer = null;
+const show = (v) => v === null || v === undefined ? "—" : typeof v === "string" ? `'${v}'` : v;
+function setVar(id, val, prev, first) {
+  const el = $(id);
+  el.querySelector(".val").textContent = show(val);
+  el.classList.toggle("changed", !first && show(prev) !== show(val));
+}
+function render() {
+  const st = steps[k], pv = steps[k - 1] || {};
+  $("code").innerHTML = CODE.map((c, n) => `<div class="ln${n === 2 ? " wrong" : ""}${n === st.line ? " active" : ""}"><span class="no">${n + 1}</span>${c}</div>`).join("");
+  $("cells").innerHTML = [...S].map((v, d) => {
+    const cls = ["cell"];
+    if (st.index !== null && d < st.index) cls.push("past");
+    if (st.matches.includes(d)) cls.push("match");
+    if (st.index === d) cls.push("cur");
+    if (st.j === d) cls.push("scan");
+    if (st.found === d) cls.push("found");
+    const tags = (st.index === d ? '<span class="tag">index</span>' : "") + (st.j === d ? '<span class="tag j">j</span>' : "");
+    return `<div class="${cls.join(" ")}">${tags}<div class="box">${esc(v)}</div><div class="idx">${d}</div></div>`;
+  }).join("") || '<span style="color:var(--muted);font-style:italic">пустая строка</span>';
+  setVar("v-index", st.index, pv.index, k === 0);
+  setVar("v-char", st.char, pv.char, k === 0);
+  setVar("v-j", st.j, pv.j, k === 0);
+  setVar("v-cnt", st.cnt, pv.cnt, k === 0);
+  setVar("v-ops", st.ops, pv.ops, k === 0);
+  const n = S.length, n2 = n * n || 1;
+  $("m-bad").textContent = st.ops;
+  $("m-n2").textContent = n * n;
+  $("m-good").textContent = 2 * n;
+  $("b-bad").style.width = `${Math.min(100, st.ops / n2 * 100)}%`;
+  $("b-good").style.width = `${Math.min(100, 2 * n / n2 * 100)}%`;
+  $("msg").innerHTML = st.msg;
+  $("msg").classList.toggle("err", st.err);
+  $("stepno").textContent = `шаг ${k + 1} из ${steps.length}`;
+  $("hist").innerHTML = st.hist.map((h, i) => `<tr class="${i === st.hist.length - 1 ? "cur" : ""}"><td>${h.i}</td><td>'${esc(h.ch)}'</td><td>${h.cnt}</td><td>${h.step}</td><td>${h.ops}</td></tr>`).join("")
+    || '<tr><td colspan="5" style="color:var(--muted)">пока пусто</td></tr>';
+  $("prev").disabled = k === 0;
+  $("next").disabled = $("end").disabled = k === steps.length - 1;
+}
+function load() { stop(); S = $("inp").value.slice(0, 14); steps = build(S); k = 0; render(); }
+function stop() { clearInterval(timer); timer = null; $("play").textContent = "▶ Авто"; }
+$("next").onclick = () => { if (k < steps.length - 1) { k++; render(); } };
+$("prev").onclick = () => { stop(); if (k > 0) { k--; render(); } };
+$("reset").onclick = () => { stop(); k = 0; render(); };
+$("end").onclick = () => { stop(); k = steps.length - 1; render(); };
+$("play").onclick = () => {
+  if (timer) return stop();
+  if (k === steps.length - 1) k = 0;
+  $("play").textContent = "❚❚ Пауза";
+  timer = setInterval(() => { if (k < steps.length - 1) { k++; render(); } else stop(); }, 700);
+};
+$("inp").addEventListener("input", load);
+document.querySelectorAll("[data-s]").forEach(b => b.onclick = () => { $("inp").value = b.dataset.s; load(); });
+document.addEventListener("keydown", (e) => {
+  if (e.target.tagName === "INPUT") return;
+  if (e.key === "ArrowRight") $("next").click();
+  if (e.key === "ArrowLeft") $("prev").click();
+});
+load();
+</script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+# Prometheus сам ходит за метриками (pull) раз в scrape_interval
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+scrape_configs:
+  - job_name: exchange
+    static_configs:
+      - targets: ["exchange:8000"]
+        labels:
+          env: dev
+      # stage поднимается только с --profile stage; без него цель down (up == 0)
+      - targets: ["exchange-stage:8000"]
+        labels:
+          env: stage
+
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]

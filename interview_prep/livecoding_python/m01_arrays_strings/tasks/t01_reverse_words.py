@@ -12,4 +12,25 @@ reverse_words("   ")                -> ""
 
 
 def reverse_words(s: str) -> str:
-    raise NotImplementedError
+    edited_words = []
+    word = ''
+    for ch in s:
+        if ' ' in ch:
+            if word:
+                edited_words.append(word)
+                word = ''
+        else:
+            word +=ch
+    edited_words.append(word)
+
+    result = ''
+
+    for word in edited_words[::-1]:
+        if result:
+            result += ' ' + str(word)
+        else:
+            result += str(word)
+    return result
+
+print(reverse_words("the sky is blue"))
+

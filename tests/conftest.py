@@ -5,13 +5,6 @@ from ui_framework.data.generators import unique_email, unique_password
 from ui_framework.api.client import ExchangeApi
 
 
-pytest_plugins = [
-    "ui_framework.fixtures.app",
-    "ui_framework.fixtures.data",
-    "ui_framework.plugins.reporting",
-]
-
-
 @pytest.fixture(scope="session")
 def api_context(playwright: Playwright, base_url):
     api = playwright.request.new_context(base_url=base_url)

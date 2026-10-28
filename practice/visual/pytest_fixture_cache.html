@@ -1,0 +1,229 @@
+<title>Кеш фикстур pytest</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: слева кеш фикстур pytest, сессия клиента и база стенда; справа код фикстур и теста с подсветкой и история */
+:root {
+  --bg: #f3f5f4; --panel: #ffffff; --ink: #17211f; --muted: #5b6965; --line: #d7dedb;
+  --accent: #0d6b5e; --accent-soft: #d5ece7; --hit: #f3c24b; --hit-soft: #fdf0cc;
+  --write: #2f4a8a; --write-soft: #e4e9f5; --swap: #b3261e; --swap-soft: #f8dedb;
+  --code-bg: #1d2523; --code-ink: #dfe7e4; --code-dim: #7f8f8a;
+  --font-body: "Golos Text", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121816; --panel: #1a2220; --ink: #e4ebe8; --muted: #94a39e; --line: #2c3734;
+    --accent: #4fc2ad; --accent-soft: #1f3d37; --hit: #f3c24b; --hit-soft: #3d3219;
+    --write: #a9bdf0; --write-soft: #232d45; --swap: #ff8a80; --swap-soft: #43201d;
+    --code-bg: #0c1110; --code-ink: #dfe7e4; --code-dim: #6c7b76; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121816; --panel: #1a2220; --ink: #e4ebe8; --muted: #94a39e; --line: #2c3734;
+  --accent: #4fc2ad; --accent-soft: #1f3d37; --hit: #f3c24b; --hit-soft: #3d3219;
+  --write: #a9bdf0; --write-soft: #232d45; --swap: #ff8a80; --swap-soft: #43201d;
+  --code-bg: #0c1110; --code-ink: #dfe7e4; --code-dim: #6c7b76; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 40px;
+}
+.wrap { max-width: 1080px; margin: 0 auto; display: grid; gap: 18px; }
+h1 { font-size: 1.6rem; margin: 0; text-wrap: balance; }
+.sub { color: var(--muted); margin: 4px 0 0; max-width: 72ch; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.controls label { font-size: .85rem; color: var(--muted); }
+input[type=text] { font: 600 .95rem var(--font-mono); padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--ink); width: 14rem; }
+button { font: 500 .95rem var(--font-body); padding: 8px 14px; border-radius: 6px; cursor: pointer; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+button:disabled { opacity: .45; cursor: default; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--hit); outline-offset: 2px; }
+.presets { display: flex; gap: 6px; flex-wrap: wrap; }
+.presets button { font-family: var(--font-mono); font-size: .82rem; padding: 4px 8px; }
+.grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 16px; min-width: 0; align-content: start; }
+.eyebrow { font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 6px; }
+.cells { display: flex; flex-wrap: wrap; gap: 6px; padding-block: 26px 28px; }
+.cell { position: relative; width: 46px; display: grid; gap: 2px; justify-items: center; }
+.box { width: 46px; height: 48px; display: grid; place-items: center; border-radius: 6px; font: 600 1.2rem var(--font-mono); border: 2px solid var(--line); background: var(--panel); transition: background .25s, border-color .25s; }
+.idx { font: .7rem var(--font-mono); color: var(--muted); }
+.cell.kept .box { background: var(--accent-soft); border-color: var(--accent); }
+.cell.swap .box { background: var(--swap-soft); border-color: var(--swap); }
+.cell.read .box { border-color: var(--hit); box-shadow: 0 0 0 2px var(--hit); }
+.tag { position: absolute; font: 600 .72rem var(--font-mono); padding: 0 6px; border-radius: 4px; white-space: nowrap; }
+.tag.r { top: -24px; background: var(--hit); color: #2a2000; }
+.tag.w { bottom: -26px; background: var(--write); color: var(--panel); }
+.vars { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 480px) { .vars { grid-template-columns: minmax(0, 1fr); } }
+.var { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; min-width: 0; }
+.var .name { font: .8rem var(--font-mono); color: var(--muted); }
+.var .val { font: 600 1.15rem var(--font-mono); }
+.var.changed { border-color: var(--hit); background: var(--hit-soft); }
+.msg { border-left: 3px solid var(--accent); padding: 10px 14px; background: var(--accent-soft); border-radius: 0 8px 8px 0; min-height: 4em; }
+.msg b { font-family: var(--font-mono); font-size: .92em; }
+.code { background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 14px 0; overflow-x: auto; font: .88rem/1.7 var(--font-mono); }
+.code .ln { display: flex; padding: 0 14px; white-space: pre; border-left: 3px solid transparent; }
+.code .ln .no { color: var(--code-dim); width: 2.2em; flex: none; user-select: none; }
+.code .ln.active { background: rgba(243, 194, 75, .18); border-left-color: var(--hit); }
+.kw { color: #f0a36b; } .fn { color: #8fd3c4; } .nu { color: #f3c24b; } .cm { color: var(--code-dim); }
+.progress { font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+table { border-collapse: collapse; width: 100%; font: .82rem var(--font-mono); font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { color: var(--muted); font-weight: 400; font-family: var(--font-body); }
+tr.cur td { background: var(--hit-soft); }
+.tablewrap { overflow-x: auto; }
+.legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: .8rem; color: var(--muted); }
+.legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; border: 2px solid var(--sw); background: var(--swbg); }
+.note { border: 1px dashed var(--line); border-radius: 8px; padding: 10px 14px; font-size: .9rem; }
+@media (prefers-reduced-motion: reduce) { .box { transition: none; } }
+.slots { display: grid; gap: 8px; }
+.slot { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: 10px; align-items: center; border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; transition: background .25s, border-color .25s; }
+.slot .k { font: 600 .9rem var(--font-mono); }
+.slot .v { font: .85rem var(--font-mono); overflow-wrap: anywhere; color: var(--muted); }
+.slot.on .v { color: var(--ink); }
+.slot.new { border-color: var(--accent); background: var(--accent-soft); }
+.slot.hit { border-color: var(--hit); background: var(--hit-soft); }
+.wire { display: grid; gap: 6px; font: .85rem var(--font-mono); }
+.wire div { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; overflow-wrap: anywhere; }
+.wire div.new { border-color: var(--write); background: var(--write-soft); }
+.eq { font: 600 1rem var(--font-mono); padding: 10px 14px; border-radius: 8px; border: 2px dashed var(--line); }
+.eq.ok { border-style: solid; border-color: var(--accent); background: var(--accent-soft); }
+.code .grp { color: var(--code-dim); padding: 6px 14px 2px; font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Почему в тесте тот же email: кеш фикстур pytest</h1>
+    <p class="sub">Тест просит <b>auth_api</b> и <b>credentials</b>. Фикстуре <b>auth_api</b> тоже нужен <b>credentials</b>. pytest создаёт каждую фикстуру <b>один раз на тест</b>, кладёт значение в кеш и отдаёт его всем, кто попросит. Поэтому словарь один и email один.</p>
+  </header>
+
+  <div class="controls">
+    <button id="prev">← Назад</button>
+    <button id="next" class="primary">Шаг →</button>
+    <button id="play">▶ Авто</button>
+    <button id="reset">В начало</button>
+  </div>
+
+  <div class="grid">
+    <section class="panel">
+      <div>
+        <p class="eyebrow">Кеш фикстур pytest (живёт один тест)</p>
+        <div class="slots" id="slots"></div>
+      </div>
+      <div>
+        <p class="eyebrow">Сессия клиента и стенд</p>
+        <div class="wire" id="wire"></div>
+      </div>
+      <div class="eq" id="eq">assert r.json()['email'] == credentials['email']</div>
+      <div class="msg" id="msg"></div>
+      <div class="progress" id="stepno"></div>
+    </section>
+
+    <section class="panel">
+      <div>
+        <p class="eyebrow">Код</p>
+        <div class="code" id="code"></div>
+      </div>
+      <div>
+        <p class="eyebrow">История шагов</p>
+        <div class="tablewrap"><table><thead><tr><th>#</th><th>что сделал pytest</th></tr></thead><tbody id="hist"></tbody></table></div>
+      </div>
+      <div class="note"><b>Правило:</b> параметр функции = имя фикстуры. Значение = то, что фикстура вернула. В пределах одного теста (scope="function") значение берётся из кеша, поэтому <code>credentials</code> в фикстуре и в тесте — <b>один объект</b> (одинаковый <code>id</code>). Следующий тест получит новый кеш и новый email.</div>
+    </section>
+  </div>
+</div>
+
+<script>
+const G = (t) => ({ grp: t });
+const CODE = [
+  G("fixtures/data.py"),
+  '<span class="kw">def</span> <span class="fn">credentials</span>():',
+  '    data = {<span class="nu">"email"</span>: faker.email(), <span class="nu">"password"</span>: ...}',
+  '    <span class="kw">return</span> data',
+  G("fixtures/api.py"),
+  '<span class="kw">def</span> <span class="fn">api</span>():',
+  '    client = ApiClient(settings.base_url, settings.timeout)',
+  '    <span class="kw">yield</span> Api(client)',
+  '    client.session.close()',
+  '<span class="kw">def</span> <span class="fn">auth_api</span>(api, credentials):',
+  '    api.auth.register(**credentials)',
+  '    login = api.auth.login(**credentials)',
+  '    api.client.set_token(login.json()[<span class="nu">"access_token"</span>])',
+  '    <span class="kw">return</span> api',
+  G("test_auth.py"),
+  '<span class="kw">def</span> <span class="fn">test_me_returns_current_user</span>(auth_api, credentials):',
+  '    r = auth_api.auth.me()',
+  '    <span class="kw">assert</span> r.json()[<span class="nu">"email"</span>] == credentials[<span class="nu">"email"</span>]',
+];
+// индексы строк кода (без заголовков групп)
+const L = { cred: 1, credData: 2, credRet: 3, api: 5, apiClient: 6, apiYield: 7, apiClose: 8, auth: 9, reg: 10, login: 11, token: 12, authRet: 13, test: 15, me: 16, assert: 17 };
+
+const E1 = "kim@example.org", E2 = "lee@example.org";
+const S = [];
+let st = { cache: {}, fresh: null, hit: null, wire: [], wireNew: -1, eq: null, test: 1 };
+const H = [];
+function step(line, msg, patch = {}, hist) {
+  st = { ...st, fresh: null, hit: null, wireNew: -1, ...patch, cache: { ...st.cache, ...(patch.cache || {}) }, wire: patch.wire || st.wire };
+  if (hist) H.push(hist);
+  S.push({ ...st, line, msg, hist: H.slice() });
+}
+step(L.test, "Запуск теста. pytest читает параметры: <b>auth_api</b> и <b>credentials</b>. Это имена фикстур, которые нужно подготовить до вызова теста.", {}, "тесту нужны auth_api, credentials");
+step(L.auth, "Начинаем с <b>auth_api</b>. У неё свои параметры: <b>api</b> и <b>credentials</b>. Их надо создать раньше неё.", {}, "auth_api ждёт api, credentials");
+step(L.apiClient, "Фикстура <b>api</b>: создаём ApiClient с base_url и таймаутом.", {}, null);
+step(L.apiYield, "<b>yield Api(client)</b>: фасад готов. pytest кладёт его в кеш под именем <b>api</b>.", { cache: { api: "Api(client) · токена нет" }, fresh: "api", wire: ["Authorization: —"] }, "создал api → кеш");
+step(L.credData, `Фикстура <b>credentials</b>: Faker генерирует email <b>${E1}</b>.`, {}, null);
+step(L.credRet, `<b>return data</b>: словарь кладётся в кеш под именем <b>credentials</b>. Запомни его id: <b>#4588</b>.`, { cache: { credentials: `{'email': '${E1}', ...} · id #4588` }, fresh: "credentials" }, "создал credentials (#4588) → кеш");
+step(L.reg, `Тело <b>auth_api</b>. Параметр credentials — это словарь <b>#4588</b> из кеша. Регистрируем <b>${E1}</b> на стенде.`, { hit: "credentials", wire: ["Authorization: —", `POST /auth/register {email: ${E1}} → 201`], wireNew: 1 }, null);
+step(L.login, `Логинимся тем же словарём #4588. Сервер выдаёт токен, внутри которого зашит пользователь <b>${E1}</b>.`, { hit: "credentials", wire: ["Authorization: —", `POST /auth/register {email: ${E1}} → 201`, `POST /auth/login → 200 {access_token: eyJ…(${E1})}`], wireNew: 2 }, null);
+step(L.token, "<b>set_token</b>: токен записан в заголовки сессии. Теперь каждый запрос этого клиента идёт от имени этого пользователя.", { wire: [`Authorization: Bearer eyJ…(${E1})`, `POST /auth/register {email: ${E1}} → 201`, `POST /auth/login → 200 {access_token: eyJ…(${E1})}`], wireNew: 0 }, "auth_api: register + login + set_token");
+step(L.authRet, "<b>return api</b>: auth_api возвращает тот же фасад, уже с токеном. В кеш он кладётся под именем <b>auth_api</b>. Это не новый объект, а api из кеша.", { cache: { api: "Api(client) · с токеном", auth_api: "→ тот же объект, что api" }, fresh: "auth_api" }, "создал auth_api (= api с токеном) → кеш");
+step(L.test, "Все фикстуры для <b>auth_api</b> готовы. Тесту ещё нужен параметр <b>credentials</b>.", {}, null);
+step(L.test, "<b>credentials уже есть в кеше</b>. pytest НЕ вызывает фикстуру второй раз и отдаёт тот же словарь <b>#4588</b>. Новый Faker-email не генерируется.", { hit: "credentials" }, "credentials для теста: взял из кеша (#4588)");
+step(L.me, `<b>auth_api.auth.me()</b>: GET /me с заголовком Bearer. Сервер смотрит в токен и возвращает его владельца: <b>${E1}</b>.`, { hit: "auth_api", wire: [`Authorization: Bearer eyJ…(${E1})`, `POST /auth/register {email: ${E1}} → 201`, `POST /auth/login → 200 {access_token: eyJ…(${E1})}`, `GET /me → 200 {email: ${E1}}`], wireNew: 3 }, "тест: GET /me");
+step(L.assert, `Сравниваем: <b>${E1}</b> из ответа == <b>${E1}</b> из словаря #4588. Совпало, потому что регистрировались, логинились и сравниваем по <b>одному и тому же словарю</b>.`, { eq: true, hit: "credentials" }, "assert: email совпал");
+step(L.apiClose, "Тест закончился. Код после <b>yield</b> в фикстуре api закрывает сессию. Кеш этого теста очищается.", { cache: { api: null, credentials: null, auth_api: null }, wire: [], eq: null }, "teardown: session.close(), кеш очищен");
+step(L.credData, `<b>Следующий тест</b> получает новый кеш. Фикстура credentials вызывается заново: другой email <b>${E2}</b>, другой id <b>#4589</b>. Тесты не мешают друг другу.`, { cache: { credentials: `{'email': '${E2}', ...} · id #4589` }, fresh: "credentials", test: 2 }, "тест 2: новый credentials (#4589)");
+
+const $ = (id) => document.getElementById(id);
+let k = 0, timer = null;
+function render() {
+  const s = S[k];
+  let n = 0;
+  $("code").innerHTML = CODE.map((c, i) => typeof c === "object"
+    ? `<div class="grp">${c.grp}</div>`
+    : `<div class="ln${i === s.line ? " active" : ""}"><span class="no">${++n}</span>${c}</div>`).join("");
+  $("slots").innerHTML = ["api", "credentials", "auth_api"].map(name => {
+    const v = s.cache[name];
+    const cls = ["slot"]; if (v) cls.push("on"); if (s.fresh === name) cls.push("new"); if (s.hit === name) cls.push("hit");
+    return `<div class="${cls.join(" ")}"><span class="k">${name}</span><span class="v">${v || "— ещё не создана"}</span></div>`;
+  }).join("");
+  $("wire").innerHTML = s.wire.length ? s.wire.map((w, i) => `<div class="${i === s.wireNew ? "new" : ""}">${w}</div>`).join("") : '<div style="color:var(--muted)">клиента нет</div>';
+  $("eq").className = "eq" + (s.eq ? " ok" : "");
+  $("eq").innerHTML = s.eq ? `assert '${E1}' == '${E1}'  ✓` : "assert r.json()['email'] == credentials['email']";
+  $("msg").innerHTML = s.msg;
+  $("stepno").textContent = `тест ${s.test} · шаг ${k + 1} из ${S.length}`;
+  $("hist").innerHTML = s.hist.map((h, i) => `<tr class="${i === s.hist.length - 1 ? "cur" : ""}"><td>${i + 1}</td><td>${h}</td></tr>`).join("") || '<tr><td colspan="2" style="color:var(--muted)">пока пусто</td></tr>';
+  $("prev").disabled = k === 0;
+  $("next").disabled = k === S.length - 1;
+}
+function stop() { clearInterval(timer); timer = null; $("play").textContent = "▶ Авто"; }
+$("next").onclick = () => { if (k < S.length - 1) { k++; render(); } };
+$("prev").onclick = () => { stop(); if (k > 0) { k--; render(); } };
+$("reset").onclick = () => { stop(); k = 0; render(); };
+$("play").onclick = () => {
+  if (timer) return stop();
+  if (k === S.length - 1) k = 0;
+  $("play").textContent = "❚❚ Пауза";
+  timer = setInterval(() => { if (k < S.length - 1) { k++; render(); } else stop(); }, 2200);
+};
+document.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowRight") $("next").click();
+  if (e.key === "ArrowLeft") $("prev").click();
+});
+render();
+</script>

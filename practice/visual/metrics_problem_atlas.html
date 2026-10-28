@@ -1,0 +1,464 @@
+<title>Атлас проблем на графиках</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: справочник ресурсов → как читать графики → галерея проблем с фильтром → как рассказывать на собесе */
+:root {
+  --bg: #f3f5f4; --panel: #ffffff; --ink: #17211f; --muted: #5b6965; --line: #d7dedb; --grid: #e6ebe9;
+  --accent: #0d6b5e; --accent-soft: #d5ece7; --hit: #c99412; --hit-soft: #fdf0cc;
+  --blue: #2f4a8a; --blue-soft: #e4e9f5; --red: #b3261e; --red-soft: #f8dedb; --violet: #6b3fa0;
+  --code-bg: #eef2f0;
+  --font-body: "Golos Text", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121816; --panel: #1a2220; --ink: #e4ebe8; --muted: #94a39e; --line: #2c3734; --grid: #24302d;
+    --accent: #4fc2ad; --accent-soft: #1f3d37; --hit: #f3c24b; --hit-soft: #3d3219;
+    --blue: #a9bdf0; --blue-soft: #232d45; --red: #ff8a80; --red-soft: #43201d; --violet: #c9a6f5;
+    --code-bg: #111816; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121816; --panel: #1a2220; --ink: #e4ebe8; --muted: #94a39e; --line: #2c3734; --grid: #24302d;
+  --accent: #4fc2ad; --accent-soft: #1f3d37; --hit: #f3c24b; --hit-soft: #3d3219;
+  --blue: #a9bdf0; --blue-soft: #232d45; --red: #ff8a80; --red-soft: #43201d; --violet: #c9a6f5;
+  --code-bg: #111816; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body);
+  padding-block: 28px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 34px; }
+h1 { font-size: 1.75rem; margin: 0; text-wrap: balance; }
+h2 { font-size: 1.25rem; margin: 0 0 4px; text-wrap: balance; }
+h3 { font-size: 1rem; margin: 0; }
+.sub { color: var(--muted); margin: 6px 0 0; max-width: 82ch; }
+.lead { color: var(--muted); margin: 0 0 14px; max-width: 82ch; }
+code, .mono { font-family: var(--font-mono); font-size: .82em; }
+code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.res-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.res { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.res .tag { font: 600 .7rem var(--font-body); text-transform: uppercase; letter-spacing: .08em; color: var(--accent); }
+.res p { margin: 0; font-size: .9rem; }
+.res .bad { color: var(--red); }
+.res .q { font: .74rem var(--font-mono); color: var(--muted); overflow-wrap: anywhere; }
+.methods { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.method { border-left: 3px solid var(--accent); padding: 4px 0 4px 14px; }
+.method p { margin: 4px 0 0; font-size: .9rem; }
+.tscroll { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; min-width: 640px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: .72rem var(--font-body); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 400; }
+tr:last-child td { border-bottom: 0; }
+.up { color: var(--red); font-weight: 600; } .down { color: var(--blue); font-weight: 600; } .flat { color: var(--muted); font-weight: 600; }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.filters button { font: 500 .88rem var(--font-body); padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; }
+.filters button.on { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+button:focus-visible { outline: 2px solid var(--hit); outline-offset: 2px; }
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr)); gap: 16px; }
+.pat { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+.pat-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.chip { font: 600 .7rem var(--font-body); text-transform: uppercase; letter-spacing: .06em; padding: 2px 8px; border-radius: 999px; }
+.chip.crit { background: var(--red-soft); color: var(--red); }
+.chip.warn { background: var(--hit-soft); color: var(--ink); }
+.chip.ok { background: var(--accent-soft); color: var(--accent); }
+.charts { display: grid; gap: 2px; }
+.chart-label { display: flex; justify-content: space-between; gap: 8px; font-size: .74rem; color: var(--muted); }
+.chart-label b { color: var(--ink); font-weight: 600; }
+svg { width: 100%; height: auto; display: block; }
+.toggle { justify-self: start; font: 500 .82rem var(--font-body); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; }
+.toggle.on { background: var(--accent-soft); border-color: var(--accent); }
+.facts { display: grid; gap: 8px; font-size: .9rem; }
+.facts div { display: grid; grid-template-columns: 7.5em minmax(0, 1fr); gap: 10px; }
+.facts dt { color: var(--muted); font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; padding-top: 2px; }
+.facts dd { margin: 0; min-width: 0; }
+.say { border-left: 3px solid var(--blue); background: var(--blue-soft); padding: 8px 12px; border-radius: 0 8px 8px 0; font-size: .88rem; font-style: italic; }
+.story { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; display: grid; gap: 10px; }
+.steps { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; counter-reset: s; }
+.steps li { counter-increment: s; display: grid; grid-template-columns: 2em minmax(0, 1fr); gap: 8px; }
+.steps li::before { content: counter(s); font: 600 .85rem var(--font-mono); color: var(--accent); }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+@media (max-width: 520px) { .facts div { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Атлас проблем на графиках</h1>
+    <p class="sub">Что означают CPU, память, диск, сеть, дескрипторы и пулы, как каждая типовая проблема выглядит на графиках и как рассказать о ней на собесе. Графики — учебные примеры с одной осью времени на карточку: смотри, что меняется <b>одновременно</b>, — по этому и ставят диагноз.</p>
+  </header>
+
+  <section>
+    <h2>1. Ресурсы: что это простыми словами</h2>
+    <p class="lead">У сервиса есть конечные ресурсы. Проблема почти всегда звучит как «какой-то ресурс кончился» или «сервис ждёт кого-то другого».</p>
+    <div class="res-grid" id="resources"></div>
+  </section>
+
+  <section>
+    <h2>2. Как читать графики: три метода и одно правило</h2>
+    <div class="methods">
+      <div class="method"><h3>RED — для сервиса</h3><p><b>R</b>ate (запросов в секунду), <b>E</b>rrors (доля ошибок), <b>D</b>uration (p95/p99 времени ответа). Отвечает на вопрос «плохо ли пользователю».</p></div>
+      <div class="method"><h3>USE — для ресурса</h3><p><b>U</b>tilization (насколько занят), <b>S</b>aturation (сколько ждёт в очереди), <b>E</b>rrors (ошибки ресурса). Отвечает на вопрос «что именно кончилось».</p></div>
+      <div class="method"><h3>4 golden signals (Google SRE)</h3><p>Latency, traffic, errors, saturation. Тот же RED плюс насыщенность. Это первые четыре графика любого дашборда.</p></div>
+      <div class="method"><h3>Правило: сравнивай по времени</h3><p>Один график ничего не доказывает. Нашёл всплеск задержки — посмотри, что <b>в ту же минуту</b> было с CPU, памятью, пулом, зависимостями, деплоями.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>3. Диагноз по сочетанию сигналов</h2>
+    <p class="lead">Шпаргалка: какие графики меняются вместе и что это обычно значит. Подробности и картинки — в галерее ниже.</p>
+    <div class="tscroll">
+      <table>
+        <thead><tr><th>Задержка p95</th><th>CPU</th><th>Память</th><th>Ошибки</th><th>Ещё признак</th><th>Скорее всего</th></tr></thead>
+        <tbody>
+          <tr><td class="up">растёт</td><td class="up">упёрся в 100% / лимит</td><td class="flat">ровно</td><td class="flat">позже</td><td>RPS растёт</td><td>Не хватает CPU — предел производительности</td></tr>
+          <tr><td class="up">растёт</td><td class="down">низкий</td><td class="flat">ровно</td><td class="flat">позже таймауты</td><td>запросы «в обработке» на потолке</td><td>Сервис <b>ждёт</b>: пул соединений к БД, блокировки, медленная зависимость</td></tr>
+          <tr><td class="flat">ровно, потом скачок</td><td class="flat">ровно</td><td class="up">растёт без возврата</td><td class="up">всплеск при падении</td><td>uptime сбрасывается в 0</td><td>Утечка памяти → OOMKilled → рестарт</td></tr>
+          <tr><td class="down">падает</td><td class="down">падает</td><td class="flat">ровно</td><td class="up">резко растут</td><td>отказы зависимости растут</td><td>Зависимость лежит, сервис быстро отвечает ошибкой (fail fast)</td></tr>
+          <tr><td class="up">пики по расписанию</td><td class="up">пики</td><td class="flat">ровно</td><td class="flat">нет</td><td>диск / IO в те же минуты</td><td>Крон, бэкап, отчёт, тяжёлая сборка мусора</td></tr>
+          <tr><td class="flat">ровно</td><td class="flat">ровно</td><td class="flat">ровно</td><td class="up">растут ступенькой</td><td>открытые дескрипторы у лимита</td><td>Утечка соединений / файлов: «too many open files»</td></tr>
+          <tr><td class="up">растёт</td><td class="flat">у лимита контейнера</td><td class="flat">ровно</td><td class="flat">нет</td><td>throttling растёт, на хосте CPU свободен</td><td>Контейнеру мало CPU-лимита (throttling)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Галерея: как выглядит каждая проблема</h2>
+    <p class="lead">Красная вертикаль — момент, когда началась проблема. Кнопка «Сравнить с нормой» накладывает пунктиром, как тот же график выглядит у здорового сервиса.</p>
+    <div class="filters" id="filters"></div>
+    <div class="gallery" id="gallery"></div>
+  </section>
+
+  <section>
+    <h2>5. Как рассказывать на собесе</h2>
+    <div class="two">
+      <div class="story">
+        <h3>Схема ответа «как ты ищешь причину»</h3>
+        <ol class="steps">
+          <li><span><b>Симптом</b> по RED: что именно плохо пользователю — задержка, ошибки, с какого времени.</span></li>
+          <li><span><b>Масштаб:</b> один эндпоинт или все, один инстанс или все, после деплоя или нет.</span></li>
+          <li><span><b>Ресурсы</b> по USE в то же время: CPU, память, пул, дескрипторы, диск, сеть.</span></li>
+          <li><span><b>Зависимости:</b> БД, внешние API, очереди — их задержка и ошибки.</span></li>
+          <li><span><b>Гипотеза → подтверждение</b> логами (request_id) и трейсами: где именно тратится время.</span></li>
+          <li><span><b>Фикс и защита:</b> тест или алерт, который поймает это в следующий раз.</span></li>
+        </ol>
+      </div>
+      <div class="story">
+        <h3>Готовые фразы на английском</h3>
+        <p class="say">"I start from the user-facing symptom using RED metrics, then correlate it in time with resource metrics using the USE method."</p>
+        <p class="say">"High latency with high CPU means we're CPU-bound. High latency with low CPU usually means we're waiting on something — a connection pool, a lock, or a slow dependency."</p>
+        <p class="say">"Memory that keeps growing and never returns to the baseline after GC is a leak. In Kubernetes it ends with OOMKilled and a restart, which you see as uptime dropping to zero."</p>
+        <p class="say">"During load and soak tests I don't only check response codes — I watch p95, error rate, CPU, memory and pool saturation, and I assert SLOs through the Prometheus API."</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const RES = [
+  { tag: 'CPU · процессор', what: 'Сколько времени процессор занят работой. Измеряется в ядрах: 1.0 = одно ядро загружено на 100%, на 4-ядерной машине максимум 4.0.',
+    norm: 'Норма: запас 30–50% под пики.', bad: 'Плохо: долго на 100% или на лимите контейнера — запросы встают в очередь, задержка растёт.',
+    q: 'rate(process_cpu_seconds_total[1m]) · node: 1 - avg(rate(node_cpu_seconds_total{mode="idle"}[1m]))' },
+  { tag: 'Память (RSS, heap)', what: 'Сколько оперативной памяти занимает процесс. RSS — реально занятая; у контейнера есть лимит, выше которого его убивают.',
+    norm: 'Норма: «пила» — растёт и падает после сборки мусора, база ровная.', bad: 'Плохо: база ползёт вверх и не возвращается — утечка; дошла до лимита — OOMKilled.',
+    q: 'process_resident_memory_bytes · container_memory_working_set_bytes' },
+  { tag: 'Диск', what: 'Два разных ресурса: место (сколько свободно) и скорость (IOPS, задержка чтения/записи). iowait в CPU — процессор ждёт диск.',
+    norm: 'Норма: место растёт медленно и предсказуемо.', bad: 'Плохо: место кончится — записи падают (БД, логи); высокий iowait — всё тормозит.',
+    q: 'node_filesystem_avail_bytes · predict_linear(...[6h], 24*3600) < 0' },
+  { tag: 'Сеть', what: 'Пропускная способность (байт/с), число соединений, потери и повторные отправки пакетов (retransmits).',
+    norm: 'Норма: трафик далеко от ёмкости канала.', bad: 'Плохо: трафик упёрся в потолок канала, растут retransmits — задержка и таймауты.',
+    q: 'rate(node_network_transmit_bytes_total[1m]) · rate(node_netstat_Tcp_RetransSegs[1m])' },
+  { tag: 'Файловые дескрипторы', what: 'Каждый открытый файл, сокет и соединение — это дескриптор. У процесса есть лимит (ulimit).',
+    norm: 'Норма: число держится около постоянного.', bad: 'Плохо: растёт лесенкой — что-то не закрывается; у лимита — «too many open files».',
+    q: 'process_open_fds / process_max_fds' },
+  { tag: 'Пулы и воркеры', what: 'Пул соединений к БД, число потоков/воркеров, очередь задач. Конечное число «рабочих мест».',
+    norm: 'Норма: заняты частично, очереди нет.', bad: 'Плохо: пул занят целиком, запросы ждут свободное соединение — CPU низкий, а всё медленно.',
+    q: 'exchange_http_requests_in_progress · pg_stat_activity_count · очередь: длина топика / lag' },
+  { tag: 'Сборка мусора (GC)', what: 'Python, Java, Go сами чистят память. Пока идёт сборка, работа может приостанавливаться.',
+    norm: 'Норма: частые короткие сборки молодого поколения.', bad: 'Плохо: частые долгие сборки старого поколения — паузы и всплески задержки.',
+    q: 'rate(python_gc_collections_total[1m]) · jvm_gc_pause_seconds' },
+  { tag: 'Рестарты и доступность', what: 'up — смог ли Prometheus забрать метрики. Uptime — сколько процесс живёт без перезапуска.',
+    norm: 'Норма: up = 1, uptime растёт ровной линией.', bad: 'Плохо: uptime падает в 0 — рестарт (падение, OOM, деплой); up мигает — crash loop.',
+    q: 'up · time() - process_start_time_seconds · kube_pod_container_status_restarts_total' },
+];
+
+// --- детерминированный шум, чтобы графики были одинаковыми при каждом открытии
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const N = 60;
+function series(f, amp = 0, seed = 1) { const r = rng(seed); return Array.from({ length: N }, (_, i) => Math.max(0, f(i) + (r() - .5) * 2 * amp)); }
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+
+const C = { a: 'var(--accent)', b: 'var(--blue)', r: 'var(--red)', h: 'var(--hit)', v: 'var(--violet)' };
+
+const PATTERNS = [
+  { id: 'leak', cat: 'mem', sev: 'crit', title: 'Утечка памяти → OOMKilled',
+    at: 48, atLabel: 'OOMKilled',
+    charts: [
+      { name: 'Память (RSS)', unit: ' МБ', max: 1150, color: C.v, limit: [1024, 'лимит 1 ГБ'],
+        data: series(i => i < 48 ? 260 + i * 16 + (i % 6) * 12 : 260 + (i - 48) * 16 + (i % 6) * 12, 8, 3),
+        normal: series(i => 300 + (i % 8) * 14, 6, 4) },
+      { name: 'Время без рестарта', unit: ' мин', max: 60, color: C.a,
+        data: series(i => i < 48 ? i + 10 : i - 48, 0), normal: series(i => i + 10, 0) },
+      { name: 'Ошибки 5xx', unit: '%', max: 30, color: C.r,
+        data: series(i => (i >= 47 && i <= 49) ? 24 : 0.3, .2, 5), normal: series(() => .3, .2, 6) },
+    ],
+    see: 'Память ползёт вверх: после каждой сборки мусора база выше, чем была. На лимите процесс убивает ядро (OOMKilled), uptime падает в ноль, в момент рестарта всплеск ошибок, потом всё повторяется.',
+    why: 'Объекты копятся и не освобождаются: кеш без ограничения, список в глобальной переменной, незакрытые сессии, подписчики, которые не отписываются.',
+    check: 'process_resident_memory_bytes и restarts; в Kubernetes reason=OOMKilled в kubectl describe pod. Подтверждение — soak-тест на часы: рост памяти пропорционален числу запросов.',
+    say: '"A memory leak shows up as a baseline that keeps rising after every GC cycle. We caught one in a soak test — memory grew linearly with requests until the pod was OOMKilled."' },
+
+  { id: 'gc', cat: 'mem', sev: 'ok', title: 'Не путать: нормальная «пила» GC',
+    at: null,
+    charts: [
+      { name: 'Память (RSS)', unit: ' МБ', max: 700, color: C.v, limit: [1024, 'лимит'],
+        data: series(i => 320 + (i % 10) * 22, 5, 7), normal: null },
+      { name: 'Задержка p95', unit: ' мс', max: 300, color: C.b,
+        data: series(i => 90 + ((i % 10) === 9 ? 25 : 0), 6, 8), normal: null },
+    ],
+    see: 'Память растёт и сбрасывается зубцами, но нижняя точка каждого зубца одна и та же. В момент сборки небольшой бугорок задержки.',
+    why: 'Так работает сборщик мусора: копит мусор, потом чистит. Это не утечка.',
+    check: 'Смотри на нижние точки зубцов за часы: если ровные — норма. Если каждый следующий минимум выше — это уже карточка «утечка».',
+    say: '"A sawtooth memory pattern with a stable baseline is normal GC behaviour, not a leak. A leak is when the minimums keep climbing."' },
+
+  { id: 'cpu', cat: 'cpu', sev: 'crit', title: 'CPU упёрся в потолок под нагрузкой',
+    at: 34, atLabel: 'CPU 100%',
+    charts: [
+      { name: 'Запросы в секунду', unit: ' rps', max: 140, color: C.a,
+        data: series(i => 10 + i * 2, 2, 9), normal: series(i => 10 + i * 2, 2, 9) },
+      { name: 'CPU (ядер из 2)', unit: '', max: 2.3, color: C.h, limit: [2, 'все ядра'], fmt: v => v.toFixed(1),
+        data: series(i => clamp((10 + i * 2) / 39, 0, 2), .04, 10), normal: series(i => (10 + i * 2) / 39 * .5, .03, 11) },
+      { name: 'Задержка p95', unit: ' мс', max: 2000, color: C.b,
+        data: series(i => i < 34 ? 80 : 80 + Math.pow(i - 33, 2) * 2.2, 6, 12), normal: series(() => 80, 6, 13) },
+    ],
+    see: 'Нагрузка растёт ровно. CPU растёт вместе с ней, пока не упирается во все ядра. С этой минуты задержка уходит вверх «клюшкой», хотя RPS растёт так же плавно.',
+    why: 'Процессор не успевает: новые запросы встают в очередь и ждут. Это предел производительности сервиса на этом железе.',
+    check: 'rate(process_cpu_seconds_total[1m]) рядом с p95 и RPS. Найти «колено»: при каком RPS задержка выходит за SLO. Профилировщик (py-spy) покажет, на что уходит CPU.',
+    say: '"In the load test p95 was flat until about 70 rps, then went up like a hockey stick exactly when CPU hit 100%. So the service was CPU-bound and that was our capacity limit."' },
+
+  { id: 'throttle', cat: 'cpu', sev: 'warn', title: 'Троттлинг: контейнеру мало CPU-лимита',
+    at: 20, atLabel: 'нагрузка выросла',
+    charts: [
+      { name: 'CPU контейнера (лимит 0.5 ядра)', unit: '', max: .7, color: C.h, limit: [.5, 'limit'], fmt: v => v.toFixed(2),
+        data: series(i => i < 20 ? .2 + i * .01 : .49, .01, 14), normal: series(i => .2 + i * .003, .01, 15) },
+      { name: 'Доля «задушенных» периодов', unit: '%', max: 80, color: C.r,
+        data: series(i => i < 20 ? 1 : 55, 6, 16), normal: series(() => 1, .5, 17) },
+      { name: 'Задержка p95', unit: ' мс', max: 600, color: C.b,
+        data: series(i => i < 20 ? 90 : 300 + (i % 3) * 90, 25, 18), normal: series(() => 90, 6, 19) },
+    ],
+    see: 'CPU контейнера прилип к лимиту ровной полкой, при этом на машине процессор свободен. Растёт доля «задушенных» периодов, задержка рваная.',
+    why: 'В Kubernetes/Docker задан CPU limit. Когда контейнер выбирает свою квоту, ядро его приостанавливает до следующего периода (100 мс).',
+    check: 'container_cpu_cfs_throttled_periods_total / container_cpu_cfs_periods_total. Сравнить использование с limits в манифесте.',
+    say: '"The pod looked fine on the node level, but it was CPU-throttled by its container limit. Throttled periods went above 50%, and p95 became spiky."' },
+
+  { id: 'pool', cat: 'wait', sev: 'crit', title: 'Кончился пул соединений к БД',
+    at: 25, atLabel: 'пул занят',
+    charts: [
+      { name: 'Запросы в обработке', unit: '', max: 36, color: C.a, limit: [30, 'pool 10 + overflow 20'],
+        data: series(i => i < 25 ? 4 + i * 1.05 : 30, .6, 20), normal: series(() => 5, 1, 21) },
+      { name: 'CPU (ядер)', unit: '', max: 2, color: C.h, fmt: v => v.toFixed(1),
+        data: series(i => i < 25 ? .3 + i * .015 : .45, .04, 22), normal: series(() => .35, .04, 23) },
+      { name: 'Задержка p95', unit: ' мс', max: 3500, color: C.b,
+        data: series(i => i < 25 ? 120 : 120 + (i - 25) * 95, 30, 24), normal: series(() => 120, 10, 25) },
+    ],
+    see: 'Число одновременных запросов растёт и упирается в «потолок», ровно равный размеру пула. CPU при этом низкий и почти не растёт. Задержка растёт линейно, потом начнутся таймауты.',
+    why: 'Все соединения к БД заняты (долгие запросы, транзакции держат соединение, утечка соединений). Новые запросы ждут свободное. Сервис не работает — он стоит в очереди.',
+    check: 'in-progress на ровной полке = подозрение на пул. pg_stat_activity (сколько соединений и в каком состоянии), время ожидания соединения из пула, медленные запросы в БД.',
+    say: '"Latency went up while CPU stayed low — so the service was waiting, not working. In-progress requests plateaued exactly at the pool size, and pg_stat_activity confirmed all connections were busy."' },
+
+  { id: 'slowdep', cat: 'dep', sev: 'warn', title: 'Медленная зависимость (до таймаута)',
+    at: 22, atLabel: 'провайдер тормозит',
+    charts: [
+      { name: 'Задержка зависимости', unit: ' мс', max: 2400, color: C.v, limit: [2000, 'таймаут 2 с'],
+        data: series(i => i < 22 ? 50 : clamp(50 + (i - 22) * 110, 0, 2000), 15, 26), normal: series(() => 50, 8, 27) },
+      { name: 'Наша задержка p95', unit: ' мс', max: 2400, color: C.b,
+        data: series(i => i < 22 ? 90 : clamp(90 + (i - 22) * 110, 0, 2050), 20, 28), normal: series(() => 90, 8, 29) },
+      { name: 'Ошибки (таймауты)', unit: '%', max: 40, color: C.r,
+        data: series(i => i < 39 ? .3 : 28, 2, 30), normal: series(() => .3, .2, 31) },
+    ],
+    see: 'Наша задержка повторяет форму задержки зависимости. Когда та доходит до нашего таймаута, задержка упирается в полку 2 с и появляются ошибки-таймауты.',
+    why: 'Мы синхронно ждём чужой сервис. Сами мы здоровы, но пользователь видит наши тормоза.',
+    check: 'Метрики клиента к зависимости (время и ошибки по каждой), трейс в Jaeger: самый длинный span — вызов наружу. У нас воспроизводится Toxiproxy latency.',
+    say: '"Our p95 had the same shape as the price-feed latency and flattened at exactly our 2-second timeout. The trace showed the outbound call taking all the time."' },
+
+  { id: 'depdown', cat: 'dep', sev: 'crit', title: 'Зависимость упала: быстрые ошибки',
+    at: 30, atLabel: 'провайдер недоступен',
+    charts: [
+      { name: 'Ошибки 5xx', unit: '%', max: 70, color: C.r,
+        data: series(i => i < 30 ? .3 : 57, 3, 32), normal: series(() => .3, .2, 33) },
+      { name: 'Задержка p95', unit: ' мс', max: 200, color: C.b,
+        data: series(i => i < 30 ? 120 : 15, 6, 34), normal: series(() => 120, 6, 35) },
+      { name: 'Отказы провайдера цен', unit: '/мин', max: 120, color: C.v,
+        data: series(i => i < 30 ? 0 : 95, 6, 36), normal: series(() => 0, 0, 37) },
+    ],
+    see: 'Ошибки резко вверх, а задержка — неожиданно вниз. Растут отказы конкретной зависимости.',
+    why: 'Соединение отклоняется сразу (connection refused), и сервис мгновенно отвечает 503. Ошибка дешёвая, поэтому «быстрее». Нельзя смотреть только на задержку — «стало быстрее» здесь плохой знак.',
+    check: 'Ошибки по причинам (у нас exchange_price_feed_errors_total{reason}), up зависимости. Воспроизведение: Toxiproxy enabled=false.',
+    say: '"Latency dropped while the error rate jumped — classic fail-fast when a dependency is down. That\'s why I always look at errors and latency together."' },
+
+  { id: 'fd', cat: 'res', sev: 'crit', title: 'Утечка соединений / дескрипторов',
+    at: 52, atLabel: 'too many open files',
+    charts: [
+      { name: 'Открытые дескрипторы', unit: '', max: 1150, color: C.a, limit: [1024, 'ulimit 1024'],
+        data: series(i => clamp(60 + Math.floor(i / 4) * 75, 0, 1024), 4, 38), normal: series(() => 60, 4, 39) },
+      { name: 'Ошибки 5xx', unit: '%', max: 60, color: C.r,
+        data: series(i => i < 52 ? .3 : 45, 2, 40), normal: series(() => .3, .2, 41) },
+    ],
+    see: 'Число открытых дескрипторов растёт лесенкой и никогда не снижается. Когда упирается в лимит, новые соединения не открываются — ошибки ступенькой. Ресурсы CPU и памяти при этом в порядке.',
+    why: 'Не закрываются сессии HTTP-клиента, ответы, файлы, соединения к БД. Классика тестов: requests.Session без close в каждом тесте.',
+    check: 'process_open_fds / process_max_fds, в контейнере ls /proc/1/fd | wc -l, lsof. В логах "Too many open files".',
+    say: '"Open file descriptors grew like a staircase and never went down. At the ulimit we got \'too many open files\'. The cause was HTTP sessions that were never closed."' },
+
+  { id: 'disk', cat: 'io', sev: 'warn', title: 'Кончается место на диске',
+    at: 54, atLabel: 'диск 100%',
+    charts: [
+      { name: 'Занято на диске', unit: '%', max: 110, color: C.h, limit: [100, '100%'],
+        data: series(i => clamp(55 + i * .85, 0, 100), .3, 42), normal: series(i => 55 + i * .02, .3, 43), forecast: true },
+      { name: 'Ошибки записи', unit: '/мин', max: 60, color: C.r,
+        data: series(i => i < 54 ? 0 : 45, 3, 44), normal: series(() => 0, 0, 45) },
+    ],
+    see: 'Занятое место растёт почти прямой линией. Пунктиром продолжение тренда — по нему видно, когда кончится место, задолго до проблемы. На 100% падают записи: БД, логи, загрузки.',
+    why: 'Растут логи без ротации, артефакты тестов, WAL базы, временные файлы.',
+    check: 'predict_linear(node_filesystem_avail_bytes[6h], 24*3600) < 0 — алерт «место кончится в течение суток». df -h, du -sh *, docker system df.',
+    say: '"Disk usage grows linearly, so instead of alerting at 90% we use predict_linear to alert when it will be full within 24 hours."' },
+
+  { id: 'net', cat: 'io', sev: 'warn', title: 'Сеть упёрлась в канал',
+    at: 32, atLabel: 'канал заполнен',
+    charts: [
+      { name: 'Исходящий трафик', unit: ' Мбит/с', max: 1150, color: C.a, limit: [1000, '1 Гбит/с'],
+        data: series(i => clamp(200 + i * 25, 0, 985), 12, 46), normal: series(() => 250, 15, 47) },
+      { name: 'Повторные отправки (retransmits)', unit: '/с', max: 400, color: C.r,
+        data: series(i => i < 32 ? 3 : 260, 25, 48), normal: series(() => 3, 1, 49) },
+      { name: 'Задержка p95', unit: ' мс', max: 900, color: C.b,
+        data: series(i => i < 32 ? 100 : 600, 50, 50), normal: series(() => 100, 6, 51) },
+    ],
+    see: 'Трафик растёт и прилипает к ёмкости канала. Растут повторные отправки пакетов, задержка скачет.',
+    why: 'Канал заполнен: большие ответы, отсутствие сжатия и пагинации, много логов или реплик по сети.',
+    check: 'rate(node_network_transmit_bytes_total[1m]) против ёмкости, retransmits, размеры ответов. У нас: Toxiproxy bandwidth.',
+    say: '"Network throughput flat-lined at the link capacity and TCP retransmits spiked. The fix was pagination and gzip on large responses."' },
+
+  { id: 'crash', cat: 'res', sev: 'crit', title: 'Crash loop: сервис постоянно перезапускается',
+    at: 20, atLabel: 'плохой деплой',
+    charts: [
+      { name: 'up (метрики доступны)', unit: '', max: 1.3, color: C.a, fmt: v => v.toFixed(0),
+        data: series(i => i < 20 ? 1 : ((i % 6) < 2 ? 0 : 1), 0), normal: series(() => 1, 0) },
+      { name: 'Время без рестарта', unit: ' мин', max: 25, color: C.h,
+        data: series(i => i < 20 ? i : (i % 6 < 2 ? 0 : (i % 6) - 2), 0), normal: series(i => clamp(i, 0, 25), 0) },
+      { name: 'Рестарты (накопительно)', unit: '', max: 12, color: C.r,
+        data: series(i => i < 20 ? 0 : Math.floor((i - 20) / 6) + 1, 0), normal: series(() => 0, 0) },
+    ],
+    see: 'up мигает 1/0, uptime короткой пилой (живёт пару минут), счётчик рестартов растёт ступеньками. Сразу после деплоя.',
+    why: 'Процесс падает на старте или через минуту: нет переменной окружения, БД недоступна, миграция упала, OOM при старте.',
+    check: 'kube_pod_container_status_restarts_total, kubectl get pods (CrashLoopBackOff), kubectl logs --previous, docker compose logs.',
+    say: '"Right after the deploy, uptime turned into a short sawtooth and restarts kept growing — a crash loop. kubectl logs --previous showed a missing environment variable."' },
+
+  { id: 'cron', cat: 'res', sev: 'warn', title: 'Пики по расписанию',
+    at: null,
+    charts: [
+      { name: 'Задержка p95', unit: ' мс', max: 1000, color: C.b,
+        data: series(i => (i % 15 >= 13) ? 800 : 100, 15, 52), normal: series(() => 100, 8, 53) },
+      { name: 'Дисковые операции (IOPS)', unit: '', max: 3500, color: C.h,
+        data: series(i => (i % 15 >= 13) ? 3000 : 300, 60, 54), normal: series(() => 300, 40, 55) },
+    ],
+    see: 'Задержка подскакивает каждые 15 минут на пару минут, и ровно в эти минуты всплеск диска. Между пиками всё в порядке.',
+    why: 'Периодическая задача: бэкап, отчёт, очистка, перестроение индекса, ротация логов, тяжёлый GC.',
+    check: 'Наложить графики друг на друга и найти, что повторяется с тем же периодом. Список кронов и CronJob в Kubernetes.',
+    say: '"Latency spikes appeared every 15 minutes, perfectly aligned with disk IO spikes. It was a scheduled backup job running on the same node."' },
+
+  { id: 'retry', cat: 'load', sev: 'crit', title: 'Шторм ретраев после сбоя',
+    at: 20, atLabel: 'сбой 5 минут',
+    charts: [
+      { name: 'Запросы в секунду', unit: ' rps', max: 400, color: C.a,
+        data: series(i => i < 20 ? 100 : (i < 25 ? 100 + (i - 19) * 50 : clamp(350 - (i - 25) * 18, 100, 400)), 8, 56), normal: series(() => 100, 6, 57) },
+      { name: 'Ошибки 5xx', unit: '%', max: 80, color: C.r,
+        data: series(i => i < 20 ? .3 : (i < 25 ? 60 : clamp(55 - (i - 25) * 4, .3, 60)), 3, 58), normal: series(() => .3, .2, 59) },
+    ],
+    see: 'Во время сбоя и после него трафик вырастает в 3 раза, хотя пользователей не прибавилось. Ошибки держатся дольше, чем сам сбой.',
+    why: 'Клиенты повторяют запросы без паузы и без ограничения. Поднявшийся сервис сразу заваливают ретраями, и он снова падает.',
+    check: 'RPS по клиентам и заголовкам ретраев; правильное поведение — экспоненциальная пауза, jitter, Retry-After, circuit breaker.',
+    say: '"After a short outage traffic tripled because clients retried aggressively without backoff. That\'s why our client only retries when the server sends Retry-After."' },
+];
+
+const CATS = [['all', 'Все'], ['cpu', 'CPU'], ['mem', 'Память'], ['wait', 'Ожидание и пулы'], ['dep', 'Зависимости'], ['res', 'Ресурсы и рестарты'], ['io', 'Диск и сеть'], ['load', 'Нагрузка']];
+const SEV = { crit: ['crit', 'серьёзно'], warn: ['warn', 'внимание'], ok: ['ok', 'норма'] };
+
+function drawChart(ch, at, atLabel, showNormal) {
+  const W = 480, H = 92, L = 46, R = 10, T = 10, B = 14;
+  const x = i => L + (W - L - R) * i / (N - 1);
+  const y = v => T + (H - T - B) * (1 - clamp(v, 0, ch.max) / ch.max);
+  const fmt = ch.fmt || (v => Math.round(v).toString());
+  let g = '';
+  [0, ch.max / 2, ch.max].forEach(v => {
+    g += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)" stroke-width="1"/>`;
+    g += `<text x="${L - 6}" y="${y(v) + 3.5}" font-size="9.5" text-anchor="end" fill="var(--muted)" font-family="var(--font-mono)">${fmt(v)}</text>`;
+  });
+  if (ch.limit) {
+    g += `<line x1="${L}" x2="${W - R}" y1="${y(ch.limit[0])}" y2="${y(ch.limit[0])}" stroke="var(--red)" stroke-width="1.2" stroke-dasharray="5 3"/>`;
+    g += `<text x="${W - R - 2}" y="${y(ch.limit[0]) - 3}" font-size="9.5" text-anchor="end" fill="var(--red)">${ch.limit[1]}</text>`;
+  }
+  if (at != null) {
+    g += `<line x1="${x(at)}" x2="${x(at)}" y1="${T}" y2="${H - B}" stroke="var(--red)" stroke-width="1.5" opacity=".7"/>`;
+  }
+  if (showNormal && ch.normal) {
+    const np = ch.normal.map((v, i) => `${x(i)},${y(v)}`).join(' ');
+    g += `<polyline points="${np}" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4 3"/>`;
+  }
+  const pts = ch.data.map((v, i) => `${x(i)},${y(v)}`).join(' ');
+  g += `<polygon points="${x(0)},${y(0)} ${pts} ${x(N - 1)},${y(0)}" fill="${ch.color}" opacity=".13"/>`;
+  g += `<polyline points="${pts}" fill="none" stroke="${ch.color}" stroke-width="2" stroke-linejoin="round"/>`;
+  if (ch.forecast) {
+    // продолжение тренда по первым 40 точкам: так считает predict_linear
+    const k = (ch.data[39] - ch.data[0]) / 39;
+    const xs = 20, x2 = N - 1;
+    g += `<line x1="${x(xs)}" y1="${y(ch.data[0] + k * xs)}" x2="${x(x2)}" y2="${y(ch.data[0] + k * x2)}" stroke="var(--ink)" stroke-width="1.2" stroke-dasharray="2 3" opacity=".6"/>`;
+    g += `<text x="${x(xs) + 4}" y="${y(ch.data[0] + k * xs) - 10}" font-size="9.5" fill="var(--muted)">predict_linear</text>`;
+  }
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${ch.name}">${g}</svg>`;
+}
+
+function renderPattern(p, showNormal) {
+  const charts = p.charts.map((ch, k) => {
+    const last = ch.data[N - 1];
+    return `<div><div class="chart-label"><span>${ch.name}</span>${k === 0 && p.at != null ? `<span style="color:var(--red)">│ ${p.atLabel}</span>` : `<b>${(ch.fmt || (v => Math.round(v)))(last)}${ch.unit}</b>`}</div>${drawChart(ch, p.at, p.atLabel, showNormal)}</div>`;
+  }).join('');
+  const hasNormal = p.charts.some(c => c.normal);
+  const [cls, label] = SEV[p.sev];
+  return `
+    <div class="pat-head"><h3>${p.title}</h3><span class="chip ${cls}">${label}</span></div>
+    <div class="charts">${charts}</div>
+    ${hasNormal ? `<button class="toggle${showNormal ? ' on' : ''}" data-id="${p.id}" id="t-${p.id}">${showNormal ? 'Скрыть норму' : 'Сравнить с нормой'}</button>` : ''}
+    <dl class="facts">
+      <div><dt>Что видно</dt><dd>${p.see}</dd></div>
+      <div><dt>Почему</dt><dd>${p.why}</dd></div>
+      <div><dt>Как проверить</dt><dd>${p.check.replace(/([a-z_]+\([^·]*?\)[^ ,.;]*|[a-z_]+_[a-z_]+(\{[^}]*\})?)/g, '<code>$1</code>')}</dd></div>
+    </dl>
+    <p class="say">${p.say}</p>`;
+}
+
+const shown = {};
+let cat = 'all';
+
+function renderGallery() {
+  const g = document.getElementById('gallery');
+  g.innerHTML = PATTERNS.filter(p => cat === 'all' || p.cat === cat)
+    .map(p => `<article class="pat" id="p-${p.id}">${renderPattern(p, !!shown[p.id])}</article>`).join('');
+}
+
+document.getElementById('resources').innerHTML = RES.map(r =>
+  `<div class="res"><span class="tag">${r.tag}</span><p>${r.what}</p><p>${r.norm}</p><p class="bad">${r.bad}</p><p class="q">${r.q}</p></div>`).join('');
+
+document.getElementById('filters').innerHTML = CATS.map(([k, l]) =>
+  `<button data-cat="${k}" id="f-${k}" class="${k === cat ? 'on' : ''}">${l}</button>`).join('');
+document.getElementById('filters').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  cat = b.dataset.cat;
+  document.querySelectorAll('#filters button').forEach(x => x.classList.toggle('on', x === b));
+  renderGallery();
+});
+document.getElementById('gallery').addEventListener('click', e => {
+  const b = e.target.closest('.toggle'); if (!b) return;
+  const id = b.dataset.id; shown[id] = !shown[id];
+  const p = PATTERNS.find(x => x.id === id);
+  document.getElementById('p-' + id).innerHTML = renderPattern(p, shown[id]);
+});
+renderGallery();
+</script>

@@ -11,4 +11,14 @@ max_profit([])                  -> 0
 
 
 def max_profit(prices: list[int]) -> int:
-    raise NotImplementedError
+    result = []
+    for buy in range(len(prices)):
+        for sell in range(buy + 1, len(prices)):
+            pass
+
+    
+
+
+
+
+print(max_profit([7, 1, 5, 3, 6, 4]))
