@@ -56,11 +56,15 @@ package = false
 default-groups = ["dev"]
 
 [tool.pytest.ini_options]
-testpaths = ["api_tests"]
+testpaths = ["tests"]
 pythonpath = ["."]
-addopts = "-ra --strict-markers"
+# macOS 12: свежий Chromium от Playwright не ставится, поэтому используем установленный Chrome
+addopts = "-ra --strict-markers --browser-channel chrome --screenshot only-on-failure"
 log_level = "INFO"
 markers = [
+    'unit: без стенда, проверяют код фреймворка (ставится по папке tests/unit)',
+    'api: через HTTP/WS к стенду (ставится по папке tests/api)',
+    'ui: через браузер (ставится по папке tests/ui)',
     'smoke: quick checks',
     'balance: deposit money before test'
 ]

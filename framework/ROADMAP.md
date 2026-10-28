@@ -1,7 +1,7 @@
 # API-фреймворк: дорожная карта и прогресс
 
 Фреймворк пишет пользователь, Claude ставит задачи и ревьюит (см. `CLAUDE.md`).
-Тесты — `api_tests/`, запуск `uv run pytest`, отчёт `uv run pytest --alluredir=allure-results` → `allure serve allure-results`.
+Тесты — `tests/api/`, запуск `uv run pytest`, отчёт `uv run pytest --alluredir=allure-results` → `allure serve allure-results`.
 Пункты курса — `PROGRAM.md` (модули 1–10 = этапы ниже); перед переходом к следующему этапу сверяться со списком модуля.
 
 ## Где остановились (2026-10-27)
@@ -19,7 +19,7 @@
 ## Этап 1. Каркас — ✅
 
 - 1.1 `ApiClient` (сессия, таймаут, `set_token`) · 1.2 Settings и `envs/` · 1.3 сервисы Auth, Balance, Order
-- 1.4 `list`/`get`/`cancel`, teardown через `yield` в `auth_api`, тесты в `api_tests/`, корневой `conftest.py`
+- 1.4 `list`/`get`/`cancel`, teardown через `yield` в `auth_api`, тесты в `tests/api/`, корневой `conftest.py`
 - 1.5 `transport/reporting.py`: строка лога на запрос + шаги и вложения Allure, тела `/auth/*` не прикладываются
 - 1.6 `Retry` на 503 через `HTTPAdapter`, `Idempotency-Key` на `POST /orders`
 
@@ -35,7 +35,7 @@
 
 - 3.1 `funded_user` + фабрика `create_order`, параллельный прогон `-n 4` — частично
 - 3.2 фабрика `make_user` (уборка за всеми), тест чужого ордера: get/cancel → 404, нет в list — частично (токен исправлен)
-- 3.3 `wait`/`wait_until` (polling), `api_tests/test_trade.py` сделка BUY/SELL по 500, `xdist_group('order_book')` + `--dist loadgroup` — выдан
+- 3.3 `wait`/`wait_until` (polling), `tests/api/test_trade.py` сделка BUY/SELL по 500, `xdist_group('order_book')` + `--dist loadgroup` — выдан
 - 3.4 БД: `DB_URL` в env, `framework/db.py` (psycopg, autocommit, dict_row), фикстура `db` session;
   `test_db_side_effects.py`: пароль хранится хешем, повтор с тем же Idempotency-Key → один ордер в `orders` — **выдан**
 - 3.5 testcontainers: `framework/fixtures/containers.py` session-фикстура `container_stand` (Network + PostgresContainer alias db + образ стенда, HttpWaitStrategy /health), `TESTCONTAINERS_RYUK_DISABLED=true` (Ryuk не стартует на macOS 12), `testcontainers.community.postgres`, `driver=None`; `test_clean_stand.py` count users == 2; маркер `containers`, addopts `-m "not containers"` — **выдан** (проверено Claude: старт ~17 с)
@@ -43,7 +43,7 @@
 
 ## Этап 4. Бизнес-логика — выдан 4.1
 
-- 4.1 блокировка денег: `api_tests/test_balance_lock.py` — BUY блокирует price×qty USDT, SELL — qty ETH (parametrize), граница «ровно хватает» 201 / «3.01» 400, после 400 баланс не изменился — выдан
+- 4.1 блокировка денег: `tests/api/test_balance_lock.py` — BUY блокирует price×qty USDT, SELL — qty ETH (parametrize), граница «ровно хватает» 201 / «3.01» 400, после 400 баланс не изменился — выдан
 
 ## Пропущенные пункты модулей 1–2 (сверка с PROGRAM.md 2026-10-27)
 
@@ -62,7 +62,7 @@
 - Теория целиком выдана 2026-10-27 (WebSocket, вебхуки, GraphQL, gRPC, Kafka/RabbitMQ)
 - 5.1 WebSocket стакан: `framework/transport/ws_client.py` (websockets sync), фикстура `orderbook_ws`, snapshot → update, sequence+1, close 4004 — **выдан**;
   ручка влита: ветка `stand/ws-orderbook` (PR в main открыть на сайте) + cherry-pick в sandbox; 4004 теперь после accept.
-  Пользователь сделал `api_tests/test_ws.py` (snapshot → update), фикстура через `with connect(...)`, WsClient не нужен
+  Пользователь сделал `tests/api/test_ws.py` (snapshot → update), фикстура через `with connect(...)`, WsClient не нужен
 - 5.2 вебхуки: стенд `stand/webhooks` (POST /webhooks → secret, order.filled/order.canceled, X-Signature HMAC, повторы 1/2/4 с) —
   задание: `pytest-httpserver`, `WebhookService`, `framework/signature.py`, тесты подписи и повтора после 500, адрес `host.docker.internal` — **выдан**
 - 5.3 GraphQL и gRPC — теория-обзор выдана (без практики, по программе обзор)
