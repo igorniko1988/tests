@@ -35,5 +35,6 @@ remove_all(items, value) -> int
 
 
 def remove_all(items: list, value) -> int:
+    initial_len = len(items)
     items[:] = [item for item in items if item != value]
-    return items
+    return initial_len - len(items)
