@@ -1,5 +1,6 @@
 """C3 · Раздел 5. Counter и defaultdict — упражнения «что выведет».
 
+Обязательные — все фрагменты, кроме помеченных «# доп.» (их можно пропустить).
 Впиши ответ в A[...] под каждым фрагментом ДО запуска:
   - точный вывод, как напечатает print: аргументы через ПРОБЕЛ (без запятых между ними),
     строки без кавычек, а внутри списков и словарей — как Python: [1, 2], {'a': 1};
@@ -10,6 +11,7 @@
 
 D: dict[str, str] = {}  # фрагменты
 A: dict[str, str] = {}  # твои ответы
+OPTIONAL = {"5.4", "5.7", "5.8"}  # доп. фрагменты: можно пропустить
 
 
 D["5.1"] = """
@@ -34,6 +36,7 @@ print(Counter([1, 2, 2]) == Counter([2, 1, 2]), Counter([1, 2]) == Counter([1, 2
 A["5.3"] = ""
 
 
+# доп. — по желанию
 D["5.4"] = """
 from collections import Counter
 a = Counter(x=3, y=1)
@@ -65,6 +68,7 @@ print(dict(d))
 A["5.6"] = ""
 
 
+# доп. — по желанию
 D["5.7"] = """
 from collections import defaultdict
 d = defaultdict(list)
@@ -73,6 +77,7 @@ print(d.get("x"), "x" in d, len(d))
 A["5.7"] = ""
 
 
+# доп. — по желанию
 D["5.8"] = """
 from collections import defaultdict
 d = defaultdict([])
@@ -87,4 +92,4 @@ if __name__ == "__main__":
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
     from drill import run
 
-    run(D, A, __file__)
+    run(D, A, __file__, optional=OPTIONAL)

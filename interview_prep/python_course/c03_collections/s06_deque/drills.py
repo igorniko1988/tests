@@ -1,5 +1,6 @@
 """C3 · Раздел 6. deque — упражнения «что выведет».
 
+Обязательные — все фрагменты, кроме помеченных «# доп.» (их можно пропустить).
 Впиши ответ в A[...] под каждым фрагментом ДО запуска:
   - точный вывод, как напечатает print: аргументы через ПРОБЕЛ (без запятых между ними),
     строки без кавычек, а внутри списков и словарей — как Python: [1, 2], {'a': 1};
@@ -10,6 +11,7 @@
 
 D: dict[str, str] = {}  # фрагменты
 A: dict[str, str] = {}  # твои ответы
+OPTIONAL = {"6.4", "6.5", "6.6", "6.7"}  # доп. фрагменты: можно пропустить
 
 
 D["6.1"] = """
@@ -41,6 +43,7 @@ print(list(q))
 A["6.3"] = ""
 
 
+# доп. — по желанию
 D["6.4"] = """
 from collections import deque
 print(len(deque("abc")), len(deque(["abc"])))
@@ -48,6 +51,7 @@ print(len(deque("abc")), len(deque(["abc"])))
 A["6.4"] = ""
 
 
+# доп. — по желанию
 D["6.5"] = """
 from collections import deque
 q = deque([1, 2])
@@ -57,6 +61,7 @@ print(list(q))
 A["6.5"] = ""
 
 
+# доп. — по желанию
 D["6.6"] = """
 from collections import deque
 q = deque([1, 2, 3, 4])
@@ -66,6 +71,7 @@ print(list(q))
 A["6.6"] = ""
 
 
+# доп. — по желанию
 D["6.7"] = """
 from collections import deque
 print(deque([1, 2, 3])[0:2])
@@ -80,4 +86,4 @@ if __name__ == "__main__":
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
     from drill import run
 
-    run(D, A, __file__)
+    run(D, A, __file__, optional=OPTIONAL)

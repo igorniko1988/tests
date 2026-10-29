@@ -1,5 +1,6 @@
 """C3 · Раздел 8. коллекции в автотестах — упражнения «что выведет».
 
+Обязательные — все фрагменты, кроме помеченных «# доп.» (их можно пропустить).
 Впиши ответ в A[...] под каждым фрагментом ДО запуска:
   - точный вывод, как напечатает print: аргументы через ПРОБЕЛ (без запятых между ними),
     строки без кавычек, а внутри списков и словарей — как Python: [1, 2], {'a': 1};
@@ -10,6 +11,7 @@
 
 D: dict[str, str] = {}  # фрагменты
 A: dict[str, str] = {}  # твои ответы
+OPTIONAL = {"8.4", "8.7"}  # доп. фрагменты: можно пропустить
 
 
 D["8.1"] = """
@@ -36,6 +38,7 @@ print(len(ids) == len(set(ids)), [x for x, n in Counter(ids).items() if n > 1])
 A["8.3"] = ""
 
 
+# доп. — по желанию
 D["8.4"] = """
 orders = [{"id": 1, "s": "NEW"}, {"id": 2, "s": "FILLED"}]
 by_id = {o["id"]: o for o in orders}
@@ -59,6 +62,7 @@ print(prices == sorted(prices, key=Decimal, reverse=True))
 A["8.6"] = ""
 
 
+# доп. — по желанию
 D["8.7"] = """
 a = [3, 1, 2]
 print(all(x <= y for x, y in zip(a, a[1:])))
@@ -73,4 +77,4 @@ if __name__ == "__main__":
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
     from drill import run
 
-    run(D, A, __file__)
+    run(D, A, __file__, optional=OPTIONAL)

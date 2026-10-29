@@ -45,21 +45,24 @@ def load_explain(drills_file: str) -> dict[str, str]:
     return module.EXPLAIN if module else {}
 
 
-def run(D: dict[str, str], A: dict[str, str], drills_file: str, setup: str = "") -> None:
-    """setup — общий код, который выполняется перед каждым фрагментом (например, класс-счётчик)."""
+def run(D: dict[str, str], A: dict[str, str], drills_file: str, setup: str = "", optional=()) -> None:
+    """setup — общий код, который выполняется перед каждым фрагментом (например, класс-счётчик).
+    optional — ключи дополнительных фрагментов («доп.»): их можно пропустить, раздел без них закрыт."""
     explain = load_explain(drills_file)
-    right = wrong = empty = 0
+    # счёт отдельно для обязательных и дополнительных: [верно, ошибок, не отвечено]
+    score = {False: [0, 0, 0], True: [0, 0, 0]}
     for key, code in D.items():
-        print(f"── {key} " + "─" * 50, code.rstrip(), sep="")
+        extra = key in optional
+        mark = " (доп.)" if extra else ""
+        print(f"── {key}{mark} " + "─" * 50, code.rstrip(), sep="")
         mine = A.get(key, "").strip()
         if not mine:
             print(f"   ответ не вписан — заполни A[{key!r}]\n")
-            empty += 1
+            score[extra][2] += 1
             continue
         real = actual_output(code, setup)
         ok = normalize(mine) == normalize(real)
-        right += ok
-        wrong += not ok
+        score[extra][0 if ok else 1] += 1
         print(f"   твой ответ: {mine}")
         print(f"   на деле:    {real}")
         if ok:
@@ -71,7 +74,11 @@ def run(D: dict[str, str], A: dict[str, str], drills_file: str, setup: str = "")
         if key in explain:
             print("   почему:", explain[key])
         print()
-    print(f"Итого: верно {right}, ошибок {wrong}, не отвечено {empty}")
+    right, wrong, empty = score[False]
+    print(f"Обязательные: верно {right}, ошибок {wrong}, не отвечено {empty}")
+    if optional:
+        right, wrong, empty = score[True]
+        print(f"Доп. (по желанию): верно {right}, ошибок {wrong}, не отвечено {empty}")
 
 
 def normalize_big_o(text: str) -> str:
