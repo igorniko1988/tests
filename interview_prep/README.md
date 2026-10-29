@@ -1,13 +1,7 @@
-# Подготовка к интервью: Python core и live coding
+# Подготовка к собесу AQA
 
-Работаем так:
-1. Открываешь урок в `lessons/`, запускаешь его (`python lessons/lesson_01_references.py`) и читаешь комментарии.
-2. Открываешь задачу в `tasks/`, пишешь решение вместо `raise NotImplementedError`.
-3. Проверяешь: `pytest -k task_02 -q` (одна задача) или `pytest -q` (все).
-4. Пишешь в чат "готово task_02", Claude смотрит код и разбирает.
+Всё в `python_course/` — курс Python к собеседованию (6 недель, треки C/A/Q/X).
+Программа: https://claude.ai/artifact/BoyW5f8ooxGvGYaeSqjxkt, описание — `python_course/README.md`.
 
-Папка `solutions/` с эталонными решениями. Не открывай её, пока не решишь сам.
-
-Запуск тестов из папки модуля:
-    cd module_1_types
-    pytest -q
+Старые материалы (module_1–4, livecoding_python, mock_interview) удалены 2026-10-29,
+они есть в истории git. Их визуализаторы перенесены в `practice/visual/` (файлы `lc_*`).
