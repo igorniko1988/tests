@@ -16,26 +16,26 @@ OPTIONAL = {"7.5", "7.7", "7.8"}  # доп. фрагменты: можно пр�
 D["7.1"] = """
 print(bool(0), bool(""), bool([]), bool("0"), bool([0]))
 """
-A["7.1"] = ""
+A["7.1"] = "False, False, False, True, True"
 
 
 D["7.2"] = """
 print(0 or "default", 5 or "default")
 """
-A["7.2"] = ""
+A["7.2"] = "default, 5"
 
 
 D["7.3"] = """
 print(repr("" and "x"), "a" and "x")
 """
-A["7.3"] = ""
+A["7.3"] = "'', 'x"
 
 
 D["7.4"] = """
 qty = 0
 print(qty or 1)
 """
-A["7.4"] = ""
+A["7.4"] = "1"
 
 
 # доп. — по желанию
@@ -48,7 +48,7 @@ A["7.5"] = ""
 D["7.6"] = """
 print(None == False, not None)
 """
-A["7.6"] = ""
+A["7.6"] = "False, "
 
 
 # доп. — по желанию
