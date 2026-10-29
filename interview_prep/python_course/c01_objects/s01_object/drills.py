@@ -16,7 +16,7 @@ a = [1, 2]
 b = [1, 2]
 print(a == b, id(a) == id(b))
 """
-A["1.1"] = ""
+A["1.1"] = "True, False"
 
 
 D["1.2"] = """
@@ -25,7 +25,7 @@ before = id(nums)
 nums.sort()
 print(nums, id(nums) == before)
 """
-A["1.2"] = ""
+A["1.2"] = "[1,2,3], True"
 
 
 D["1.3"] = """
@@ -34,7 +34,7 @@ before = id(nums)
 nums = sorted(nums)
 print(nums, id(nums) == before)
 """
-A["1.3"] = ""
+A["1.3"] = "[1,2,3], False"
 
 
 D["1.4"] = """
@@ -44,7 +44,7 @@ d["k"] = 2
 d["n"] = 3
 print(d, id(d) == before)
 """
-A["1.4"] = ""
+A["1.4"] = "{'k': 2, 'n': 3}, True"
 
 
 D["1.5"] = """
@@ -52,13 +52,13 @@ x = 5
 x = "5"
 print(type(x))
 """
-A["1.5"] = ""
+A["1.5"] = "string"
 
 
 D["1.6"] = """
 print(type(type(5)), type(print))
 """
-A["1.6"] = ""
+A["1.6"] = "type, print"
 
 
 # ---------------------------- проверка — не трогай ----------------------------
