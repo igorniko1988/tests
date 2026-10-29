@@ -35,4 +35,5 @@ remove_all(items, value) -> int
 
 
 def remove_all(items: list, value) -> int:
-    raise NotImplementedError
+    items[:] = [item for item in items if item != value]
+    return items
