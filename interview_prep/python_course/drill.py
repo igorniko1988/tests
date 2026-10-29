@@ -25,6 +25,11 @@ def normalize(text: str) -> str:
     return " | ".join(part.strip() for part in text.strip().split("|"))
 
 
+def loose(text: str) -> str:
+    """Без пробелов, запятых и кавычек — чтобы отличить «не понял» от «не тот формат»."""
+    return "".join(ch for ch in text if ch not in " ,'\"")
+
+
 def load_solution(drills_file: str, name: str):
     path = Path(drills_file).resolve().parents[1] / "solutions" / f"{name}.py"
     if not path.exists():
@@ -57,7 +62,12 @@ def run(D: dict[str, str], A: dict[str, str], drills_file: str, setup: str = "")
         wrong += not ok
         print(f"   твой ответ: {mine}")
         print(f"   на деле:    {real}")
-        print("   ✅ верно" if ok else "   ❌ ошибка")
+        if ok:
+            print("   ✅ верно")
+        elif loose(mine) == loose(real):
+            print("   ⚠️ по смыслу верно, но формат вывода другой — сравни посимвольно")
+        else:
+            print("   ❌ ошибка")
         if key in explain:
             print("   почему:", explain[key])
         print()
