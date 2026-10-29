@@ -4,11 +4,25 @@ import os
 
 import pytest
 
+# SRC=solutions — прогнать тесты на эталоне; по умолчанию — твои решения в папках разделов.
 SRC = os.environ.get("SRC", "tasks")
+SECTION = {
+    "t01_fix_default": "s07_default_arg",
+    "t02_make_grid": "s06_copy",
+    "t03_relation": "s05_is_vs_eq",
+    "t04_build_payload": "s06_copy",
+    "t05_deep_merge": "s08_passing",
+    "t06_freeze": "s09_hashable",
+    "t07_dedupe": "s09_hashable",
+    "t08_my_deepcopy": "s06_copy",
+    "t09_deepcopy_cycles": "s06_copy",
+    "t10_call_recorder": "s10_autotests",
+}
 
 
 def load(name):
-    return importlib.import_module(f"{SRC}.{name}")
+    package = SECTION[name] if SRC == "tasks" else SRC
+    return importlib.import_module(f"{package}.{name}")
 
 
 # ---------- t01 ----------
