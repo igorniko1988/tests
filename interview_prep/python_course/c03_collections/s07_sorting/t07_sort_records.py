@@ -1,34 +1,32 @@
-"""C3 t07 (основная, 15 мин). Сортировка по нескольким полям.
+"""C3 t07 (required, ~15 min). Sort records by multiple fields.
 
-Теория: THEORY.md в этой папке (раздел 7: ключ-кортеж, строки-числа, None).
+Given a list of records {"name": str, "amount": str | None}, return a new
+sorted list. Amounts come from an API as strings.
 
-ЗАЧЕМ ЭТО
-«Лидерборд», «топ клиентов по обороту», проверка, что API отдал список в правильном
-порядке. Суммы в API — строки, и сортировка «как строк» — тихий баг: "100" < "9".
+Sort order:
+1. By amount DESCENDING, compared as numbers (Decimal), not as strings.
+2. Equal amounts - by name, case-insensitive, ascending.
+3. Records with amount None go last, sorted by name (case-insensitive).
 
-УСЛОВИЕ
-sort_records(records) -> list[dict]
-- records — список словарей {"name": str, "amount": str | None}.
-- Порядок:
-    1) по amount ПО УБЫВАНИЮ, сравнивая как числа (Decimal), а не как строки;
-    2) при равных суммах — по name по алфавиту БЕЗ учёта регистра;
-    3) записи с amount None — в самом конце, между собой по name (тоже без учёта регистра).
-- Вернуть новый список, исходный не менять.
+Do not modify the input list.
 
-ПРИМЕР
+Example:
     sort_records([
-        {"name": "bob",  "amount": "9.50"},
-        {"name": "Ann",  "amount": "100.00"},
-        {"name": "cat",  "amount": None},
-        {"name": "dan",  "amount": "100"},
-        {"name": "Abe",  "amount": None},
+        {"name": "bob", "amount": "9.50"},
+        {"name": "Ann", "amount": "100.00"},
+        {"name": "cat", "amount": None},
+        {"name": "dan", "amount": "100"},
+        {"name": "Abe", "amount": None},
     ])
-    → Ann (100.00), dan (100), bob (9.50), Abe (None), cat (None)
-      # "100.00" и "100" равны как Decimal → по имени: ann < dan
+    -> names in order: Ann, dan, bob, Abe, cat
+       ("100.00" and "100" are equal as Decimal, so they are ordered by name)
 
-ПОСЛЕ РЕШЕНИЯ ответь в чат: почему -Decimal(...) работает в ключе, а для строк минус
-не подходит? Как бы ты отсортировал «по имени по убыванию, при равенстве по сумме
-по возрастанию»?
+Follow-up questions:
+- Why does -Decimal(...) work in a sort key, but negation doesn't work for strings?
+- How would you sort by name descending, then by amount ascending?
+
+Run: uv run pytest -k t07
+Теория: THEORY.md в этой папке, раздел 7.
 """
 
 

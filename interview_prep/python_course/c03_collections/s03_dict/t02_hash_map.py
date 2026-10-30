@@ -1,44 +1,40 @@
-"""C3 t02 ★ (сложная, 30 мин). Своя хеш-таблица на списке корзин.
+"""C3 t02 ★ (optional, ~30 min). Implement a hash map.
 
-Теория: THEORY.md в этой папке (раздел 3: ячейки, коллизии, рост таблицы).
+Implement a simple hash map WITHOUT using the built-in dict or set.
+Use separate chaining: self._buckets is a list of buckets, each bucket is a list
+of [key, value] pairs.
 
-ЗАЧЕМ ЭТО
-Вопрос «как устроен dict» задают почти на каждом собесе. Кто один раз написал хеш-таблицу
-сам, отвечает уверенно: про hash % размер, коллизии, рост и почему ключ должен быть
-хешируемым. Встроенный dict и set внутри использовать НЕЛЬЗЯ — в этом весь смысл.
+    bucket index = hash(key) % len(self._buckets)
 
-УСТРОЙСТВО (метод цепочек)
-    self._buckets — список корзин, корзина — список пар [ключ, значение]:
+Implement:
+- HashMap() - starts with 8 buckets (self._buckets is a list of length 8).
+- put(key, value) - insert the pair; if the key already exists, overwrite the value.
+- get(key, default=None) - return the value for key, or default if it is missing.
+- remove(key) - delete the key and return its value; raise KeyError(key) if missing.
+- len(m) - number of stored pairs.
+- key in m - whether the key is present.
 
-        _buckets = [ [], [["b", 2]], [], [["a", 1], ["q", 7]], ... ]
-                          ▲ корзина 1           ▲ коллизия: два ключа в корзине 3
+Resizing: after inserting a NEW key, if size > 0.75 * number of buckets,
+double the number of buckets and rehash all pairs.
+Unhashable keys (e.g. a list) must raise TypeError, like dict does.
 
-    номер корзины для ключа:  hash(key) % len(self._buckets)
-    в корзине ключ ищем перебором, сравнивая через ==
-
-УСЛОВИЕ
-class HashMap:
-- HashMap() — начальное число корзин 8 (поле _buckets — list длиной 8).
-- put(key, value) — добавить пару; если ключ уже есть — заменить значение.
-- get(key, default=None) — значение по ключу или default.
-- remove(key) — удалить ключ и вернуть его значение; нет ключа — KeyError(key).
-- len(m) — число пар (__len__). key in m — есть ли ключ (__contains__).
-- Рост: когда после добавления НОВОГО ключа пар стало больше, чем 0.75 × число корзин,
-  увеличить число корзин в 2 раза и переложить все пары (у них поменяется hash % размер).
-- Нехешируемый ключ (список) — TypeError, как у dict (hash() сделает это сам).
-
-ПРИМЕРЫ
+Example:
     m = HashMap()
-    m.put("a", 1); m.put("a", 2)
-    m.get("a")       → 2         # перезапись, пара одна
-    len(m)           → 1
-    m.get("zzz", 0)  → 0
-    m.remove("a")    → 2
-    "a" in m         → False
-    после 7 разных ключей корзин станет 16 (7 > 0.75 × 8 = 6)
+    m.put("a", 1)
+    m.put("a", 2)
+    m.get("a")       -> 2
+    len(m)           -> 1
+    m.get("zzz", 0)  -> 0
+    m.remove("a")    -> 2
+    "a" in m         -> False
+    # after 7 distinct keys there are 16 buckets (7 > 0.75 * 8)
 
-ПОСЛЕ РЕШЕНИЯ ответь в чат: почему поиск в среднем O(1), а в худшем — O(n)?
-Что сломается, если ключ изменится после того, как его положили в таблицу?
+Follow-up questions:
+- Why is lookup O(1) on average but O(n) in the worst case?
+- What breaks if a key is mutated after it was put into the map?
+
+Run: uv run pytest -k t02
+Теория: THEORY.md в этой папке, раздел 3.
 """
 
 

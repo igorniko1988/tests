@@ -1,30 +1,29 @@
-"""C3 t05 (разминка, 10 мин). Сгруппировать ордера по статусу.
+"""C3 t05 (required, ~10 min). Group orders by status.
 
-Теория: THEORY.md в этой папке (раздел 5: defaultdict, наружу — обычный dict).
+Given a list of orders like {"id": 1, "status": "NEW"}, return a dict
+that maps each status to the list of order ids with that status.
 
-ЗАЧЕМ ЭТО
-«Сколько ордеров в каждом статусе», «какие тесты упали по каждой причине» — группировка
-нужна постоянно: в отчётах, в проверках ответа, на лайвкодинге.
+Requirements:
+- Ids inside each list keep the input order.
+- Statuses appear in the order of their first occurrence.
+- Return a plain dict (the test checks type(result) is dict).
+- Do not modify the input list.
 
-УСЛОВИЕ
-group_orders(orders) -> dict[str, list[int]]
-- orders — список словарей с ключами "id" и "status".
-- Вернуть словарь «статус → список id» в порядке появления ордеров.
-- Порядок статусов — по первому появлению.
-- Вернуть ОБЫЧНЫЙ dict (тест проверит type(result) is dict).
-- Исходный список не менять.
-
-ПРИМЕР
+Example:
     orders = [
         {"id": 1, "status": "NEW"},
         {"id": 2, "status": "FILLED"},
         {"id": 3, "status": "NEW"},
     ]
-    group_orders(orders) → {"NEW": [1, 3], "FILLED": [2]}
-    group_orders([])     → {}
+    group_orders(orders) -> {"NEW": [1, 3], "FILLED": [2]}
+    group_orders([])     -> {}
 
-ПОСЛЕ РЕШЕНИЯ ответь в чат: почему не defaultdict([])? И зачем отдавать dict(...),
-если defaultdict == dict с тем же содержимым?
+Follow-up questions:
+- Why defaultdict(list) and not defaultdict([])?
+- Why convert to dict(...) if a defaultdict compares equal to a dict anyway?
+
+Run: uv run pytest -k t05
+Теория: THEORY.md в этой папке, раздел 5.
 """
 
 

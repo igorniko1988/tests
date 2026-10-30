@@ -1,33 +1,31 @@
-"""C3 t06 (основная, 10 мин). Хранить только последние N событий.
+"""C3 t06 (required, ~10 min). Keep the last N events.
 
-Теория: THEORY.md в этой папке (раздел 6: deque(maxlen=N)).
+Implement a class that stores only the N most recent events
+(e.g. the last requests of an API client, attached to a report on failure).
 
-ЗАЧЕМ ЭТО
-Тест-раннер или клиент API держит последние N запросов, чтобы приложить их к отчёту при
-падении. Поток событий может быть бесконечным — хранить всё нельзя.
+Implement:
+- RecentEvents(n) - keep at most n latest events; raise ValueError if n < 1.
+- add(event) - add an event.
+- items() -> list - stored events from oldest to newest. Return a NEW list:
+  changing it must not affect the storage.
+- total - a property: how many events were added in total, including dropped ones.
+- len(r) - how many events are stored right now.
 
-УСЛОВИЕ
-class RecentEvents:
-- RecentEvents(n) — хранить не больше n последних событий. n < 1 — ValueError.
-- add(event) — добавить событие.
-- items() -> list — сохранённые события, от старых к новым (новый список: изменения
-  в нём не должны портить хранилище).
-- total — свойство (@property): сколько событий добавлено ЗА ВСЁ ВРЕМЯ, включая выпавшие.
-- len(r) — сколько событий хранится сейчас.
-- Память — O(n): тест прогонит 200 000 событий при n = 3.
+Memory must be O(n): the test adds 200 000 events with n = 3.
 
-ПРИМЕР
+Example:
     r = RecentEvents(3)
     for e in ["e1", "e2", "e3", "e4"]:
         r.add(e)
-    r.items()  → ["e2", "e3", "e4"]    # e1 выпал
-    len(r)     → 3
-    r.total    → 4
+    r.items()  -> ["e2", "e3", "e4"]
+    len(r)     -> 3
+    r.total    -> 4
 
-ТЕРМИНЫ
-- @property — метод, который читается как поле: r.total без скобок (подробно в C9).
+Follow-up questions:
+- Why not a list with pop(0) when it is full?
 
-ПОСЛЕ РЕШЕНИЯ ответь в чат: почему не list с pop(0), когда он переполнен?
+Run: uv run pytest -k t06
+Теория: THEORY.md в этой папке, раздел 6.
 """
 
 

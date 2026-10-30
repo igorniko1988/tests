@@ -1,29 +1,26 @@
-"""C3 t03 (основная, 10 мин). Пользователи, которые есть в обоих ответах API.
+"""C3 t03 (required, ~10 min). Common users.
 
-Теория: THEORY.md в этой папке (раздел 4: in за O(1), пересечение).
+You get two API responses, each is a list of users: [{"id": 1, ...}, ...].
+Return the ids that appear in BOTH lists.
 
-ЗАЧЕМ ЭТО
-Сверка двух выгрузок — «кто есть и в списке активных, и в списке с балансом», «какие
-ордера вернули оба эндпоинта». Решение «цикл в цикле» на 10 000 записей в каждом
-списке — 10⁸ сравнений. Через множество — 2 × 10⁴.
+Requirements:
+- Keep the order of the first list (by first occurrence).
+- No duplicates in the result.
+- Time complexity O(n + m). Tests use lists of 20 000 users each.
 
-УСЛОВИЕ
-common_users(first, second) -> list[int]
-- first, second — списки словарей пользователей, у каждого есть ключ "id" (int).
-- Вернуть id, которые встречаются в ОБОИХ списках.
-- Порядок — как в first (по первому появлению), без повторов.
-- Время O(n + m). Тест проверит списки по 20 000 записей.
-
-ПРИМЕР
+Example:
     first  = [{"id": 3}, {"id": 1}, {"id": 2}, {"id": 3}]
     second = [{"id": 2}, {"id": 3}, {"id": 9}]
-    common_users(first, second) → [3, 2]
-        # 3 и 2 есть в обоих; порядок — как в first; второй 3 не повторяем
-        # 1 нет во втором, 9 нет в первом
+    common_users(first, second) -> [3, 2]
 
-    common_users([], [{"id": 1}]) → []
+    common_users([], [{"id": 1}]) -> []
 
-ПОСЛЕ РЕШЕНИЯ ответь в чат: почему просто `set(a) & set(b)` не подходит под условие?
+Follow-up questions:
+- Why doesn't set(a) & set(b) satisfy the requirements?
+- What is the complexity of a nested-loop solution?
+
+Run: uv run pytest -k t03
+Теория: THEORY.md в этой папке, раздел 4.
 """
 
 

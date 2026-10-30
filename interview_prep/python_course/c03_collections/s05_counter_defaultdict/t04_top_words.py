@@ -1,30 +1,27 @@
-"""C3 t04 (основная, 15 мин). Топ-k слов текста.
+r"""C3 t04 (required, ~15 min). Top K frequent words.
 
-Теория: THEORY.md в этой папке (раздел 5: Counter, most_common и ничьи).
+Given a text and an integer k, return the k most frequent words
+as a list of (word, count) tuples.
 
-ЗАЧЕМ ЭТО
-Классика лайвкодинга: «самые частые ошибки в логе», «топ эндпоинтов по запросам».
-Подвох всегда один — ничьи. Интервьюер обязательно даст пример с равными частотами.
+Rules:
+- A word is a sequence of letters/digits (the regex \w+ is fine).
+  Everything else is a separator: spaces, punctuation, newlines.
+- Case-insensitive: "The" and "the" are the same word; return words in lowercase.
+- Sort by count descending; TIES are broken alphabetically.
+- If there are fewer than k distinct words, return all of them.
+- If k <= 0, return an empty list.
 
-УСЛОВИЕ
-top_words(text, k) -> list[tuple[str, int]]
-- Слово — подряд идущие буквы и цифры (регулярное выражение \\w+ подходит).
-  Всё остальное — разделители: пробелы, знаки препинания, переводы строк.
-- Регистр не учитывать: "The" и "the" — одно слово, в ответе — строчными буквами.
-- Вернуть k самых частых пар (слово, частота): по убыванию частоты,
-  ПРИ РАВЕНСТВЕ — по алфавиту.
-- Слов меньше k — вернуть все. k <= 0 — пустой список.
+Examples:
+    top_words("b a b a c", 2)                  -> [("a", 2), ("b", 2)]
+    top_words("The cat. the CAT, the dog!", 2) -> [("the", 3), ("cat", 2)]
+    top_words("", 3)                           -> []
 
-ПРИМЕРЫ
-    top_words("b a b a c", 2)         → [("a", 2), ("b", 2)]   # ничья → по алфавиту
-    top_words("The cat. the CAT, the dog!", 2) → [("the", 3), ("cat", 2)]
-    top_words("", 3)                  → []
+Follow-up questions:
+- Why does Counter(words).most_common(k) fail the first example?
+- What is the time complexity of your solution?
 
-ТЕРМИНЫ
-- re.findall(r"\\w+", s) — список всех кусков из букв, цифр и _.
-
-ПОСЛЕ РЕШЕНИЯ ответь в чат: почему Counter(words).most_common(k) не проходит
-первый пример? Какая сложность у твоего решения?
+Run: uv run pytest -k t04
+Теория: THEORY.md в этой папке, раздел 5.
 """
 
 
