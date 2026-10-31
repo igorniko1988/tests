@@ -1,29 +1,22 @@
-"""A0 t02 (разминка, 10 мин). Есть ли в списке повтор — ускорить с O(n²) до O(n).
+"""A0 t02 (required, ~10 min). Contains duplicate - optimize O(n^2) to O(n).
 
-Теория: interview_prep/python_course/a00_big_o/s07_method/THEORY.md (метод решения) и interview_prep/python_course/a00_big_o/s04_hidden_cost/THEORY.md (скрытая сложность).
+Given a list of hashable values, return True if any value appears at least twice,
+otherwise False. Do not modify the input.
 
-ЗАЧЕМ ЭТО
-Классика собеса (LeetCode «Contains Duplicate»). В работе — проверить, что в ответе API
-нет повторяющихся id, или что генератор тестовых данных не выдал два одинаковых email.
+Examples:
+    has_duplicate([1, 2, 3, 1])  -> True
+    has_duplicate([1, 2, 3])     -> False
+    has_duplicate([])            -> False
+    has_duplicate(["a", "A"])    -> False
 
-УСЛОВИЕ
-has_duplicate(items) -> bool
-- True, если хотя бы одно значение встречается в items больше одного раза, иначе False.
-- items — список хешируемых значений (числа, строки). Может быть пустым.
-- Вход не менять.
+The code below is a working brute-force solution: it compares every pair, O(n^2).
+On 10 000 items it takes ~3 s, the test allows 0.2 s. Rewrite it in O(n) time.
 
-ПРИМЕРЫ
-    has_duplicate([1, 2, 3, 1])    → True     # 1 встречается дважды
-    has_duplicate([1, 2, 3])       → False
-    has_duplicate([])              → False    # пустой список — повторов нет
-    has_duplicate(["a", "A"])      → False    # разный регистр — разные строки
+Follow-up questions:
+- Time and memory complexity before and after?
 
-ЧТО СЕЙЧАС
-Ниже решение в лоб: сравнивает каждую пару — O(n²). На 10 000 элементах оно работает
-около 3 секунд, а тест скорости даёт 0,2 с. Перепиши, чтобы было O(n) по времени.
-Подумай по шагу 4 метода: что здесь «ищется много раз»? Где искать за O(1)?
-
-ПОСЛЕ РЕШЕНИЯ ответь в чат: сложность по времени и по памяти — до и после.
+Run (from interview_prep/python_course/todo): uv run pytest tests/test_a0.py -k t02
+Теория: interview_prep/python_course/a00_big_o/s07_method/THEORY.md и interview_prep/python_course/a00_big_o/s04_hidden_cost/THEORY.md.
 """
 
 

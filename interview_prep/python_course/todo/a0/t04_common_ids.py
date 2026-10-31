@@ -1,31 +1,28 @@
-"""A0 t04 (основная, 15 мин). Общие id двух выгрузок — ускорить с O(n · m) до O(n + m).
+"""A0 t04 (required, ~15 min). Common ids - optimize O(n * m) to O(n + m).
 
-Теория: interview_prep/python_course/a00_big_o/s07_method/THEORY.md и interview_prep/python_course/a00_big_o/s04_hidden_cost/THEORY.md (пункт 1, `in` по списку).
+Given two lists of ids a and b (e.g. orders from the API and from the database),
+return the ids present in BOTH lists.
 
-ЗАЧЕМ ЭТО
-Типичная задача AQA: сравнить два ответа — например, список ордеров из API и из базы — и
-найти записи, которые есть в обоих. На 100 000 записей решение в лоб считает минуты.
+Requirements:
+- Keep the order of a (by first occurrence).
+- Each id appears in the result once, even if it repeats in a or b.
+- Do not modify the input.
 
-УСЛОВИЕ
-common_ids(a, b) -> list
-- Вернуть id, которые есть И в a, И в b.
-- Порядок — как в a (по первому появлению в a).
-- Каждый id в результате один раз, даже если в a или b он повторяется.
-- Вход не менять.
+Examples:
+    common_ids([3, 1, 2], [2, 3])  -> [3, 2]
+    common_ids([1, 1, 2], [1])     -> [1]
+    common_ids([1, 2], [3, 4])     -> []
+    common_ids([], [1])            -> []
 
-ПРИМЕРЫ (разбор)
-    common_ids([3, 1, 2], [2, 3])       → [3, 2]   # порядок из a: сначала 3, потом 2
-    common_ids([1, 1, 2], [1])          → [1]      # 1 в результате один раз
-    common_ids([1, 2], [3, 4])          → []
-    common_ids([], [1])                 → []
+The code below is a working brute-force solution. It hides two O(n) list
+lookups: `x in b` and `x not in result`. Rewrite it in O(n + m).
 
-ЧТО СЕЙЧАС
-Ниже решение в лоб. В нём ДВА скрытых O(n): `x in b` и `x not in result` — оба по списку.
-Итого O(n · m). Перепиши в O(n + m).
-Подсказка уровня 1: set нужен не один. Подумай, для какой проверки нужен каждый.
+Follow-up questions:
+- Why not just return list(set(a) & set(b))?
+- What is the memory complexity of your solution?
 
-ПОСЛЕ РЕШЕНИЯ ответь в чат: почему нельзя просто вернуть list(set(a) & set(b))? Какая
-сложность по памяти у твоего решения?
+Run (from interview_prep/python_course/todo): uv run pytest tests/test_a0.py -k t04
+Теория: interview_prep/python_course/a00_big_o/s07_method/THEORY.md и interview_prep/python_course/a00_big_o/s04_hidden_cost/THEORY.md.
 """
 
 

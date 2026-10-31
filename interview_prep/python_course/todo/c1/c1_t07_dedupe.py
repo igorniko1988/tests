@@ -1,40 +1,30 @@
-"""C1 t07 (классика собеса, 15 мин). Убрать дубли, сохранив порядок.
+"""C1 t07 (required, ~15 min). Remove duplicates, keep order.
 
-Теория: interview_prep/python_course/c01_objects/s09_hashable/THEORY.md (раздел 9). Использует готовую freeze из freeze_helper.py рядом с задачей.
+Given a list of values from a JSON response, return a new list with duplicates
+removed, keeping the FIRST occurrence and the original order.
 
-ЗАЧЕМ ЭТО
-«Убери дубли, сохранив порядок» — одна из самых частых задач лайвкодинга. В версии
-для AQA элементы — записи из JSON-ответа (словари), и обычный set(items) падает:
-TypeError: unhashable type: 'dict'.
+Requirements:
+- Items may be unhashable: dicts and lists (so set(items) fails with TypeError).
+- Dicts are equal regardless of key order; [1, 2] and [2, 1] are different values.
+- Return the ORIGINAL objects, not copies (the test checks with `is`).
+- Time complexity O(n). Tests use 20 000 items.
+- You may use the ready helper: `from freeze_helper import freeze` - it turns
+  dicts/lists/sets into hashable frozensets/tuples.
 
-ПОЧЕМУ НЕ list(set(items))
-1) set не хранит порядок элементов;
-2) set не принимает dict и list.
+Examples:
+    dedupe([3, 1, 3, 2, 1])                       -> [3, 1, 2]
+    dedupe([{"id": 1}, {"id": 2}, {"id": 1}])     -> [{"id": 1}, {"id": 2}]
+    dedupe([[1, 2], [1, 2], [2, 1]])              -> [[1, 2], [2, 1]]
+    dedupe([{"a": 1, "b": 2}, {"b": 2, "a": 1}])  -> [{"a": 1, "b": 2}]
+    dedupe([])                                    -> []
 
-ПОЧЕМУ НЕ `if item not in result`
-Работает, но `in` для списка перебирает его целиком — это O(n) на каждый элемент,
-итого O(n²). На 20 000 записей это уже заметно. Нужно O(n): проверка «видели ли мы
-такое раньше» должна быть за O(1), а это умеет только set (или dict).
+Follow-up questions:
+- Why not list(set(items))?
+- Why is `if item not in result` O(n^2)?
+- What are the time and memory complexity of your solution?
 
-ИДЕЯ
-Храним рядом с результатом множество seen — «что уже видели». Но в set нельзя положить
-dict... зато можно положить его замороженную версию: freeze(obj) превращает dict, list и set
-в хешируемые frozenset и tuple (готова в freeze_helper.py, это задача t06). Импорт:
-    from freeze_helper import freeze
-
-ЧТО НУЖНО
-Оставь первое вхождение каждого значения, сохрани исходный порядок.
-Возвращай ИСХОДНЫЕ элементы, а не замороженные копии (тест проверяет через is).
-
-dedupe([3, 1, 3, 2, 1])                       -> [3, 1, 2]
-dedupe([{"id": 1}, {"id": 2}, {"id": 1}])     -> [{"id": 1}, {"id": 2}]
-dedupe([[1, 2], [1, 2], [2, 1]])              -> [[1, 2], [2, 1]]   # [2, 1] — другое значение
-dedupe([{"a": 1, "b": 2}, {"b": 2, "a": 1}])  -> [{"a": 1, "b": 2}] # словари равны
-dedupe([])                                    -> []
-
-После решения назови сложность по времени и памяти.
-
-Проверка (из папки interview_prep/python_course/todo):  uv run pytest -k c1_t07
+Run (from interview_prep/python_course/todo): uv run pytest -k c1_t07
+Теория: interview_prep/python_course/c01_objects/s09_hashable/THEORY.md, раздел 9.
 """
 
 

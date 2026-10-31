@@ -1,18 +1,21 @@
-"""A0 t01 «Оцени сложность» — 10 фрагментов, для каждого время и память.
+"""A0 t01 (required, ~20 min). Estimate the complexity.
 
-Теория: interview_prep/python_course/a00_big_o/s04_hidden_cost/THEORY.md (скрытая сложность), interview_prep/python_course/a00_big_o/s03_python_ops/THEORY.md (цены операций),
-interview_prep/python_course/a00_big_o/s05_memory/THEORY.md (память).
+For each of the 10 functions below, write its worst-case time and EXTRA memory
+complexity in ANSWERS as "O(time) / O(memory)", e.g. "O(n) / O(1)".
 
-КАК ОТВЕЧАТЬ
-В ANSWERS внизу впиши для каждого фрагмента строку «O(время) / O(память)», например "O(n) / O(1)".
-- n — длина входа; если входов два (a и b) — n = len(a), m = len(b): "O(n·m)" или "O(n + m)".
-- Память — только ДОПОЛНИТЕЛЬНАЯ: то, что функция создала сама (вход не считается).
-  Стек рекурсии считается!
-- Квадрат можно писать O(n^2), O(n²) или O(n*n); логарифм — O(log n), O(n log n).
-- Худший случай.
+Rules:
+- n is the input length; with two inputs a and b use n = len(a), m = len(b):
+  "O(n*m)" or "O(n + m)".
+- Memory is only what the function allocates itself (the input does not count).
+  The recursion stack DOES count.
+- Squares: O(n^2), O(n²) or O(n*n); logs: O(log n), O(n log n).
+- Pass mark: 8 of 10 on the first try.
 
-Проверка (из папки interview_prep/python_course/todo):  uv run python a0/t01_estimate.py
-Скрипт сверит и объяснит каждый ответ. Зачёт: 8 из 10 с первой попытки.
+Follow-up questions:
+- Which "O(1)-looking" lines are actually O(n) here?
+
+Run (from interview_prep/python_course/todo): uv run python a0/t01_estimate.py
+Теория: interview_prep/python_course/a00_big_o/s04_hidden_cost/THEORY.md, s03_python_ops/THEORY.md, s05_memory/THEORY.md.
 """
 
 from collections import Counter
@@ -130,4 +133,6 @@ if __name__ == "__main__":
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
     from drill import run_estimate
 
-    run_estimate(ANSWERS, __file__)
+    # ключ ответов лежит в уроке: a00_big_o/solutions/estimate_key.py
+    lesson_file = Path(__file__).resolve().parents[2] / "a00_big_o" / "s04_hidden_cost" / "t01_estimate.py"
+    run_estimate(ANSWERS, str(lesson_file))

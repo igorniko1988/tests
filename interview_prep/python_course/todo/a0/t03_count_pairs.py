@@ -1,30 +1,25 @@
-"""A0 t03 (основная, 15 мин). Сколько пар даёт нужную сумму — ускорить с O(n²) до O(n).
+"""A0 t03 (required, ~15 min). Count pairs with target sum - optimize O(n^2) to O(n).
 
-Теория: interview_prep/python_course/a00_big_o/s07_method/THEORY.md (пример two sum — тот же приём).
+Given a list of integers nums and an integer target, return the number of index
+pairs i < j such that nums[i] + nums[j] == target.
+Numbers may repeat and may be negative. Do not modify the input.
 
-ЗАЧЕМ ЭТО
-Родственник two sum, самой частой задачи собеса. Отличие: не найти одну пару, а посчитать
-все. Это проверяет, понял ли ты приём «помню, что уже видел», или просто выучил two sum.
+Examples:
+    count_pairs([1, 2, 3, 4], 5)   -> 2    # (1, 4) and (2, 3)
+    count_pairs([3, 3, 3], 6)      -> 3    # index pairs (0,1), (0,2), (1,2)
+    count_pairs([1, 1], 3)         -> 0
+    count_pairs([], 0)             -> 0
+    count_pairs([-1, 1, 0, 0], 0)  -> 2
 
-УСЛОВИЕ
-count_pairs(nums, target) -> int
-- Пара — это два РАЗНЫХ индекса i < j, такие что nums[i] + nums[j] == target.
-- Вернуть количество таких пар. Числа могут повторяться, могут быть отрицательными.
-- Вход не менять.
+The code below is a working brute-force solution over all pairs, O(n^2).
+Rewrite it in O(n) time.
 
-ПРИМЕРЫ (разбор)
-    count_pairs([1, 2, 3, 4], 5)   → 2    # (1, 4) и (2, 3)
-    count_pairs([3, 3, 3], 6)      → 3    # индексы (0,1), (0,2), (1,2) — каждая пара троек
-    count_pairs([1, 1], 3)         → 0
-    count_pairs([], 0)             → 0
-    count_pairs([-1, 1, 0, 0], 0)  → 2    # (-1, 1) и (0, 0)
+Follow-up questions:
+- Why does [3, 3, 3] give 3, not 6 or 9?
+- Time and memory complexity before and after?
 
-ЧТО СЕЙЧАС
-Ниже решение в лоб — все пары, O(n²). Перепиши в O(n).
-Подсказка уровня 1: идём слева направо; для текущего x нужно знать, СКОЛЬКО раз уже
-встречалось число target - x. Где хранить «сколько раз встречалось»?
-
-ПОСЛЕ РЕШЕНИЯ ответь в чат: почему [3, 3, 3] даёт 3, а не 6 и не 9? Сложность до и после.
+Run (from interview_prep/python_course/todo): uv run pytest tests/test_a0.py -k t03
+Теория: interview_prep/python_course/a00_big_o/s07_method/THEORY.md (пример two sum).
 """
 
 

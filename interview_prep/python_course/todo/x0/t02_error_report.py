@@ -1,25 +1,29 @@
-"""X0 t02 (практика AQA, 25 минут). Отчёт по ошибкам из лога.
+"""X0 t02 (~25 min). Error report from a log.
 
-На вход — список строк лога вида:
+You get a list of log lines like:
     "2026-10-28T10:00:00 ERROR orders Timeout to price-feed"
-    дата-время, уровень, сервис, сообщение (сообщение может содержать пробелы).
+    timestamp, level, service, message (the message may contain spaces).
 
-Верни список пар (service, count) по строкам с уровнем ERROR:
-- отсортирован по count по убыванию;
-- при равном count — по имени сервиса по алфавиту;
-- не больше top пар (top по умолчанию 3).
+Return a list of (service, count) pairs for lines with level ERROR:
+- sorted by count descending;
+- ties broken by service name alphabetically;
+- at most `top` pairs (default 3).
+Skip empty lines and lines with fewer than four parts.
 
-Пустые строки и строки, где меньше четырёх частей, пропускай.
+Example:
+    error_report([
+        "2026-10-28T10:00:00 ERROR orders Timeout to price-feed",
+        "2026-10-28T10:00:01 INFO orders Created 42",
+        "2026-10-28T10:00:02 ERROR auth Bad token",
+        "2026-10-28T10:00:03 ERROR orders Insufficient funds",
+        "",
+    ]) -> [("orders", 2), ("auth", 1)]
 
-error_report([
-    "2026-10-28T10:00:00 ERROR orders Timeout to price-feed",
-    "2026-10-28T10:00:01 INFO orders Created 42",
-    "2026-10-28T10:00:02 ERROR auth Bad token",
-    "2026-10-28T10:00:03 ERROR orders Insufficient funds",
-    "",
-]) -> [("orders", 2), ("auth", 1)]
+Follow-up questions:
+- Why split(maxsplit=3)?
+- What is the complexity of your solution?
 
-Проверка (из папки interview_prep/python_course/todo):  uv run pytest tests/test_x0.py -k t02
+Run (from interview_prep/python_course/todo): uv run pytest tests/test_x0.py -k t02
 """
 
 

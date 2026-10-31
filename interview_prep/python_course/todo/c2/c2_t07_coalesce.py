@@ -1,31 +1,24 @@
-"""C2 t07 (разминка, 5 мин). Первое значение, которое не None.
+"""C2 t07 (required, ~5 min). Coalesce: first value that is not None.
 
-Теория: interview_prep/python_course/c02_numbers_strings/s07_truthy/THEORY.md (раздел 7: ловушка `x or default`).
+A framework config takes a value "from the argument, else from the environment,
+else the default". Implement coalesce(*values, default=None).
 
-ЗАЧЕМ ЭТО
-В конфиге фреймворка значение берут «из аргумента, иначе из переменной окружения, иначе
-по умолчанию». Если сделать это через or, то timeout=0 или пустой префикс "" молча
-заменятся значением по умолчанию. Это реальный баг тестовых фреймворков.
+Requirements:
+- Return the first value that is NOT None - even if it is falsy (0, "", [], False).
+- If all values are None, or there are no values, return default.
 
-УСЛОВИЕ
-coalesce(*values, default=None) -> значение
-- Вернуть первое из values, которое НЕ None — даже если оно falsy (0, "", [], False).
-- Если все None или values пусто — вернуть default.
+Examples:
+    coalesce(None, 0, 5)        -> 0
+    coalesce(None, "", "x")     -> ""
+    coalesce(None, None)        -> None
+    coalesce(None, default=1)   -> 1
+    coalesce(False, True)       -> False
 
-ПРИМЕРЫ (разбор)
-    coalesce(None, 0, 5)          → 0       # 0 — не None, его и возвращаем
-    coalesce(None, "", "x")       → ""
-    coalesce(None, None)          → None
-    coalesce(None, default=1)     → 1
-    coalesce(False, True)         → False
+Follow-up questions:
+- What does `None or 0 or 5` return, and why is `or` wrong here?
 
-ТЕРМИНЫ
-- *values — все позиционные аргументы собираются в кортеж (подробно в C4).
-- default=None после *values — аргумент, который можно передать только по имени.
-
-ПОСЛЕ РЕШЕНИЯ ответь в чат: что вернёт `None or 0 or 5` и почему это не годится здесь?
-
-Проверка (из папки interview_prep/python_course/todo):  uv run pytest -k c2_t07
+Run (from interview_prep/python_course/todo): uv run pytest -k c2_t07
+Теория: interview_prep/python_course/c02_numbers_strings/s07_truthy/THEORY.md, раздел 7.
 """
 
 

@@ -1,38 +1,31 @@
-"""C1 t01 (разминка, 5 мин). Почини аргумент по умолчанию.
+"""C1 t01 (required, ~5 min). Fix the mutable default argument.
 
-Теория: interview_prep/python_course/c01_objects/s07_default_arg/THEORY.md (раздел 7). В визуализаторе — пример «Аргумент по умолчанию».
-
-ЗАЧЕМ ЭТО В РАБОТЕ
-В тестовом фреймворке полно хелперов вида «добавь тег / роль / заголовок».
-Если такой хелпер написан с [] по умолчанию, теги одного теста «протекают» в другой,
-и тесты начинают зависеть от порядка запуска.
-
-ЧТО СЕЙЧАС НЕ ТАК
-Хелпер написан так:
+This helper is used across the test framework, and tags from one test leak into another:
 
     def add_tag(tag, tags=[]):
         tags.append(tag)
         return tags
 
-Список [] создаётся ОДИН раз — когда Python выполняет строку def — и хранится внутри
-функции (add_tag.__defaults__). Все вызовы без второго аргумента получают этот самый список:
+    add_tag("smoke")  -> ["smoke"]
+    add_tag("api")    -> ["smoke", "api"]   # bug: expected ["api"]
 
-    add_tag("smoke")   # общий список стал ["smoke"]
-    add_tag("api")     # ТОТ ЖЕ список стал ["smoke", "api"]  ← баг
+Fix it so that:
+- every call WITHOUT a list gets its own new empty list;
+- if a list IS passed, append to that same list and return it
+  (an empty list [] passed by the caller counts as "passed").
 
-ЧТО НУЖНО
-Перепиши функцию так, чтобы:
-- каждый вызов БЕЗ списка получал свой новый пустой список:
-      add_tag("smoke") -> ["smoke"]
-      add_tag("api")   -> ["api"]
-- если список ПЕРЕДАЛИ, добавляем в него же (это ожидаемое поведение — вызывающий
-  сам дал свой список) и возвращаем его же:
-      mine = ["ui"]
-      add_tag("x", mine) -> ["ui", "x"], и mine теперь тоже ["ui", "x"]
-- осторожно: пустой переданный список [] — это тоже «передали». Подумай, почему
-  проверка `if not tags:` здесь была бы ошибкой (подсказка: `not []` == True).
+Examples:
+    add_tag("smoke")       -> ["smoke"]
+    add_tag("api")         -> ["api"]
+    mine = ["ui"]
+    add_tag("x", mine)     -> ["ui", "x"]   # and mine is ["ui", "x"] too
 
-Проверка (из папки interview_prep/python_course/todo):  uv run pytest -k c1_t01
+Follow-up questions:
+- Why does the original version share one list between calls?
+- Why would `if not tags:` be wrong instead of `if tags is None:`?
+
+Run (from interview_prep/python_course/todo): uv run pytest -k c1_t01
+Теория: interview_prep/python_course/c01_objects/s07_default_arg/THEORY.md, раздел 7.
 """
 
 

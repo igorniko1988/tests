@@ -1,17 +1,20 @@
-"""X0 t01 (алгоритм, 20 минут). Первый неповторяющийся символ.
+"""X0 t01 (~20 min). First unique character.
 
-Верни индекс первого символа строки, который встречается в ней ровно один раз.
-Если такого нет — верни -1.
+Given a string s, return the index of the first character that appears in s
+exactly once. If there is no such character, return -1.
+Case matters: "a" and "A" are different characters.
 
-first_unique("leetcode")      -> 0    # "l"
-first_unique("loveleetcode")  -> 2    # "v"
-first_unique("aabb")          -> -1
-first_unique("")              -> -1
+Examples:
+    first_unique("leetcode")      -> 0    # "l"
+    first_unique("loveleetcode")  -> 2    # "v"
+    first_unique("aabb")          -> -1
+    first_unique("")              -> -1
 
-Регистр важен: "a" и "A" — разные символы.
-Засеки время. После решения назови сложность по времени и памяти.
+Follow-up questions:
+- What are the time and memory complexity of your solution?
+- Why is s.count(ch) inside the loop a bad idea?
 
-Проверка (из папки interview_prep/python_course/todo):  uv run pytest tests/test_x0.py -k t01
+Run (from interview_prep/python_course/todo): uv run pytest tests/test_x0.py -k t01
 """
 
 
