@@ -1,6 +1,7 @@
 import copy
 import importlib
 import inspect
+import time
 from decimal import Decimal
 
 import pytest
@@ -84,8 +85,12 @@ def test_c1_t07_returns_original_objects():
 
 
 def test_c1_t07_linear_enough():
-    items = [{"id": i % 1000} for i in range(20000)]
-    assert len(load("c1_t07_dedupe").dedupe(items)) == 1000
+    # 20 000 разных записей: решение `if item not in result` — O(n²), около 10 с
+    items = [{"id": i} for i in range(20_000)] * 2
+    start = time.perf_counter()
+    assert len(load("c1_t07_dedupe").dedupe(items)) == 20_000
+    spent = time.perf_counter() - start
+    assert spent < 1, f"{spent:.2f} с — похоже на O(n²), нужно O(n)"
 
 
 
