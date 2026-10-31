@@ -19,4 +19,11 @@ Run (from interview_prep/python_course/todo): uv run pytest tests/test_x0.py -k 
 
 
 def first_unique(s: str) -> int:
-    raise NotImplementedError
+    for index, char in enumerate(s):
+        if s.count(char) == 1:
+            return index
+    return -1
+
+print( first_unique("") )
+
+
