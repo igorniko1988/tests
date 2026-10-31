@@ -31,8 +31,11 @@ def loose(text: str) -> str:
 
 
 def load_solution(drills_file: str, name: str):
-    path = Path(drills_file).resolve().parents[1] / "solutions" / f"{name}.py"
-    if not path.exists():
+    # solutions/ ищем рядом с файлом (урок без разделов), потом уровнем выше (урок с разделами sNN_*)
+    here = Path(drills_file).resolve()
+    candidates = [base / "solutions" / f"{name}.py" for base in (here.parents[0], here.parents[1])]
+    path = next((c for c in candidates if c.exists()), None)
+    if path is None:
         return None
     spec = importlib.util.spec_from_file_location(name, path)
     module = importlib.util.module_from_spec(spec)
