@@ -26,4 +26,11 @@ Run (from interview_prep/python_course/todo): uv run pytest -k c2_t04
 
 
 def is_palindrome(s: str) -> bool:
-    raise NotImplementedError
+    edited_string = ''.join([ch.lower() for ch in s if ch.isalnum()])
+    print(edited_string)
+    reversed_string = edited_string[::-1]
+    print(reversed_string)
+    return edited_string == reversed_string
+
+
+print( is_palindrome("А роза упала на лапу Азора") )
