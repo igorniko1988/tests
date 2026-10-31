@@ -26,6 +26,24 @@ Run (from interview_prep/python_course/todo): uv run pytest tests/test_c3.py -k 
 Теория: interview_prep/python_course/c03_collections/s05_counter_defaultdict/THEORY.md, раздел 5.
 """
 
+from collections import defaultdict
 
 def group_orders(orders: list[dict]) -> dict[str, list[int]]:
-    raise NotImplementedError
+    status_dict = defaultdict(list)
+    for order in orders:
+        status_dict[order['status']].append(order['id'])
+    #     if not order['status'] in status_dict:
+    #         status_dict[order['status']] = []
+    #         status_dict[order['status']].append(order['id'])
+    #     else:
+    #         status_dict[order['status']].append(order['id'])
+    #
+    return dict(status_dict)
+
+
+orders = [
+        {"id": 1, "status": "NEW"},
+        {"id": 2, "status": "FILLED"},
+        {"id": 3, "status": "NEW"},
+    ]
+print(group_orders(orders))
