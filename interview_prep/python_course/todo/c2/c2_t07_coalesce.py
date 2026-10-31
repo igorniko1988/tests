@@ -23,4 +23,9 @@ Run (from interview_prep/python_course/todo): uv run pytest -k c2_t07
 
 
 def coalesce(*values, default=None):
-    raise NotImplementedError
+    for value in values:
+        if value is not None:
+            return value
+    return default
+
+print(  coalesce(None, default=1))
