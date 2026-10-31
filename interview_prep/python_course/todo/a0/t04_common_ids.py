@@ -1,6 +1,6 @@
 """A0 t04 (основная, 15 мин). Общие id двух выгрузок — ускорить с O(n · m) до O(n + m).
 
-Теория: THEORY.md в этой папке и ../s04_hidden_cost/THEORY.md (пункт 1, `in` по списку).
+Теория: interview_prep/python_course/a00_big_o/s07_method/THEORY.md и interview_prep/python_course/a00_big_o/s04_hidden_cost/THEORY.md (пункт 1, `in` по списку).
 
 ЗАЧЕМ ЭТО
 Типичная задача AQA: сравнить два ответа — например, список ордеров из API и из базы — и

@@ -135,6 +135,6 @@ print(sorted(data, key=lambda x: -x[1])[0])
 Все команды — из папки `interview_prep/python_course/c03_collections`.
 
 - **Упражнения:** `drills.py` в этой папке. Проверка: `uv run python s07_sorting/drills.py`
-- **Задача t07 `sort_records`** — по убыванию суммы (строки → Decimal), при равенстве по имени,
+- **Задача t07 `sort_records`** (`interview_prep/python_course/todo/c3/t07_sort_records.py`) — по убыванию суммы (строки → Decimal), при равенстве по имени,
   записи без суммы — в конце. Проверка: `uv run pytest -k t07`
 - **Quiz урока:** №14, №15.

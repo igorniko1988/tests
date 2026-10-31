@@ -22,8 +22,8 @@ Follow-up questions:
 - Why defaultdict(list) and not defaultdict([])?
 - Why convert to dict(...) if a defaultdict compares equal to a dict anyway?
 
-Run: uv run pytest -k t05
-Теория: THEORY.md в этой папке, раздел 5.
+Run (from interview_prep/python_course/todo): uv run pytest tests/test_c3.py -k t05
+Теория: interview_prep/python_course/c03_collections/s05_counter_defaultdict/THEORY.md, раздел 5.
 """
 
 

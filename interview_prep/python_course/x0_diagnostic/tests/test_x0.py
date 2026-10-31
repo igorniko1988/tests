@@ -1,11 +1,34 @@
 import importlib
+import importlib.util
 import os
+import sys
+from pathlib import Path
 
 import pytest
 
 SRC = os.environ.get("SRC", "tasks")
-t01 = importlib.import_module(f"{SRC}.t01_first_unique")
-t02 = importlib.import_module(f"{SRC}.t02_error_report")
+# Обязательные задачи вынесены в todo/<модуль>; если файл там — берём его.
+TODO = Path(__file__).resolve().parents[2] / "todo" / "x0"
+
+
+def load_file(path):
+    name = f"todo_{path.parent.name}_{path.stem}"
+    if name not in sys.modules:
+        spec = importlib.util.spec_from_file_location(name, path)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[name] = module
+        spec.loader.exec_module(module)
+    return sys.modules[name]
+
+
+def load(name):
+    if SRC == "tasks" and (TODO / f"{name}.py").exists():
+        return load_file(TODO / f"{name}.py")
+    return importlib.import_module(f"{SRC}.{name}")
+
+
+t01 = load("t01_first_unique")
+t02 = load("t02_error_report")
 
 
 @pytest.mark.parametrize(

@@ -31,7 +31,7 @@ order_total(lines, fee_percent="0") -> str
 
 ПОСЛЕ РЕШЕНИЯ ответь в чат: что изменится, если сделать Decimal(19.99) вместо Decimal("19.99")?
 
-Проверка (из папки priority_c1_c2):  uv run pytest -k c2_t01
+Проверка (из папки interview_prep/python_course/todo):  uv run pytest -k c2_t01
 """
 
 from decimal import Decimal

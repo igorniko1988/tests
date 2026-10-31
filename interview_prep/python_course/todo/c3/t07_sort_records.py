@@ -25,8 +25,8 @@ Follow-up questions:
 - Why does -Decimal(...) work in a sort key, but negation doesn't work for strings?
 - How would you sort by name descending, then by amount ascending?
 
-Run: uv run pytest -k t07
-Теория: THEORY.md в этой папке, раздел 7.
+Run (from interview_prep/python_course/todo): uv run pytest tests/test_c3.py -k t07
+Теория: interview_prep/python_course/c03_collections/s07_sorting/THEORY.md, раздел 7.
 """
 
 

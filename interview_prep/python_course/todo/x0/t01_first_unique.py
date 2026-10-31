@@ -11,7 +11,7 @@ first_unique("")              -> -1
 Регистр важен: "a" и "A" — разные символы.
 Засеки время. После решения назови сложность по времени и памяти.
 
-Проверка:  uv run pytest -k t01
+Проверка (из папки interview_prep/python_course/todo):  uv run pytest tests/test_x0.py -k t01
 """
 
 

@@ -103,6 +103,6 @@ def two_sum(nums, target):
 перепиши его в O(n) по методу выше. Тесты проверяют и правильность, и скорость: решение в лоб
 не уложится в лимит времени.
 
-- **t02 `has_duplicate`** — есть ли повтор. Проверка: `uv run pytest -k t02`
-- **t03 `count_pairs`** — сколько пар даёт сумму target (родственник two sum: тот же приём, но считаем). Проверка: `uv run pytest -k t03`
-- **t04 `common_ids`** — общие id двух выгрузок. Проверка: `uv run pytest -k t04`
+- **t02 `has_duplicate`** — есть ли повтор. Файл — `interview_prep/python_course/todo/a0/`, проверка: `uv run pytest -k t02`
+- **t03 `count_pairs`** — сколько пар даёт сумму target (родственник two sum: тот же приём, но считаем). Файл — `interview_prep/python_course/todo/a0/`, проверка: `uv run pytest -k t03`
+- **t04 `common_ids`** — общие id двух выгрузок. Файл — `interview_prep/python_course/todo/a0/`, проверка: `uv run pytest -k t04`

@@ -19,7 +19,7 @@ error_report([
     "",
 ]) -> [("orders", 2), ("auth", 1)]
 
-Проверка:  uv run pytest -k t02
+Проверка (из папки interview_prep/python_course/todo):  uv run pytest tests/test_x0.py -k t02
 """
 
 

@@ -20,8 +20,8 @@ Follow-up questions:
 - Why does Counter(words).most_common(k) fail the first example?
 - What is the time complexity of your solution?
 
-Run: uv run pytest -k t04
-Теория: THEORY.md в этой папке, раздел 5.
+Run (from interview_prep/python_course/todo): uv run pytest tests/test_c3.py -k t04
+Теория: interview_prep/python_course/c03_collections/s05_counter_defaultdict/THEORY.md, раздел 5.
 """
 
 

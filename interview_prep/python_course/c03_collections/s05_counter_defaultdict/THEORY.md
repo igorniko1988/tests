@@ -185,8 +185,8 @@ Counter при чтении отсутствующего ключа отдаёт
 Все команды — из папки `interview_prep/python_course/c03_collections`.
 
 - **Упражнения:** `drills.py` в этой папке. Проверка: `uv run python s05_counter_defaultdict/drills.py`
-- **Задача t04 `top_words`** — топ-k слов текста без учёта регистра, ничьи по алфавиту.
+- **Задача t04 `top_words`** (`interview_prep/python_course/todo/c3/t04_top_words.py`) — топ-k слов текста без учёта регистра, ничьи по алфавиту.
   Проверка: `uv run pytest -k t04`
-- **Задача t05 `group_orders`** — сгруппировать id ордеров по статусу.
+- **Задача t05 `group_orders`** (`interview_prep/python_course/todo/c3/t05_group_orders.py`) — сгруппировать id ордеров по статусу.
   Проверка: `uv run pytest -k t05`
 - **Quiz урока:** №11, №12.

@@ -116,6 +116,6 @@ print(list(q))
 Все команды — из папки `interview_prep/python_course/c03_collections`.
 
 - **Упражнения:** `drills.py` в этой папке. Проверка: `uv run python s06_deque/drills.py`
-- **Задача t06 `RecentEvents`** — хранить только последние N событий.
+- **Задача t06 `RecentEvents`** (`interview_prep/python_course/todo/c3/t06_recent_events.py`) — хранить только последние N событий.
   Проверка: `uv run pytest -k t06`
 - **Quiz урока:** №13.

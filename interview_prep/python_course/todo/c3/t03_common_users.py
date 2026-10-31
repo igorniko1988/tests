@@ -19,7 +19,7 @@ Follow-up questions:
 - Why doesn't set(a) & set(b) satisfy the requirements?
 - What is the complexity of a nested-loop solution?
 
-Run: uv run pytest -k t03
+Run (from interview_prep/python_course/todo): uv run pytest tests/test_c3.py -k t03
 Теория: THEORY.md в этой папке, раздел 4.
 """
 

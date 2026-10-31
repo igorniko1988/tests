@@ -25,7 +25,7 @@ coalesce(*values, default=None) -> значение
 
 ПОСЛЕ РЕШЕНИЯ ответь в чат: что вернёт `None or 0 or 5` и почему это не годится здесь?
 
-Проверка (из папки priority_c1_c2):  uv run pytest -k c2_t07
+Проверка (из папки interview_prep/python_course/todo):  uv run pytest -k c2_t07
 """
 
 

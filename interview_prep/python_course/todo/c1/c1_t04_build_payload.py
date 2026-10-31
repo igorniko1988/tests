@@ -36,7 +36,7 @@ ORDER["meta"]["tags"] -> ["smoke"]          # шаблон цел
 И ещё одна тонкость: значение из changes тоже не должно «делиться» с вызывающим кодом:
 tags = ["a"]; p = build_payload({}, tags=tags); p["tags"].append("b")  ->  tags всё ещё ["a"].
 
-Проверка (из папки priority_c1_c2):  uv run pytest -k c1_t04
+Проверка (из папки interview_prep/python_course/todo):  uv run pytest -k c1_t04
 """
 
 

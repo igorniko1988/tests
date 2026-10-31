@@ -32,7 +32,7 @@
 - осторожно: пустой переданный список [] — это тоже «передали». Подумай, почему
   проверка `if not tags:` здесь была бы ошибкой (подсказка: `not []` == True).
 
-Проверка (из папки priority_c1_c2):  uv run pytest -k c1_t01
+Проверка (из папки interview_prep/python_course/todo):  uv run pytest -k c1_t01
 """
 
 

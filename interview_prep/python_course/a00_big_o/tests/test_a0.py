@@ -1,7 +1,10 @@
 import importlib
+import importlib.util
 import os
+import sys
 import random
 import time
+from pathlib import Path
 
 import pytest
 
@@ -15,7 +18,23 @@ SECTION = {
 TIME_LIMIT = 0.2  # секунды: O(n) укладывается с запасом, O(n²) — нет
 
 
+# Обязательные задачи вынесены в todo/<модуль>; если файл там — берём его.
+TODO = Path(__file__).resolve().parents[2] / "todo" / "a0"
+
+
+def load_file(path):
+    name = f"todo_{path.parent.name}_{path.stem}"
+    if name not in sys.modules:
+        spec = importlib.util.spec_from_file_location(name, path)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[name] = module
+        spec.loader.exec_module(module)
+    return sys.modules[name]
+
+
 def load(name):
+    if SRC == "tasks" and (TODO / f"{name}.py").exists():
+        return load_file(TODO / f"{name}.py")
     package = SECTION[name] if SRC == "tasks" else SRC
     return importlib.import_module(f"{package}.{name}")
 

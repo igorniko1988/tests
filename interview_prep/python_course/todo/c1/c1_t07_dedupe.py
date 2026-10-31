@@ -1,6 +1,6 @@
 """C1 t07 (классика собеса, 15 мин). Убрать дубли, сохранив порядок.
 
-Теория: interview_prep/python_course/c01_objects/s09_hashable/THEORY.md (раздел 9). Использует готовую freeze из freeze_helper.py в этой папке.
+Теория: interview_prep/python_course/c01_objects/s09_hashable/THEORY.md (раздел 9). Использует готовую freeze из freeze_helper.py рядом с задачей.
 
 ЗАЧЕМ ЭТО
 «Убери дубли, сохранив порядок» — одна из самых частых задач лайвкодинга. В версии
@@ -34,7 +34,7 @@ dedupe([])                                    -> []
 
 После решения назови сложность по времени и памяти.
 
-Проверка (из папки priority_c1_c2):  uv run pytest -k c1_t07
+Проверка (из папки interview_prep/python_course/todo):  uv run pytest -k c1_t07
 """
 
 

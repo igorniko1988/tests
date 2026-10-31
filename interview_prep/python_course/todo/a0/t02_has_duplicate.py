@@ -1,6 +1,6 @@
 """A0 t02 (разминка, 10 мин). Есть ли в списке повтор — ускорить с O(n²) до O(n).
 
-Теория: THEORY.md в этой папке (метод решения) и ../s04_hidden_cost/THEORY.md (скрытая сложность).
+Теория: interview_prep/python_course/a00_big_o/s07_method/THEORY.md (метод решения) и interview_prep/python_course/a00_big_o/s04_hidden_cost/THEORY.md (скрытая сложность).
 
 ЗАЧЕМ ЭТО
 Классика собеса (LeetCode «Contains Duplicate»). В работе — проверить, что в ответе API

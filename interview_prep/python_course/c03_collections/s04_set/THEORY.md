@@ -145,6 +145,6 @@ print(len(a | set(b)), a & set(b), a.union(b) == a | set(b))
 Все команды — из папки `interview_prep/python_course/c03_collections`.
 
 - **Упражнения:** `drills.py` в этой папке. Проверка: `uv run python s04_set/drills.py`
-- **Задача t03 `common_users`** — пользователи, которые есть в обоих ответах API, за O(n + m).
+- **Задача t03 `common_users`** (`interview_prep/python_course/todo/c3/t03_common_users.py`) — пользователи, которые есть в обоих ответах API, за O(n + m).
   Проверка: `uv run pytest -k t03`
 - **Quiz урока:** №9, №10.

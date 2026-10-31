@@ -24,8 +24,8 @@ Example:
 Follow-up questions:
 - Why not a list with pop(0) when it is full?
 
-Run: uv run pytest -k t06
-Теория: THEORY.md в этой папке, раздел 6.
+Run (from interview_prep/python_course/todo): uv run pytest tests/test_c3.py -k t06
+Теория: interview_prep/python_course/c03_collections/s06_deque/THEORY.md, раздел 6.
 """
 
 

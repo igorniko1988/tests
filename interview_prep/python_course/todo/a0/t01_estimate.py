@@ -1,7 +1,7 @@
 """A0 t01 «Оцени сложность» — 10 фрагментов, для каждого время и память.
 
-Теория: THEORY.md в этой папке (скрытая сложность), ../s03_python_ops/THEORY.md (цены операций),
-../s05_memory/THEORY.md (память).
+Теория: interview_prep/python_course/a00_big_o/s04_hidden_cost/THEORY.md (скрытая сложность), interview_prep/python_course/a00_big_o/s03_python_ops/THEORY.md (цены операций),
+interview_prep/python_course/a00_big_o/s05_memory/THEORY.md (память).
 
 КАК ОТВЕЧАТЬ
 В ANSWERS внизу впиши для каждого фрагмента строку «O(время) / O(память)», например "O(n) / O(1)".
@@ -11,7 +11,7 @@
 - Квадрат можно писать O(n^2), O(n²) или O(n*n); логарифм — O(log n), O(n log n).
 - Худший случай.
 
-Проверка (из папки a00_big_o):  uv run python s04_hidden_cost/t01_estimate.py
+Проверка (из папки interview_prep/python_course/todo):  uv run python a0/t01_estimate.py
 Скрипт сверит и объяснит каждый ответ. Зачёт: 8 из 10 с первой попытки.
 """
 

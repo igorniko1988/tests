@@ -36,6 +36,7 @@
 
 - Упражнения: `uv run python s01_list/drills.py` (сверит и объяснит).
 - Задачи: `uv run pytest -k t01`. Условие — в начале файла задачи.
+  Обязательные t03–t07 перенесены в `interview_prep/python_course/todo/c3/` — решать там.
 - Quiz: `uv run python quiz.py all` — ответы в ANSWERS до запуска.
 
 `solutions/` — эталон и объяснения к упражнениям, не открывать до решения.
