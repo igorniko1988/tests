@@ -24,4 +24,22 @@ Run (from interview_prep/python_course/week1_core): uv run pytest -k a1_t06
 
 
 def compress(s: str) -> str:
-    raise NotImplementedError
+    if not s:
+        return ''
+    parts = []
+    char = s[0]
+    count = 1
+    for ch in s[1:]:
+        if ch == char:
+            count +=1
+        else:
+            parts.append(f'{char}{count}')
+            char = ch
+            count = 1
+
+    parts.append(f'{char}{count}')
+
+    return ''.join(parts)
+
+
+print(compress("aaab") )

@@ -22,4 +22,15 @@ Run (from interview_prep/python_course/week1_core): uv run pytest -k a1_t04
 
 
 def max_profit(prices: list[int]) -> int:
-    raise NotImplementedError
+    min_price = float('inf')
+    max_price = 0
+    for price in prices:
+        if price < min_price:
+            min_price = price
+        profit = price - min_price
+        if profit > max_price:
+            max_price = profit
+    return max_price
+
+print(max_profit([7, 1, 5, 3, 6, 4]))
+

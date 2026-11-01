@@ -19,4 +19,12 @@ Run (from interview_prep/python_course/week1_core): uv run pytest -k a2_t02
 
 
 def is_anagram(a: str, b: str) -> bool:
-    raise NotImplementedError
+    def count(s: str) -> dict:
+        counts = {}
+        for ch in s:
+            counts[ch] = counts.get(ch, 0) + 1
+        return counts
+
+    return count(a) == count(b)
+
+print(is_anagram("aab", "abb") )
