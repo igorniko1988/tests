@@ -1,6 +1,6 @@
 import pytest
 
-from ui_framework.utils.waiting import wait_until
+from framework.utils.waiting import wait_until
 
 
 def test_condition_true_on_third_attempt():

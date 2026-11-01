@@ -66,12 +66,13 @@ markers = [
     'unit: без стенда, проверяют код фреймворка (ставится по папке tests/unit)',
     'api: через HTTP/WS к стенду (ставится по папке tests/api)',
     'ui: через браузер (ставится по папке tests/ui)',
-    'smoke: quick checks',
-    'balance: deposit money before test'
+    'e2e: данные через API, проверка в браузере (ставится по папке tests/e2e)',
+    'smoke: самые важные сценарии — гоняются на каждый PR',
+    'balance: пополнить баланс перед UI-тестом, например balance(USDT="100")',
 ]
 
 [tool.ruff]
-line-length = 100
+line-length = 120
 target-version = "py313"
 
 [tool.ruff.lint]

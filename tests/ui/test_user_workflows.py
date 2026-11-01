@@ -1,9 +1,9 @@
-from playwright.sync_api import Page, expect
-from ui_framework.data.models import OrderData
 import allure
 import pytest
-from dataclasses import asdict
-from ui_framework.utils.money import format_amount
+from playwright.sync_api import expect
+
+from framework.api.models.order import CreateOrder
+from framework.utils.money import format_amount
 
 
 @allure.epic('Биржа')
@@ -11,6 +11,7 @@ from ui_framework.utils.money import format_amount
 @allure.story('Регистрация')
 @allure.title('Регистрация с валидными данными открывает кабинет')
 @allure.severity(allure.severity_level.BLOCKER)
+@pytest.mark.smoke
 def test_user_can_register_with_valid_credentials(app, credentials):
     app.auth_page.open().fill_credentials(credentials['email'], credentials['password']).click_register()
     app.dashboard_page.wait_loaded()
@@ -36,6 +37,7 @@ def test_register_with_invalid_credentials(app, email, password):
 @allure.story('Пополнение')
 @allure.title('Пополнение USDT увеличивает доступный баланс')
 @allure.severity(allure.severity_level.CRITICAL)
+@pytest.mark.smoke
 def test_check_deposit_money_success(logged_user):
     dashboard = logged_user.dashboard_page
 
@@ -63,10 +65,10 @@ def test_place_order_with_not_enough_balance(logged_user):
 @allure.severity(allure.severity_level.CRITICAL)
 @pytest.mark.balance(USDT='1000')
 def test_place_order_with_enough_balance(logged_user):
-    order_data = OrderData(price='100.5', quantity='2')
+    order_data = CreateOrder(price='100.5', quantity='2')
     dashboard = logged_user.dashboard_page
 
-    response = dashboard.order_form.place(**asdict(order_data))
+    response = dashboard.order_form.place(order_data.side, order_data.price, order_data.quantity, order_data.symbol)
 
     with allure.step('Проверить, что стоимость ордера заблокирована'):
         assert response.ok, response.text()
@@ -124,14 +126,3 @@ def test_deposit_invalid_amount(logged_user, amount):
         assert not response.ok, response.text()
         expect(dashboard.balances.available('USDT')).to_have_text('0')
 
-
-@allure.epic('Биржа')
-@allure.feature('Авторизация')
-@allure.title('Браузер открывается залогиненным по токену из API')
-def test_browser_logged_in_by_token(create_api, login_in_browser):
-    api, email = create_api()
-
-    app = login_in_browser(api, email)
-
-    expect(app.dashboard_page.header.email).to_have_text(email)
-    expect(app.auth_page.auth_form).to_be_hidden()

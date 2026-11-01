@@ -1,9 +1,13 @@
 import uuid
+from decimal import Decimal
+
 import pytest
-from framework.models.balance import Balance
-from framework.models.order import Order, CreateOrder
+
+from framework.api.models.balance import Balance
+from framework.api.models.order import CreateOrder, Order
 
 
+@pytest.mark.smoke
 def test_create_order(auth_api):
     auth_api.balances.deposit('USDT',100)
     order = auth_api.orders.create(CreateOrder())
@@ -63,8 +67,8 @@ def test_cancel_orders(auth_api):
     balances = auth_api.balances.get_balance()
 
     usdt = next(Balance.model_validate(b) for b in balances.json() if b['asset'] == 'USDT')
-    assert usdt.available == '200'
-    assert usdt.locked == '0'
+    assert usdt.available == Decimal('200')
+    assert usdt.locked == Decimal('0')
     assert auth_api.orders.cancel(created.id).status_code == 409
 
 
