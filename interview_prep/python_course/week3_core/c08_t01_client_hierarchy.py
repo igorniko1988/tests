@@ -32,8 +32,29 @@ Run (from interview_prep/python_course/week3_core): uv run pytest -k c08_t01
 
 class BaseClient:
     def __init__(self, base_url: str, session) -> None:
-        raise NotImplementedError
+        self.base_url = base_url
+        self.session = session
+
+    def headers(self) -> dict:
+        return {"Accept": "application/json"}
+
+    def request(self, method: str, path: str, **kwargs):
+        # self.headers() — полиморфизм: у наследника вызовется его версия
+        return self.session.request(method, self.base_url + path, headers=self.headers(), **kwargs)
 
 
 class UsersClient(BaseClient):
-    pass
+    def __init__(self, base_url: str, session, token: str) -> None:
+        super().__init__(base_url, session)  # родитель сохранит base_url и session
+        self.token = token
+
+    def headers(self) -> dict:
+        result = super().headers()  # заголовки родителя + свой
+        result["Authorization"] = f"Bearer {self.token}"
+        return result
+
+    def get_user(self, user_id):
+        return self.request("GET", f"/users/{user_id}")
+
+    def create_user(self, **fields):
+        return self.request("POST", "/users", json=fields)
