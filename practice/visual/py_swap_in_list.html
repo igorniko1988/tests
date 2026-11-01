@@ -1,0 +1,273 @@
+<title>Обмен в списке</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: одна колонка — выбор примера, код + состояние рядом, пояснение, история */
+:root {
+  --bg: #f5f7fa; --panel: #ffffff; --fg: #1d2430; --muted: #5d6878; --line: #d9dfe8;
+  --accent: #2f6fb3; --accent-soft: #e3eefa;
+  --read: #b7791f; --read-soft: #fdf1dc;
+  --write: #2f855a; --write-soft: #e1f4ea;
+  --bad: #c53030; --bad-soft: #fde4e4;
+  --code-bg: #f0f3f7;
+  --body: "Golos Text", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12161c; --panel: #1a2029; --fg: #e4e9f0; --muted: #98a3b3; --line: #2e3744;
+  --accent: #6ea8e6; --accent-soft: #1f3247; --read: #e0a84a; --read-soft: #3a2e17;
+  --write: #5fc28d; --write-soft: #17352a; --bad: #f07575; --bad-soft: #3d1c1c; --code-bg: #151a22; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #12161c; --panel: #1a2029; --fg: #e4e9f0; --muted: #98a3b3; --line: #2e3744;
+  --accent: #6ea8e6; --accent-soft: #1f3247; --read: #e0a84a; --read-soft: #3a2e17;
+  --write: #5fc28d; --write-soft: #17352a; --bad: #f07575; --bad-soft: #3d1c1c; --code-bg: #151a22; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 980px; margin: 0 auto; padding-block: 24px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 16px; }
+h1 { font-size: 26px; margin: 0; text-wrap: balance; }
+.lead { color: var(--muted); margin: 0; max-width: 68ch; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; min-width: 0; }
+.label { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 8px; }
+.tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+.tabs button, .ctrl button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg);
+  border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+.tabs button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+.tabs button.err[aria-pressed="true"] { background: var(--bad); border-color: var(--bad); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 720px) { .grid2 { grid-template-columns: 1fr; } }
+pre.code { margin: 0; font-family: var(--mono); font-size: 14px; background: var(--code-bg); border-radius: 6px; padding: 8px 0; overflow-x: auto; }
+.code .ln { display: block; padding: 2px 12px; white-space: pre; border-left: 3px solid transparent; }
+.code .ln.cur { background: var(--accent-soft); border-left-color: var(--accent); }
+.code .ln.cur.bad { background: var(--bad-soft); border-left-color: var(--bad); }
+.cells { display: flex; flex-wrap: wrap; gap: 10px; }
+.cell { min-width: 64px; text-align: center; border: 2px solid var(--line); border-radius: 8px; padding: 6px 8px; background: var(--panel); transition: background .2s, border-color .2s; }
+.cell .v { font-family: var(--mono); font-size: 22px; font-weight: 600; }
+.cell .k { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.cell .tag { font-size: 11px; font-weight: 700; min-height: 16px; }
+.cell.read { border-color: var(--read); background: var(--read-soft); } .cell.read .tag { color: var(--read); }
+.cell.write { border-color: var(--write); background: var(--write-soft); } .cell.write .tag { color: var(--write); }
+.cell.bad { border-color: var(--bad); background: var(--bad-soft); } .cell.bad .tag { color: var(--bad); }
+.tmp { margin-top: 14px; font-family: var(--mono); font-size: 15px; padding: 8px 10px; border: 1px dashed var(--read); border-radius: 6px; background: var(--read-soft); }
+.tmp[hidden] { display: none !important; }
+.subst { margin-top: 10px; font-family: var(--mono); font-size: 14px; color: var(--muted); overflow-x: auto; white-space: pre; }
+.ctrl { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ctrl .count { color: var(--muted); font-variant-numeric: tabular-nums; margin-left: auto; }
+.msg { font-size: 16px; max-width: 72ch; }
+.msg.bad { color: var(--bad); }
+.msg code, .lead code, .note code { font-family: var(--mono); font-size: .92em; background: var(--code-bg); padding: 1px 4px; border-radius: 4px; }
+.hist { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+td.mono { font-family: var(--mono); white-space: nowrap; font-variant-numeric: tabular-nums; }
+tr.now td { background: var(--accent-soft); }
+tr.bad td { color: var(--bad); }
+.own { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+.own label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+.own input { font-family: var(--mono); font-size: 14px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--fg); width: 180px; max-width: 100%; }
+.own input.small { width: 64px; }
+.err-text { color: var(--bad); font-size: 13px; min-height: 18px; }
+.note { color: var(--muted); font-size: 14px; }
+.note a { color: var(--accent); }
+@media (prefers-reduced-motion: reduce) { .cell { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header style="display:grid;gap:6px">
+    <h1>Обмен в списке: <code style="font-family:var(--mono);font-size:.8em">nums[write], nums[i] = nums[i], nums[write]</code></h1>
+    <p class="lead">Python делает обмен в два хода: сначала <b>читает</b> всю правую часть и запоминает значения,
+      потом <b>записывает</b> их по очереди в левую часть. Поэтому ничего не теряется.</p>
+  </header>
+
+  <section class="panel">
+    <div class="label">Пример</div>
+    <div class="tabs" id="tabs"></div>
+  </section>
+
+  <div class="grid2">
+    <section class="panel">
+      <div class="label">Код</div>
+      <pre class="code" id="code"></pre>
+      <div class="subst" id="subst"></div>
+    </section>
+    <section class="panel">
+      <div class="label">Состояние</div>
+      <div class="cells" id="cells"></div>
+      <div class="tmp" id="tmp" hidden></div>
+    </section>
+  </div>
+
+  <section class="panel" style="display:grid;gap:12px">
+    <div class="ctrl">
+      <button id="back" type="button">← Назад</button>
+      <button id="next" type="button">Шаг →</button>
+      <button id="auto" type="button">▶ Авто</button>
+      <button id="reset" type="button">↺ Сначала</button>
+      <span class="count" id="count"></span>
+    </div>
+    <div class="msg" id="msg"></div>
+  </section>
+
+  <section class="panel">
+    <div class="label">Свой пример</div>
+    <form class="own" id="own">
+      <label>список <input id="own-list" value="0, 5, 0, 7"></label>
+      <label>write <input id="own-p" class="small" value="0"></label>
+      <label>i <input id="own-q" class="small" value="1"></label>
+      <button type="submit" style="font:inherit;border:1px solid var(--accent);background:var(--accent);color:var(--panel);border-radius:6px;padding:6px 12px;cursor:pointer">Показать обмен</button>
+    </form>
+    <div class="err-text" id="own-err"></div>
+  </section>
+
+  <section class="panel hist">
+    <div class="label">История шагов</div>
+    <table><thead><tr><th>#</th><th>что делает Python</th><th>состояние</th></tr></thead><tbody id="hist"></tbody></table>
+  </section>
+
+  <p class="note">Весь цикл <code>move_zeros</code> с указателями write и i по шагам — на странице
+    <a href="https://claude.ai/artifact/CgpC6dE6zRLqWFBJ8Ashdd" target="_blank" rel="noopener">Move Zeroes по шагам</a>.
+    Каждая строка «обмен» там — ровно один такой обмен, как здесь.</p>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const clone = (cells) => cells.map((c) => ({ ...c }));
+const show = (cells) => cells.map((c) => c.v).join(", ");
+
+// Обмен двух ячеек: подстановка → чтение правой части → запись первой цели → запись второй.
+function swapSteps({ cells, p, q, codeLines, line, names, isList, pre = [] }) {
+  const steps = [...pre];
+  const [pn, qn] = names;                    // как ячейки называются в коде: "write"/"i" или "a"/"b"
+  const ref = (k) => (isList ? `nums[${k}]` : cells[k].k);
+  const start = clone(cells);
+  steps.push({ line, cells: clone(start), subst: "",
+    msg: `Перед обменом: ${isList ? `<code>${show(start).replace(/^/, "[").replace(/$/, "]")}</code>` : start.map((c) => `<code>${c.k} = ${c.v}</code>`).join(", ")}. Python начинает выполнять строку обмена.`,
+    act: "начало", hl: {} });
+  if (isList) {
+    steps.push({ line, cells: clone(start), hl: { [p]: "write", [q]: "read" },
+      subst: `${ref(p)}, ${ref(q)} = ${ref(q)}, ${ref(p)}`,
+      msg: `Подставляем номера: <code>${pn} = ${p}</code>, <code>${qn} = ${q}</code>. Строка превращается в <code>${ref(p)}, ${ref(q)} = ${ref(q)}, ${ref(p)}</code>. Это просто «поменяй местами ячейки ${p} и ${q}».`,
+      act: `подставить номера: ${ref(p)}, ${ref(q)} = ${ref(q)}, ${ref(p)}` });
+  }
+  const tmp = [start[q].v, start[p].v];
+  steps.push({ line, cells: clone(start), hl: { [p]: "read", [q]: "read" }, tmp,
+    subst: `${ref(p)}, ${ref(q)} = ${tmp[0]}, ${tmp[1]}`,
+    msg: `<b>Ход 1 — читаем правую часть целиком.</b> <code>${ref(q)}</code> это ${tmp[0]}, <code>${ref(p)}</code> это ${tmp[1]}. Python запоминает пару <code>(${tmp[0]}, ${tmp[1]})</code> во временном кортеже. Список пока не изменился.`,
+    act: `прочитать правую часть → (${tmp[0]}, ${tmp[1]})` });
+  const mid = clone(start); mid[p].v = tmp[0];
+  steps.push({ line, cells: clone(mid), hl: { [p]: "write" }, tmp,
+    subst: `${ref(p)} = ${tmp[0]}`,
+    msg: `<b>Ход 2 — первое значение пары в первую цель.</b> <code>${ref(p)} = ${tmp[0]}</code>. Значение ${tmp[1]}, которое тут было, не потерялось: оно лежит во временной паре.`,
+    act: `${ref(p)} = ${tmp[0]}` });
+  const end = clone(mid); end[q].v = tmp[1];
+  steps.push({ line, cells: clone(end), hl: { [q]: "write" }, tmp,
+    subst: `${ref(q)} = ${tmp[1]}`,
+    msg: `<b>Ход 3 — второе значение пары во вторую цель.</b> <code>${ref(q)} = ${tmp[1]}</code>. Обмен закончен.`,
+    act: `${ref(q)} = ${tmp[1]}` });
+  steps.push({ line: Math.min(line + 1, codeLines.length - 1), cells: clone(end), hl: {}, subst: "",
+    msg: `Итог: ${isList ? `<code>[${show(end)}]</code>` : end.map((c) => `<code>${c.k} = ${c.v}</code>`).join(", ")}. Ячейки ${isList ? `${p} и ${q}` : `${start[p].k} и ${start[q].k}`} поменялись значениями, остальные не тронуты.`,
+    act: "готово" });
+  return steps;
+}
+
+function listCells(values) { return values.map((v, k) => ({ k: `nums[${k}]`, v })); }
+
+const SCENARIOS = [
+  { id: "vars", title: "1. Две переменные", build() {
+      const code = ["a = 5", "b = 7", "a, b = b, a", "print(a, b)   # 7 5"];
+      return { code, steps: swapSteps({ cells: [{ k: "a", v: 5 }, { k: "b", v: 7 }], p: 0, q: 1, codeLines: code, line: 2, names: ["a", "b"], isList: false }) };
+  } },
+  { id: "list", title: "2. Ячейки списка", build() {
+      const code = ["nums = [10, 20, 30]", "nums[0], nums[2] = nums[2], nums[0]", "print(nums)   # [30, 20, 10]"];
+      return { code, steps: swapSteps({ cells: listCells([10, 20, 30]), p: 0, q: 2, codeLines: code, line: 1, names: ["0", "2"], isList: true }) };
+  } },
+  { id: "zeros", title: "3. Шаг move_zeros", build() {
+      const code = ["nums = [1, 0, 0, 3, 12]", "write, i = 1, 3          # нашли 3 на месте i", "nums[write], nums[i] = nums[i], nums[write]", "write += 1"];
+      const steps = swapSteps({ cells: listCells([1, 0, 0, 3, 12]), p: 1, q: 3, codeLines: code, line: 2, names: ["write", "i"], isList: true });
+      steps[steps.length - 1].msg += " Тройка встала на свободное место <code>write</code>, ноль уехал туда, где была тройка. Дальше <code>write += 1</code>: следующее свободное место — ячейка 2.";
+      return { code, steps };
+  } },
+  { id: "bad", title: "4. Ошибка: по очереди", err: true, build() {
+      const code = ["nums = [1, 0, 0, 3, 12]", "nums[1] = nums[3]     # сначала одно", "nums[3] = nums[1]     # потом другое", "print(nums)   # [1, 3, 0, 3, 12] — ноль пропал"];
+      const a = listCells([1, 0, 0, 3, 12]);
+      const s = [];
+      s.push({ line: 0, cells: clone(a), hl: {}, subst: "", act: "начало", msg: "Попробуем поменять ячейки 1 и 3 двумя обычными присваиваниями, без временной пары." });
+      const b = clone(a); b[1].v = 3;
+      s.push({ line: 1, cells: clone(b), hl: { 3: "read", 1: "write" }, subst: "nums[1] = 3", act: "nums[1] = 3", msg: "<code>nums[1] = nums[3]</code> → в ячейку 1 записали 3. Ноль, который там был, <b>стёрт</b>: его никто не запомнил." });
+      s.push({ line: 2, cells: clone(b), hl: { 1: "read", 3: "write" }, subst: "nums[3] = nums[1]  → nums[1] уже 3", act: "nums[3] = nums[1] → 3", bad: true, msg: "<code>nums[3] = nums[1]</code> читает ячейку 1, а там уже 3, а не 0. В ячейку 3 снова пишется 3." });
+      s.push({ line: 3, cells: clone(b), hl: { 1: "bad", 3: "bad" }, subst: "", act: "ноль потерян", bad: true, msg: "Итог <code>[1, 3, 0, 3, 12]</code>: тройка задвоилась, ноль пропал. Поэтому меняем одной строкой <code>a, b = b, a</code> — Python сам запоминает оба значения до записи." });
+      return { code, steps: s };
+  } },
+];
+
+let scen = SCENARIOS[2], data = null, at = 0, timer = null;
+
+function parseOwn() {
+  const values = $("own-list").value.split(",").map((x) => x.trim()).filter((x) => x !== "");
+  if (values.length < 2 || values.length > 10) return "Нужно от 2 до 10 значений через запятую.";
+  const p = Number($("own-p").value), q = Number($("own-q").value);
+  if (!Number.isInteger(p) || !Number.isInteger(q) || p < 0 || q < 0 || p >= values.length || q >= values.length)
+    return `Номера write и i должны быть от 0 до ${values.length - 1}.`;
+  const code = [`nums = [${values.join(", ")}]`, `write, i = ${p}, ${q}`, "nums[write], nums[i] = nums[i], nums[write]", "print(nums)"];
+  return { title: "Свой пример", code, steps: swapSteps({ cells: listCells(values), p, q, codeLines: code, line: 2, names: ["write", "i"], isList: true }) };
+}
+
+function renderTabs() {
+  $("tabs").innerHTML = "";
+  SCENARIOS.forEach((s) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.textContent = s.title; if (s.err) b.className = "err";
+    b.setAttribute("aria-pressed", String(s === scen));
+    b.onclick = () => { scen = s; load(s.build()); renderTabs(); };
+    $("tabs").appendChild(b);
+  });
+}
+
+function load(d) { stop(); data = d; at = 0; render(); }
+
+function render() {
+  const st = data.steps[at];
+  $("code").innerHTML = data.code.map((l, k) =>
+    `<span class="ln${k === st.line ? " cur" + (st.bad ? " bad" : "") : ""}">${l.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</span>`).join("");
+  $("subst").textContent = st.subst ? "сейчас: " + st.subst : "";
+  const tags = { read: "читаем", write: "пишем", bad: "ошибка" };
+  $("cells").innerHTML = st.cells.map((c, k) => {
+    const h = st.hl[k] || "";
+    return `<div class="cell ${h}"><div class="tag">${tags[h] || ""}</div><div class="v">${c.v}</div><div class="k">${c.k}</div></div>`;
+  }).join("");
+  $("tmp").hidden = !st.tmp;
+  if (st.tmp) $("tmp").innerHTML = `временная пара (правая часть) = (${st.tmp[0]}, ${st.tmp[1]})`;
+  $("msg").innerHTML = st.msg; $("msg").className = "msg" + (st.bad ? " bad" : "");
+  $("count").textContent = `шаг ${at + 1} из ${data.steps.length}`;
+  $("back").disabled = at === 0; $("next").disabled = at === data.steps.length - 1;
+  $("hist").innerHTML = data.steps.slice(0, at + 1).map((s, k) =>
+    `<tr class="${k === at ? "now" : ""} ${s.bad ? "bad" : ""}"><td class="mono">${k + 1}</td><td>${s.act}</td><td class="mono">[${show(s.cells)}]</td></tr>`).join("");
+}
+
+function step(d) { const n = at + d; if (n >= 0 && n < data.steps.length) { at = n; render(); } }
+function stop() { clearInterval(timer); timer = null; $("auto").textContent = "▶ Авто"; }
+$("next").onclick = () => { stop(); step(1); };
+$("back").onclick = () => { stop(); step(-1); };
+$("reset").onclick = () => { stop(); at = 0; render(); };
+$("auto").onclick = () => {
+  if (timer) return stop();
+  if (at === data.steps.length - 1) at = 0;
+  $("auto").textContent = "❚❚ Пауза";
+  timer = setInterval(() => { if (at >= data.steps.length - 1) return stop(); step(1); }, 1600);
+};
+document.addEventListener("keydown", (e) => {
+  if (e.target.tagName === "INPUT") return;
+  if (e.key === "ArrowRight") { stop(); step(1); }
+  if (e.key === "ArrowLeft") { stop(); step(-1); }
+});
+$("own").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const r = parseOwn();
+  if (typeof r === "string") { $("own-err").textContent = r; return; }
+  $("own-err").textContent = ""; scen = null; renderTabs(); load(r);
+});
+
+renderTabs(); load(scen.build());
+</script>

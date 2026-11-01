@@ -49,3 +49,4 @@
 | Метрики: счётчик стенда → Prometheus → PromQL → Grafana, алерт при отказе | `practice/visual/metrics_prometheus_grafana.html` | https://claude.ai/artifact/Lg7t7zzf4ZLaqby32JrvUd |
 | Метрики: атлас проблем — CPU, память, пулы, зависимости, диск, сеть на графиках | `practice/visual/metrics_problem_atlas.html` | https://claude.ai/artifact/T6EDrCurrTBEKVqBWm4jCb |
 | Python C1: имена и объекты, +=, копии, аргумент по умолчанию, передача в функцию | `interview_prep/python_course/c01_objects/visual/objects_refs.html` | https://claude.ai/artifact/TzYJP1PWSAMPkEiyaZNHLh |
+| Python: обмен в списке `a, b = b, a` (к move_zeros) и ошибка обмена по очереди | `practice/visual/py_swap_in_list.html` | https://claude.ai/artifact/HdhRdMWtjaATBbcU7zns3Y |
