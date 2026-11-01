@@ -23,4 +23,9 @@ Run (from interview_prep/python_course/week1_core): uv run pytest -k a1_t01
 
 
 def reverse_words(s: str) -> str:
-    raise NotImplementedError
+    edited_words = s.split()
+    return ' '.join(edited_words[::-1])
+
+
+
+print(reverse_words("  hello   world  ") )
