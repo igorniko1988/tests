@@ -3,16 +3,7 @@
 **Смысл темы.** На проекте много микросервисов, внешние зависимости заменены моками, тесты — API e2e на
 Python + behave. Нужно уметь объяснить: что такое BDD и Gherkin, как устроен behave (feature → steps →
 context → environment.py), что такое e2e для API и зачем моки, как это запускается в CI на AWS и как
-выглядит отчёт. Рабочий пример на нашем стенде — папка `bdd/` (запуск ниже), его стоит прогнать и
-прочитать до собеса.
-
-```bash
-docker compose up -d
-cd bdd
-PYTHONPATH=.. uv run --with behave behave                 # всё
-PYTHONPATH=.. uv run --with behave behave --tags=smoke    # только @smoke
-PYTHONPATH=.. uv run --with behave behave features/orders.feature:13   # один сценарий по строке
-```
+выглядит отчёт. Пример на нашем стенде пишешь сам по шагам в папке `bdd/` (разбор в чате).
 
 **План на 2 часа:** разделы 1–4 (BDD и behave) → прогнать `bdd/` и прочитать шаги → раздел 6 (e2e и
 моки) → раздел 10 (ответы, проговорить вслух по-английски).
