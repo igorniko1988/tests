@@ -2,7 +2,7 @@ from decimal import Decimal
 
 import pytest
 
-from ui_framework.utils.money import format_amount
+from framework.utils.money import format_amount
 
 
 @pytest.mark.parametrize(

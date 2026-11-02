@@ -1,5 +1,6 @@
-from framework.contract import assert_matches_schema
-from framework.models.order import Order, CreateOrder
+from framework.api.contract import assert_matches_schema
+from framework.api.models.order import CreateOrder
+
 
 def test_create_order_matches_openapi(auth_api):
     auth_api.balances.deposit('USDT','100')

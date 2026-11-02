@@ -1,12 +1,14 @@
 import pytest
-from framework.models.auth import User
+
+from framework.api.models.auth import Profile
 
 
+@pytest.mark.smoke
 def test_me_returns_current_user(auth_api, credentials):
     r = auth_api.auth.me()
 
     assert r.status_code == 200
-    User.model_validate(r.json())
+    Profile.model_validate(r.json())
     assert r.json()['email'] == credentials['email']
 
 

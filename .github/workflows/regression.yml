@@ -1,0 +1,64 @@
+# Уровень 2 — после merge в main: полная регрессия всех слоёв в Chromium и общий Allure-отчёт.
+# Если упало — main сломан, чиним первым делом.
+name: regression
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: regression-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  ENV: dev
+  BASE_URL: http://localhost:8080
+  PYTEST_ADDOPTS: -o addopts=-ra
+
+jobs:
+  unit-api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: uv run pytest -m "unit or api" -v --alluredir=allure-results
+      - name: Логи стенда при падении
+        if: failure()
+        run: docker compose logs exchange
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: allure-unit-api
+          path: allure-results/
+          retention-days: 14
+
+  ui-e2e:
+    needs: unit-api
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+        with:
+          browser: chromium
+      - run: >
+          uv run pytest -m "ui or e2e" -v --browser chromium
+          --tracing retain-on-failure --screenshot only-on-failure --alluredir=allure-results
+      - name: Логи стенда при падении
+        if: failure()
+        run: docker compose logs exchange
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: allure-ui-e2e
+          path: |
+            allure-results/
+            test-results/
+          retention-days: 14
+
+  report:
+    needs: [unit-api, ui-e2e]
+    if: always()                      # отчёт собираем и когда тесты упали
+    uses: ./.github/workflows/allure-report.yml

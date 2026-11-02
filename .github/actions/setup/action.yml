@@ -1,0 +1,37 @@
+# Общая подготовка джобы: Python-окружение, по желанию браузер и стенд.
+# Вызывается из workflow после actions/checkout:  - uses: ./.github/actions/setup
+name: setup
+description: uv + зависимости, браузер Playwright и стенд «мини-биржа» по запросу
+
+inputs:
+  browser:
+    description: "Браузер Playwright (chromium, firefox, webkit); пусто — без браузера"
+    default: ""
+  stand:
+    description: "Поднять стенд через docker compose (true/false)"
+    default: "true"
+
+runs:
+  using: composite
+  steps:
+    - uses: astral-sh/setup-uv@v6
+      with:
+        enable-cache: true
+
+    - name: Зависимости
+      shell: bash
+      run: uv sync --frozen
+
+    - name: Браузер ${{ inputs.browser }}
+      if: inputs.browser != ''
+      shell: bash
+      run: uv run playwright install --with-deps ${{ inputs.browser }}
+
+    - name: Стенд из кода этого коммита
+      if: inputs.stand == 'true'
+      shell: bash
+      run: |
+        docker compose up -d --build
+        for i in $(seq 1 30); do curl -sf "$BASE_URL/health" && exit 0; sleep 2; done
+        docker compose logs exchange
+        exit 1

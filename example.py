@@ -1,16 +1,32 @@
-events = [
-    {"sensor_id": "cam-1",   "seq": 1, "ts": "2026-10-28T10:00:00.000"},
-    {"sensor_id": "cam-1",   "seq": 2, "ts": "2026-10-28T10:00:00.100"},
-    {"sensor_id": "cam-1",   "seq": 5, "ts": "2026-10-28T10:00:00.400"},
-    {"sensor_id": "radar-7", "seq": 1, "ts": "2026-10-28T10:00:00.050"},
-    {"sensor_id": "radar-7", "seq": 1, "ts": "2026-10-28T10:00:00.051"},
-]
+import requests
 
-filtered_events = {}
+class BaseClient:
+    def __init__(self, base_url: str, timeout: float =10.0):
+        self.base_url = base_url
+        self.timeout = timeout
+        self.session = requests.Session()
+        self.session.headers.update({'Accept':'application/json'})
 
-for event in events:
-    for k,v in event.items():
-        if k == 'seq':
-            filtered_events[k] = filtered_events.get(k, 0 ) + 1
+    def request(self, method, path, **kwargs):
+        kwargs.setdefault('timeout', self.timeout)
+        return self.session.request(method, f'{self.base_url}{path}',**kwargs)
 
-print(filtered_events)
+    def get(self, path, **kwargs):
+        return self.request('GET', path, **kwargs)
+
+    def post(self, path, **kwargs):
+        return self.request('POST', path, **kwargs)
+
+    def set_token(self, token):
+        self.session.headers.update({'Authorizatio': f'Bearer {token}'})
+
+    def clear_token(self):
+        self.session.headers.pop('Authorization')
+
+class AuthClient(BaseClient):
+
+    def register(self, email, password):
+        return self.post('/users', json={'email': email, 'password': password})
+
+    def authorize(self, email, password):
+        return self.post('/user/auth', json={'email': email, 'password': password})

@@ -1,6 +1,5 @@
 from playwright.sync_api import expect
 
-
 # --- а) ошибка формы ордера ---
 
 def test_order_with_empty_price_shows_form_error(logged_user):

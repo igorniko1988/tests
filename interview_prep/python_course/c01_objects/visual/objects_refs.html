@@ -1,0 +1,333 @@
+<title>Имена и объекты Python</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: сверху выбор примера; слева код + пояснение, справа «память»: имена (кадры) и объекты со стрелками; внизу вывод и история */
+:root {
+  --bg: #f4f6f9; --surface: #ffffff; --fg: #17202b; --muted: #5c6878; --line: #d9dfe8;
+  --accent: #2f5fa7; --accent-soft: #e3ecf8; --chg: #b07a12; --chg-soft: #fbf0d6;
+  --trap: #b4374f; --trap-soft: #fae6ea; --arrow: #2f5fa7; --cur: #fff3c4;
+  --f-body: "Onest", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #10151c; --surface: #18202a; --fg: #e3e8ef; --muted: #98a3b2; --line: #2b3543;
+  --accent: #7aa7ec; --accent-soft: #1d2b40; --chg: #e2b04a; --chg-soft: #3a2f16;
+  --trap: #ec8399; --trap-soft: #3b1d25; --arrow: #7aa7ec; --cur: #3a3418; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #10151c; --surface: #18202a; --fg: #e3e8ef; --muted: #98a3b2; --line: #2b3543;
+  --accent: #7aa7ec; --accent-soft: #1d2b40; --chg: #e2b04a; --chg-soft: #3a2f16;
+  --trap: #ec8399; --trap-soft: #3b1d25; --arrow: #7aa7ec; --cur: #3a3418; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 48px; }
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 16px; }
+h1 { font-size: 24px; margin: 0; text-wrap: balance; }
+.sub { color: var(--muted); margin: 0; max-width: 70ch; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.tabs button, .ctrl button { font: inherit; font-size: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+.tabs button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.ctrl { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ctrl .count { font-family: var(--f-mono); font-size: 13px; color: var(--muted); margin-left: auto; font-variant-numeric: tabular-nums; }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button:disabled { opacity: .45; cursor: default; }
+.main { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 16px; align-items: start; }
+@media (max-width: 820px) { .main { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px; display: grid; gap: 10px; min-width: 0; }
+.label { font-family: var(--f-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.code { font-family: var(--f-mono); font-size: 13.5px; overflow-x: auto; }
+.code div { white-space: pre; padding: 1px 8px 1px 0; border-radius: 4px; display: flex; }
+.code .ln { color: var(--muted); width: 2.4em; text-align: right; padding-right: 10px; flex: none; user-select: none; }
+.code .cur { background: var(--cur); }
+.code .cur .ln { color: var(--fg); font-weight: 600; }
+.note { border-left: 3px solid var(--accent); padding: 6px 10px; background: var(--accent-soft); border-radius: 0 6px 6px 0; }
+.note.trap { border-color: var(--trap); background: var(--trap-soft); }
+.note .badge { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--trap); margin-bottom: 2px; }
+.out { font-family: var(--f-mono); font-size: 13px; white-space: pre-wrap; min-height: 1.5em; }
+.out .err { color: var(--trap); }
+.mem { position: relative; display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 28px; min-height: 160px; }
+@media (max-width: 520px) { .mem { grid-template-columns: minmax(0, 1fr); gap: 20px; } }
+.col { display: grid; gap: 12px; align-content: start; min-width: 0; position: relative; z-index: 1; }
+.frame { border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.frame .fh { font-size: 12px; font-weight: 600; padding: 4px 8px; background: var(--bg); border-bottom: 1px solid var(--line); }
+.var { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 4px 8px; font-family: var(--f-mono); font-size: 13px; border-top: 1px solid var(--line); }
+.var:first-of-type { border-top: 0; }
+.slot { min-width: 26px; min-height: 22px; display: inline-flex; align-items: center; justify-content: center; padding: 0 6px; border: 1px dashed var(--line); border-radius: 4px; }
+.slot.ref::after { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--arrow); }
+.chg { background: var(--chg-soft); }
+.obj { border: 1.5px solid var(--line); border-radius: 6px; background: var(--surface); display: inline-grid; justify-self: start; max-width: 100%; }
+.obj.chg { border-color: var(--chg); }
+.obj .oh { font-family: var(--f-mono); font-size: 11px; color: var(--muted); padding: 2px 8px; border-bottom: 1px solid var(--line); display: flex; gap: 8px; justify-content: space-between; }
+.cells { display: flex; flex-wrap: wrap; }
+.cell { display: grid; justify-items: center; padding: 3px 6px; border-right: 1px solid var(--line); font-family: var(--f-mono); font-size: 13px; gap: 2px; }
+.cell:last-child { border-right: 0; }
+.cell .ix { font-size: 10px; color: var(--muted); }
+.cell.chg .slot { border-color: var(--chg); border-style: solid; }
+.empty { font-family: var(--f-mono); font-size: 12px; color: var(--muted); padding: 6px 10px; }
+svg.arrows { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 2; }
+svg.arrows path { fill: none; stroke: var(--arrow); stroke-width: 1.6; opacity: .85; }
+svg.arrows marker path { fill: var(--arrow); stroke: none; }
+.legend { font-size: 12px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 4px; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+td.mono { font-family: var(--f-mono); white-space: nowrap; }
+tr.now td { background: var(--cur); }
+tr.trap td:first-child { box-shadow: inset 3px 0 0 var(--trap); }
+tr { cursor: pointer; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <h1>Имена и объекты Python</h1>
+  <p class="sub">Слева код и пояснение к шагу, справа память: имена в кадрах и объекты, на которые они ссылаются. Жёлтым выделено то, что изменилось на этом шаге, красной полосой — ловушки собеса. Числа и строки для краткости нарисованы прямо в ячейке, хотя это тоже ссылки на неизменяемые объекты.</p>
+  <div class="tabs" id="tabs" role="group" aria-label="Примеры"></div>
+  <div class="ctrl">
+    <button type="button" id="bStart">⏮ Сначала</button>
+    <button type="button" id="bPrev">← Назад</button>
+    <button type="button" id="bNext">Шаг →</button>
+    <button type="button" id="bAuto">▶ Авто</button>
+    <span class="count" id="count"></span>
+  </div>
+  <div class="main">
+    <div class="panel">
+      <span class="label">Код</span>
+      <div class="code" id="code"></div>
+      <div class="note" id="note"></div>
+      <span class="label">Вывод</span>
+      <div class="out" id="out"></div>
+    </div>
+    <div class="panel">
+      <span class="label">Память</span>
+      <div class="mem" id="mem">
+        <div class="col" id="frames"></div>
+        <div class="col" id="objs"></div>
+        <svg class="arrows" id="svg"></svg>
+      </div>
+      <div class="legend"><span><i style="background:var(--chg-soft);border:1px solid var(--chg)"></i>изменилось на этом шаге</span><span><i style="background:var(--arrow);border-radius:50%"></i>ссылка на объект</span></div>
+    </div>
+  </div>
+  <div class="panel">
+    <span class="label">История шагов (кликни по строке, чтобы перейти)</span>
+    <div class="table-wrap"><table><thead><tr><th>#</th><th>Строка</th><th>Что произошло</th><th>Вывод</th></tr></thead><tbody id="hist"></tbody></table></div>
+  </div>
+</div>
+
+<script>
+// Состояние: frames [{name, vars:{имя: {ref}|{v}}}], objs {id: {type, cells:[{v}|{ref}|{label,...}]}}
+const G = "Глобальные имена";
+const R = id => ({ ref: id });
+const V = v => ({ v: String(v) });
+
+const EXAMPLES = [
+{ title: "Два имени — один список", code: [
+  "a = [1, 2]", "b = a", "b.append(3)", "print(a, a is b)"],
+  steps: [
+  { line: 1, short: "создан список, a → он", note: "Создаётся объект list, и имя a привязывается к нему. Переменная не «содержит» список, она на него указывает.",
+    do: s => { s.objs.o1 = { type: "list", cells: [V(1), V(2)] }; s.frames[0].vars.a = R("o1"); } },
+  { line: 2, short: "b → тот же список", trap: true, note: "b = a ничего не копирует. Теперь два имени указывают на ОДИН объект. Это главная ловушка темы.",
+    do: s => { s.frames[0].vars.b = R("o1"); } },
+  { line: 3, short: "список изменён через b", note: "append меняет сам объект. Изменение видно через любое имя, указывающее на него, в том числе через a.",
+    do: s => { s.objs.o1.cells.push(V(3)); } },
+  { line: 4, short: "print", out: "[1, 2, 3] True", note: "a видит [1, 2, 3]. a is b — True: это один и тот же объект (одинаковый id)." },
+]},
+{ title: "+ против +=", code: [
+  "a = [1]", "b = a", "a = a + [2]", "print(a, b)", "", "c = [1]", "d = c", "c += [2]", "print(c, d)"],
+  steps: [
+  { line: 1, short: "a → [1]", note: "Создан список [1], a указывает на него.", do: s => { s.objs.o1 = { type: "list", cells: [V(1)] }; s.frames[0].vars.a = R("o1"); } },
+  { line: 2, short: "b → тот же", note: "b указывает на тот же список.", do: s => { s.frames[0].vars.b = R("o1"); } },
+  { line: 3, short: "+ создал НОВЫЙ список", note: "a + [2] всегда создаёт новый список. Затем имя a переклеивается на него. b по-прежнему указывает на старый [1].",
+    do: s => { s.objs.o2 = { type: "list", cells: [V(1), V(2)] }; s.frames[0].vars.a = R("o2"); } },
+  { line: 4, short: "print", out: "[1, 2] [1]", note: "Разные объекты — разный вывод." },
+  { line: 6, short: "c → [1]", note: "Второй эксперимент: новый список, c на него.", do: s => { s.objs.o3 = { type: "list", cells: [V(1)] }; s.frames[0].vars.c = R("o3"); } },
+  { line: 7, short: "d → тот же", note: "d указывает на тот же список, что c.", do: s => { s.frames[0].vars.d = R("o3"); } },
+  { line: 8, short: "+= расширил ТОТ ЖЕ список", trap: true, note: "Для списка += вызывает __iadd__ и меняет объект на месте. Новый объект НЕ создаётся, поэтому d тоже видит [1, 2]. Для tuple и str += создал бы новый объект.",
+    do: s => { s.objs.o3.cells.push(V(2)); } },
+  { line: 9, short: "print", out: "[1, 2] [1, 2]", note: "c и d — один объект." },
+]},
+{ title: "Кортеж и +=", code: [
+  "t = (1, [2])", "try:", "    t[1] += [3]", "except TypeError:", "    print(\"TypeError\")", "print(t)"],
+  steps: [
+  { line: 1, short: "кортеж со ссылкой на список", note: "Кортеж хранит две ссылки: на число 1 и на список [2]. Неизменяем сам набор ссылок, а не объекты внутри.",
+    do: s => { s.objs.o2 = { type: "list", cells: [V(2)] }; s.objs.o1 = { type: "tuple", cells: [V(1), R("o2")] }; s.frames[0].vars.t = R("o1"); } },
+  { line: 3, short: "действие 1: список расширен", trap: true, note: "t[1] += [3] — это два действия. Первое: t[1].__iadd__([3]) расширяет список на месте. Оно проходит успешно.",
+    do: s => { s.objs.o2.cells.push(V(3)); } },
+  { line: 3, short: "действие 2: t[1] = … → TypeError", trap: true, note: "Второе действие: присвоить результат обратно в t[1]. Кортеж неизменяем — TypeError. Но список уже изменён!", err: true,
+    out: "(исключение TypeError: 'tuple' object does not support item assignment)" },
+  { line: 5, short: "except ловит", out: "TypeError", note: "Исключение поймано." },
+  { line: 6, short: "print(t)", out: "(1, [2, 3])", note: "Кортеж «не изменился» (те же две ссылки), а список внутри изменился. Классический вопрос «что выведет»." },
+]},
+{ title: "Поверхностная и глубокая копия", code: [
+  "import copy", "src = [[1, 2], [3]]", "shallow = src.copy()", "deep = copy.deepcopy(src)", "src[0].append(99)", "print(shallow[0], deep[0])"],
+  steps: [
+  { line: 2, short: "src: внешний и два внутренних", note: "Внешний список хранит ссылки на два внутренних списка.",
+    do: s => { s.objs.o2 = { type: "list", cells: [V(1), V(2)] }; s.objs.o3 = { type: "list", cells: [V(3)] }; s.objs.o1 = { type: "list", cells: [R("o2"), R("o3")] }; s.frames[0].vars.src = R("o1"); } },
+  { line: 3, short: "shallow: новый внешний, те же внутренние", trap: true, note: "Поверхностная копия создаёт новый ВНЕШНИЙ список, но кладёт в него те же ссылки. Внутренние списки общие с src.",
+    do: s => { s.objs.o4 = { type: "list", cells: [R("o2"), R("o3")] }; s.frames[0].vars.shallow = R("o4"); } },
+  { line: 4, short: "deep: всё новое", note: "Глубокая копия рекурсивно копирует и внутренние списки. Ничего общего с src.",
+    do: s => { s.objs.o6 = { type: "list", cells: [V(1), V(2)] }; s.objs.o7 = { type: "list", cells: [V(3)] }; s.objs.o5 = { type: "list", cells: [R("o6"), R("o7")] }; s.frames[0].vars.deep = R("o5"); } },
+  { line: 5, short: "меняем внутренний список src", note: "src[0] — это объект, на который смотрят и src, и shallow.",
+    do: s => { s.objs.o2.cells.push(V(99)); } },
+  { line: 6, short: "print", out: "[1, 2, 99] [1, 2]", note: "shallow увидел изменение (общий внутренний список), deep — нет. Поэтому шаблоны тел запросов в тестах копируют глубоко." },
+]},
+{ title: "Ловушка [[0] * 3] * 3", code: [
+  "grid = [[0] * 3] * 3", "grid[0][0] = 1", "print(grid)", "", "good = [[0] * 3 for _ in range(3)]", "good[0][0] = 1", "print(good)"],
+  steps: [
+  { line: 1, short: "три ссылки на ОДНУ строку", trap: true, note: "[0] * 3 даёт строку [0, 0, 0]. Внешний * 3 повторяет ССЫЛКУ на неё три раза. Строка одна.",
+    do: s => { s.objs.o2 = { type: "list", cells: [V(0), V(0), V(0)] }; s.objs.o1 = { type: "list", cells: [R("o2"), R("o2"), R("o2")] }; s.frames[0].vars.grid = R("o1"); } },
+  { line: 2, short: "меняем «первую» строку", note: "grid[0] — это та самая единственная строка.", do: s => { s.objs.o2.cells[0] = V(1); } },
+  { line: 3, short: "print", out: "[[1, 0, 0], [1, 0, 0], [1, 0, 0]]", note: "Все три «строки» — один объект, поэтому изменение видно трижды." },
+  { line: 5, short: "comprehension: три разных строки", note: "Выражение [0] * 3 выполняется заново на каждой итерации — три разных объекта.",
+    do: s => { s.objs.o4 = { type: "list", cells: [V(0), V(0), V(0)] }; s.objs.o5 = { type: "list", cells: [V(0), V(0), V(0)] }; s.objs.o6 = { type: "list", cells: [V(0), V(0), V(0)] };
+      s.objs.o3 = { type: "list", cells: [R("o4"), R("o5"), R("o6")] }; s.frames[0].vars.good = R("o3"); } },
+  { line: 6, short: "меняем первую строку", note: "Меняется только один объект.", do: s => { s.objs.o4.cells[0] = V(1); } },
+  { line: 7, short: "print", out: "[[1, 0, 0], [0, 0, 0], [0, 0, 0]]", note: "Правильно. А [0] * 3 сам по себе безопасен: int неизменяем, менять его на месте нельзя." },
+]},
+{ title: "Аргумент по умолчанию", code: [
+  "def add(item, bucket=[]):", "    bucket.append(item)", "    return bucket", "", "r1 = add(1)", "r2 = add(2)", "print(r1, r2, r1 is r2)"],
+  steps: [
+  { line: 1, short: "def: создан список по умолчанию", trap: true, note: "def выполняется ОДИН раз. В этот момент создаётся список [] и сохраняется в add.__defaults__. Он будет общим для всех вызовов.",
+    do: s => { s.objs.o2 = { type: "list", cells: [] }; s.objs.o1 = { type: "function add", cells: [{ label: "__defaults__[0]", ...R("o2") }] }; s.frames[0].vars.add = R("o1"); } },
+  { line: 5, short: "вызов add(1)", note: "Новый кадр функции. bucket не передан — берётся объект из __defaults__.",
+    do: s => { s.frames.push({ name: "add(1)", vars: { item: V(1), bucket: R("o2") } }); } },
+  { line: 2, short: "append в общий список", note: "Меняется тот самый список из __defaults__.", do: s => { s.objs.o2.cells.push(V(1)); } },
+  { line: 3, short: "return, r1 → список", note: "Кадр функции исчез, r1 указывает на список по умолчанию.",
+    do: s => { s.frames.pop(); s.frames[0].vars.r1 = R("o2"); } },
+  { line: 6, short: "вызов add(2): ТОТ ЖЕ список", trap: true, note: "Новый вызов не создаёт новый список: bucket снова указывает на объект из __defaults__, где уже лежит 1.",
+    do: s => { s.frames.push({ name: "add(2)", vars: { item: V(2), bucket: R("o2") } }); } },
+  { line: 2, short: "append", note: "Теперь в общем списке [1, 2].", do: s => { s.objs.o2.cells.push(V(2)); } },
+  { line: 3, short: "return, r2 → тот же", note: "r1 и r2 — один объект.", do: s => { s.frames.pop(); s.frames[0].vars.r2 = R("o2"); } },
+  { line: 7, short: "print", out: "[1, 2] [1, 2] True", note: "Фикс: bucket=None и внутри if bucket is None: bucket = []. Тогда каждый вызов создаёт свой список." },
+]},
+{ title: "Передача аргумента в функцию", code: [
+  "def change(lst, n):", "    lst.append(1)", "    lst = [0]", "    n += 1", "", "nums, k = [], 5", "change(nums, k)", "print(nums, k)"],
+  steps: [
+  { line: 1, short: "def change", note: "Создан объект-функция.", do: s => { s.objs.o1 = { type: "function change", cells: [] }; s.frames[0].vars.change = R("o1"); } },
+  { line: 6, short: "nums → [], k = 5", note: "Пустой список и число.", do: s => { s.objs.o2 = { type: "list", cells: [] }; s.frames[0].vars.nums = R("o2"); s.frames[0].vars.k = V(5); } },
+  { line: 7, short: "вызов: lst → тот же список", note: "Параметр получает ссылку на ТОТ ЖЕ объект, что и nums. Это call by sharing.",
+    do: s => { s.frames.push({ name: "change()", vars: { lst: R("o2"), n: V(5) } }); } },
+  { line: 2, short: "мутация видна снаружи", trap: true, note: "append меняет общий объект — nums увидит изменение.", do: s => { s.objs.o2.cells.push(V(1)); } },
+  { line: 3, short: "lst переклеен на новый список", trap: true, note: "Присваивание параметру меняет только ЛОКАЛЬНОЕ имя lst. nums по-прежнему указывает на старый список.",
+    do: s => { s.objs.o3 = { type: "list", cells: [V(0)] }; s.frames[1].vars.lst = R("o3"); } },
+  { line: 4, short: "n += 1 — только локально", note: "int неизменяем: n теперь указывает на 6, k снаружи остался 5.", do: s => { s.frames[1].vars.n = V(6); } },
+  { line: 4, short: "возврат: кадр исчез, [0] — мусор", note: "Кадр функции удалён. На список [0] больше никто не ссылается — сборщик его удалит.",
+    do: s => { s.frames.pop(); delete s.objs.o3; } },
+  { line: 8, short: "print", out: "[1] 5", note: "Ответ на собесе: аргументы передаются по ссылке на объект. Мутация видна снаружи, переприсваивание — нет." },
+]},
+];
+
+const $ = id => document.getElementById(id);
+let ex = 0, pos = 0, states = [], timer = null;
+
+function build(e) {
+  const out = [{ frames: [{ name: G, vars: {} }], objs: {}, out: [] }];
+  for (const st of e.steps) {
+    const s = structuredClone(out[out.length - 1]);
+    if (st.do) st.do(s);
+    if (st.out) s.out.push({ text: st.out, err: !!st.err });
+    out.push(s);
+  }
+  return out;
+}
+
+function esc(t) { return String(t).replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])); }
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
+function slot(val, src, changed) {
+  if (!val) return `<span class="slot"></span>`;
+  if (val.ref) return `<span class="slot ref${changed ? " chg" : ""}" data-src="${val.ref}" id="${src}"></span>`;
+  return `<span class="slot${changed ? " chg" : ""}">${esc(val.v)}</span>`;
+}
+
+function render() {
+  const e = EXAMPLES[ex];
+  const s = states[pos], prev = states[Math.max(0, pos - 1)];
+  const step = pos > 0 ? e.steps[pos - 1] : null;
+  $("code").innerHTML = e.code.map((l, i) => `<div class="${step && step.line === i + 1 ? "cur" : ""}"><span class="ln">${i + 1}</span><span>${esc(l) || " "}</span></div>`).join("");
+  const note = $("note");
+  note.className = "note" + (step && step.trap ? " trap" : "");
+  note.innerHTML = step ? (step.trap ? `<span class="badge">Ловушка</span><br>` : "") + esc(step.note)
+    : "Нажми «Шаг →» или стрелку вправо. Код выполняется по одному действию за шаг.";
+  $("out").innerHTML = s.out.map(o => `<span class="${o.err ? "err" : ""}">${esc(o.text)}</span>`).join("\n") || '<span style="color:var(--muted)">пока пусто</span>';
+
+  const prevFrames = Object.fromEntries(prev.frames.map(f => [f.name, f.vars]));
+  $("frames").innerHTML = s.frames.map((f, fi) => {
+    const pv = prevFrames[f.name] || {};
+    const rows = Object.entries(f.vars).map(([n, v]) => {
+      const ch = pos > 0 && !same(pv[n], v);
+      return `<div class="var${ch ? " chg" : ""}"><span>${esc(n)}</span>${slot(v, `f${fi}-${n}`, ch)}</div>`;
+    }).join("") || `<div class="empty">нет имён</div>`;
+    return `<div class="frame"><div class="fh">${esc(f.name)}</div>${rows}</div>`;
+  }).join("");
+
+  const ids = Object.keys(s.objs);
+  $("objs").innerHTML = ids.length ? ids.map(id => {
+    const o = s.objs[id], po = prev.objs[id];
+    const objCh = pos > 0 && !same(po, o);
+    const cells = o.cells.map((c, i) => {
+      const ch = pos > 0 && (!po || !same(po.cells[i], c));
+      return `<div class="cell${ch ? " chg" : ""}"><span class="ix">${c.label ? esc(c.label) : i}</span>${slot(c.ref ? { ref: c.ref } : c, `c-${id}-${i}`, false)}</div>`;
+    }).join("") || `<div class="empty">пусто</div>`;
+    return `<div class="obj${objCh ? " chg" : ""}" id="obj-${id}"><div class="oh"><span>${esc(o.type)}</span><span>id ${id.slice(1)}</span></div><div class="cells">${cells}</div></div>`;
+  }).join("") : `<div class="empty">объектов пока нет</div>`;
+
+  $("count").textContent = `шаг ${pos} из ${e.steps.length}`;
+  $("bPrev").disabled = $("bStart").disabled = pos === 0;
+  $("bNext").disabled = pos === e.steps.length;
+
+  $("hist").innerHTML = e.steps.slice(0, pos).map((st, i) =>
+    `<tr data-i="${i + 1}" class="${i + 1 === pos ? "now" : ""}${st.trap ? " trap" : ""}"><td class="mono">${i + 1}</td><td class="mono">${st.line}</td><td>${esc(st.short)}</td><td class="mono">${esc(st.out || "")}</td></tr>`).join("")
+    || `<tr><td colspan="4" style="color:var(--muted)">шагов ещё не было</td></tr>`;
+  requestAnimationFrame(drawArrows);
+}
+
+function drawArrows() {
+  const mem = $("mem"), svg = $("svg"), box = mem.getBoundingClientRect();
+  let paths = `<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z"/></marker></defs>`;
+  mem.querySelectorAll(".slot.ref").forEach(el => {
+    const tgt = $("obj-" + el.dataset.src);
+    if (!tgt) return;
+    const a = el.getBoundingClientRect(), b = tgt.getBoundingClientRect();
+    const x1 = a.left + a.width / 2 - box.left, y1 = a.top + a.height / 2 - box.top;
+    let x2, y2, c1x, c2x;
+    if (b.left > a.right + 4) { x2 = b.left - box.left; y2 = b.top + 12 - box.top; c1x = x1 + 40; c2x = x2 - 40; }
+    else { x2 = b.left - box.left; y2 = b.top + 10 - box.top; c1x = x1 + 30; c2x = x2 - 30; if (Math.abs(y2 - y1) < 30) c1x = x1 + 60; }
+    paths += `<path marker-end="url(#ah)" d="M${x1},${y1} C${c1x},${y1} ${c2x},${y2} ${x2},${y2}"/>`;
+  });
+  svg.innerHTML = paths;
+}
+
+function go(n) { pos = Math.max(0, Math.min(EXAMPLES[ex].steps.length, n)); render(); }
+function stopAuto() { clearInterval(timer); timer = null; $("bAuto").textContent = "▶ Авто"; }
+function pick(i) {
+  stopAuto(); ex = i; states = build(EXAMPLES[i]); pos = 0;
+  [...$("tabs").children].forEach((b, j) => b.setAttribute("aria-pressed", String(j === i)));
+  try { localStorage.setItem("c1-vis-ex", String(i)); } catch (e) {}
+  render();
+}
+
+$("tabs").innerHTML = EXAMPLES.map((e, i) => `<button type="button" data-i="${i}">${esc(e.title)}</button>`).join("");
+$("tabs").onclick = e => { const b = e.target.closest("button"); if (b) pick(+b.dataset.i); };
+$("bNext").onclick = () => { stopAuto(); go(pos + 1); };
+$("bPrev").onclick = () => { stopAuto(); go(pos - 1); };
+$("bStart").onclick = () => { stopAuto(); go(0); };
+$("bAuto").onclick = () => {
+  if (timer) return stopAuto();
+  if (pos === EXAMPLES[ex].steps.length) go(0);
+  $("bAuto").textContent = "⏸ Пауза";
+  timer = setInterval(() => { if (pos >= EXAMPLES[ex].steps.length) return stopAuto(); go(pos + 1); }, 1600);
+};
+$("hist").onclick = e => { const tr = e.target.closest("tr[data-i]"); if (tr) { stopAuto(); go(+tr.dataset.i); } };
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowRight") { stopAuto(); go(pos + 1); }
+  if (e.key === "ArrowLeft") { stopAuto(); go(pos - 1); }
+});
+window.addEventListener("resize", () => requestAnimationFrame(drawArrows));
+
+let start = 0;
+try { start = Math.min(EXAMPLES.length - 1, +(localStorage.getItem("c1-vis-ex") || 0) || 0); } catch (e) {}
+pick(start);
+go(1);
+</script>

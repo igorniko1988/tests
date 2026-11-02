@@ -1,0 +1,79 @@
+# Уровень 1 — каждый Pull Request: быстрые проверки, которые решают, можно ли мержить.
+# lint → unit → api → ui-smoke. Каждая следующая джоба стартует, только если предыдущая зелёная.
+# Гейт: Settings → Branches → main → required checks: lint, unit, api, ui-smoke.
+name: pr
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:                          # новый пуш в PR отменяет ещё идущий прогон
+  group: pr-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  ENV: dev
+  BASE_URL: http://localhost:8080
+  PYTEST_ADDOPTS: -o addopts=-ra      # в pyproject --browser-channel chrome для macOS; в CI — браузеры Playwright
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uvx ruff check framework tests conftest.py
+
+  unit:
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+        with:
+          stand: "false"
+      - run: uv run pytest -m unit -v
+
+  api:
+    needs: unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: uv run pytest -m api -v --alluredir=allure-results
+      - name: Логи стенда при падении
+        if: failure()
+        run: docker compose logs exchange
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: allure-api
+          path: allure-results/
+          retention-days: 7
+
+  ui-smoke:
+    needs: api
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+        with:
+          browser: chromium
+      - run: >
+          uv run pytest -m "(ui or e2e) and smoke" -v --browser chromium
+          --tracing retain-on-failure --screenshot only-on-failure --alluredir=allure-results
+      - name: Логи стенда при падении
+        if: failure()
+        run: docker compose logs exchange
+      - uses: actions/upload-artifact@v4
+        if: always()                  # артефакты нужнее всего, когда тест упал
+        with:
+          name: allure-ui-smoke
+          path: |
+            allure-results/
+            test-results/
+          retention-days: 7

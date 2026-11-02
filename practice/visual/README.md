@@ -31,20 +31,22 @@
 
 | Тема | Файл | Онлайн |
 |------|------|--------|
-| Live coding, t02 compress (RLE) | `interview_prep/livecoding_python/m01_arrays_strings/visual/t02_compress.html` | https://claude.ai/artifact/Az7JJPTVcBMREakNebWSbo |
+| Live coding, t02 compress (RLE) | `practice/visual/lc_t02_compress.html` | https://claude.ai/artifact/Az7JJPTVcBMREakNebWSbo |
 | API-клиент: как токен попадает в каждый запрос | `practice/visual/api_auth_token.html` | https://claude.ai/artifact/JLuaXZz3yAGAYcvoD6XH7p |
 | API-фреймворк: путь теста через слои и папки | `practice/visual/api_framework_layers.html` | https://claude.ai/artifact/XqLJ5YvqfTesE8Ero26soj |
 | API: ордер через REST — запрос, ответ, баланс, общий стакан и уборка | `practice/visual/api_orders_rest.html` | https://claude.ai/artifact/RSmt1p6McUdbF4QsEz5cfW |
 | Settings и envs: откуда берётся каждое значение | `practice/visual/settings_env_sources.html` | https://claude.ai/artifact/Nb8YGKiw5bRqMuFAF8qLmg |
-| Live coding, два указателя (Remove Element, к t03) | `interview_prep/livecoding_python/m01_arrays_strings/visual/two_pointers_remove_element.html` | https://claude.ai/artifact/4TmQK4gxy5BWFF5oMnuB2p |
-| Live coding: какой паттерн выбрать (дерево решений) | `interview_prep/livecoding_python/pattern_picker.html` | https://claude.ai/artifact/WHT6kR9Rphaw4pznTSNQAk |
-| Live coding, t03 move zeros | `interview_prep/livecoding_python/m01_arrays_strings/visual/t03_move_zeros.html` | https://claude.ai/artifact/CgpC6dE6zRLqWFBJ8Ashdd |
-| Live coding, t08 merge sorted | `interview_prep/livecoding_python/m01_arrays_strings/visual/t08_merge_sorted.html` | https://claude.ai/artifact/JfzZMFJwvexGc3ku8KY499 |
-| Live coding, t09 max profit | `interview_prep/livecoding_python/m01_arrays_strings/visual/t09_max_profit.html` | https://claude.ai/artifact/3215tZnLyjFNDAFpisESBV |
+| Live coding, два указателя (Remove Element, к t03) | `practice/visual/lc_two_pointers_remove_element.html` | https://claude.ai/artifact/4TmQK4gxy5BWFF5oMnuB2p |
+| Live coding: какой паттерн выбрать (дерево решений) | `practice/visual/lc_pattern_picker.html` | https://claude.ai/artifact/WHT6kR9Rphaw4pznTSNQAk |
+| Live coding, t03 move zeros | `practice/visual/lc_t03_move_zeros.html` | https://claude.ai/artifact/CgpC6dE6zRLqWFBJ8Ashdd |
+| Live coding, t08 merge sorted | `practice/visual/lc_t08_merge_sorted.html` | https://claude.ai/artifact/JfzZMFJwvexGc3ku8KY499 |
+| Live coding, t09 max profit | `practice/visual/lc_t09_max_profit.html` | https://claude.ai/artifact/3215tZnLyjFNDAFpisESBV |
 | pytest: кеш фикстур, почему credentials в тесте и в auth_api один | `practice/visual/pytest_fixture_cache.html` | https://claude.ai/artifact/6XpfucJ1jrZLu2rsGiXvtG |
 | pytest: setup и teardown фикстуры (yield, LIFO, упавший тест и setup) | `practice/visual/pytest_fixture_teardown.html` | https://claude.ai/artifact/Xo2B5a726QSnoPLfgePrMR |
-| Live coding, m02 t02 first unique char (скрытый O(n²) в s.count) | `interview_prep/livecoding_python/m02_hashing/visual/t02_first_unique_char.html` | https://claude.ai/artifact/GE1aepAJHAupDasoxRsJKb |
-| Python: Counter и defaultdict (отсутствующий ключ, подсчёт, группировка) | `interview_prep/livecoding_python/m02_hashing/visual/counter_defaultdict.html` | https://claude.ai/artifact/2drpCM6Gcoy19wDmvdD795 |
-| Live coding, m02 t04 two sum (паттерн «ищу пару» через dict) | `interview_prep/livecoding_python/m02_hashing/visual/t04_two_sum.html` | https://claude.ai/artifact/PZ5mxKP5mFpfF8XpcMdVCS |
+| Live coding, m02 t02 first unique char (скрытый O(n²) в s.count) | `practice/visual/lc_m02_t02_first_unique_char.html` | https://claude.ai/artifact/GE1aepAJHAupDasoxRsJKb |
+| Python: Counter и defaultdict (отсутствующий ключ, подсчёт, группировка) | `practice/visual/counter_defaultdict.html` | https://claude.ai/artifact/2drpCM6Gcoy19wDmvdD795 |
+| Live coding, m02 t04 two sum (паттерн «ищу пару» через dict) | `practice/visual/lc_m02_t04_two_sum.html` | https://claude.ai/artifact/PZ5mxKP5mFpfF8XpcMdVCS |
 | Метрики: счётчик стенда → Prometheus → PromQL → Grafana, алерт при отказе | `practice/visual/metrics_prometheus_grafana.html` | https://claude.ai/artifact/Lg7t7zzf4ZLaqby32JrvUd |
 | Метрики: атлас проблем — CPU, память, пулы, зависимости, диск, сеть на графиках | `practice/visual/metrics_problem_atlas.html` | https://claude.ai/artifact/T6EDrCurrTBEKVqBWm4jCb |
+| Python C1: имена и объекты, +=, копии, аргумент по умолчанию, передача в функцию | `interview_prep/python_course/c01_objects/visual/objects_refs.html` | https://claude.ai/artifact/TzYJP1PWSAMPkEiyaZNHLh |
+| Python: обмен в списке `a, b = b, a` (к move_zeros) и ошибка обмена по очереди | `practice/visual/py_swap_in_list.html` | https://claude.ai/artifact/HdhRdMWtjaATBbcU7zns3Y |

@@ -1,5 +1,9 @@
 # API-фреймворк: дорожная карта и прогресс
 
+> 2026-11-02: API- и UI-слой объединены в один пакет — пути ниже старые (`framework/transport/…` → `framework/api/…`,
+> `framework/waiter.py` удалён, вместо него `framework/utils/waiting.py`). Карта и соответствие — `docs/FRAMEWORK_GUIDE.md`.
+> Закрыты хвосты 1.6 (POST повторяется только для `/orders`), 2.1 (`Balance` на Decimal), `print(ENV_FILE)`, `make_user` с уборкой.
+
 Фреймворк пишет пользователь, Claude ставит задачи и ревьюит (см. `CLAUDE.md`).
 Тесты — `tests/api/`, запуск `uv run pytest`, отчёт `uv run pytest --alluredir=allure-results` → `allure serve allure-results`.
 Пункты курса — `PROGRAM.md` (модули 1–10 = этапы ниже); перед переходом к следующему этапу сверяться со списком модуля.

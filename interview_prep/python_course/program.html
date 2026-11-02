@@ -3,124 +3,99 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Onest:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
-/* Layout: одна колонка-«тетрадь»; недели как главы, внутри уроки трёх треков с цветной меткой трека */
+/* Layout: одна колонка-«тетрадь»; недели как главы, внутри карточки уроков трёх треков с цветной меткой трека */
 :root {
-  --bg: #f3f5f8;
-  --surface: #ffffff;
-  --fg: #18202b;
-  --muted: #5b6676;
-  --line: #dde2ea;
-  --core: #2f5fa7;      /* трек C — ядро Python */
-  --algo: #b07a12;      /* трек A — алгоритмы */
-  --aqa: #2c7a5b;       /* трек Q — AQA-практика */
-  --exam: #9b3b55;      /* контрольные и моки */
-  --tint: #e8eef7;
-  --done: #2c7a5b;
+  --bg: #f3f5f8; --surface: #ffffff; --fg: #18202b; --muted: #5b6676; --line: #dde2ea;
+  --core: #2f5fa7; --algo: #9a6a0e; --aqa: #2c7a5b; --exam: #9b3b55;
+  --tint: #e8eef7; --code-bg: #eef1f6; --done: #2c7a5b;
   --f-display: "Unbounded", "Arial Black", system-ui, sans-serif;
   --f-body: "Onest", system-ui, -apple-system, "Segoe UI", sans-serif;
   --f-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #11161d; --surface: #18202a; --fg: #e4e9f0; --muted: #98a3b3; --line: #2a3442;
-    --core: #7aa7ec; --algo: #e2b04a; --aqa: #5fc29a; --exam: #e4829b; --tint: #1e2a3a; --done: #5fc29a;
-    color-scheme: dark;
-  }
-}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11161d; --surface: #18202a; --fg: #e4e9f0; --muted: #98a3b3; --line: #2a3442;
+  --core: #7aa7ec; --algo: #e2b04a; --aqa: #5fc29a; --exam: #e4829b; --tint: #1e2a3a; --code-bg: #111821; --done: #5fc29a;
+  color-scheme: dark; } }
 :root[data-theme="dark"] {
   --bg: #11161d; --surface: #18202a; --fg: #e4e9f0; --muted: #98a3b3; --line: #2a3442;
-  --core: #7aa7ec; --algo: #e2b04a; --aqa: #5fc29a; --exam: #e4829b; --tint: #1e2a3a; --done: #5fc29a;
-  color-scheme: dark;
-}
+  --core: #7aa7ec; --algo: #e2b04a; --aqa: #5fc29a; --exam: #e4829b; --tint: #1e2a3a; --code-bg: #111821; --done: #5fc29a;
+  color-scheme: dark; }
 * { box-sizing: border-box; }
-body {
-  background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 16px; line-height: 1.55;
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
-  padding-block: 32px 64px;
-}
-.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 40px; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 16px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 64px; }
+.wrap { max-width: 880px; margin: 0 auto; display: grid; gap: 44px; }
 h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; line-height: 1.2; }
-h1 { font-size: clamp(28px, 6vw, 44px); font-weight: 700; letter-spacing: -0.01em; }
+h1 { font-size: clamp(28px, 6vw, 44px); font-weight: 700; }
 h2 { font-size: 22px; font-weight: 700; }
-h3 { font-size: 16px; font-weight: 500; }
 p { margin: 0; }
-code, .mono { font-family: var(--f-mono); font-size: 0.88em; }
+a { color: var(--core); }
+code { font-family: var(--f-mono); font-size: 0.86em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+pre { font-family: var(--f-mono); font-size: 13px; background: var(--code-bg); border-radius: 6px; padding: 8px 10px; margin: 4px 0 0; overflow-x: auto; line-height: 1.45; }
 .muted { color: var(--muted); }
 .eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
-
 header { display: grid; gap: 16px; }
-.lead { font-size: 18px; max-width: 62ch; }
+.lead { font-size: 18px; max-width: 64ch; }
 .prompt { font-family: var(--f-mono); font-size: 14px; color: var(--muted); }
-.prompt b { color: var(--core); font-weight: 600; }
-
+.prompt b { color: var(--core); }
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
 .stat { border-top: 2px solid var(--line); padding-top: 8px; }
 .stat .n { font-family: var(--f-display); font-size: 26px; font-variant-numeric: tabular-nums; }
 .stat .l { font-size: 13px; color: var(--muted); }
-
 .progress { display: grid; gap: 8px; }
 .bar { height: 10px; background: var(--line); border-radius: 5px; overflow: hidden; }
 .bar > span { display: block; height: 100%; background: var(--done); width: 0; transition: width .3s; }
 .progress .row { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 14px; }
-
 section { display: grid; gap: 16px; }
-.legend { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 14px; }
-.tag { display: inline-flex; align-items: center; gap: 6px; }
-.dot { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+.prose { display: grid; gap: 10px; max-width: 70ch; }
 .k-core { --k: var(--core); } .k-algo { --k: var(--algo); } .k-aqa { --k: var(--aqa); } .k-exam { --k: var(--exam); }
-.dot { background: var(--k); }
-
+.tracks { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.track { border-left: 4px solid var(--k); background: var(--surface); border-radius: 0 8px 8px 0; padding: 12px 14px; display: grid; gap: 6px; font-size: 14.5px; }
+.track b { font-family: var(--f-display); font-weight: 500; font-size: 15px; color: var(--k); }
 .cycle { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; counter-reset: s; }
 .cycle div { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px; font-size: 14px; display: grid; gap: 4px; align-content: start; }
 .cycle b { font-family: var(--f-display); font-weight: 500; font-size: 14px; }
 .cycle div::before { counter-increment: s; content: counter(s); font-family: var(--f-mono); color: var(--core); font-size: 13px; }
-
 .table-wrap { overflow-x: auto; }
 table { border-collapse: collapse; width: 100%; font-size: 14px; }
 th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
 th { font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
-
+td.mono { font-family: var(--f-mono); white-space: nowrap; }
+.gloss { display: grid; gap: 8px; }
+.gloss div { display: grid; grid-template-columns: minmax(110px, 160px) minmax(0, 1fr); gap: 12px; font-size: 14.5px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+.gloss dt { font-weight: 600; } .gloss dd { margin: 0; }
+@media (max-width: 520px) { .gloss div { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
+.done-rule { background: var(--tint); border-radius: 8px; padding: 16px; display: grid; gap: 8px; }
+.done-rule ul { margin: 0; padding-left: 20px; }
 .week { display: grid; gap: 12px; }
 .week-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: 2px solid var(--fg); padding-bottom: 8px; }
-.week-head .goal { font-size: 14px; color: var(--muted); max-width: 60ch; }
+.week-head .goal { font-size: 14.5px; color: var(--muted); max-width: 64ch; }
 .week-count { font-family: var(--f-mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
-
 details.lesson { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--k); border-radius: 6px; }
-details.lesson[open] { box-shadow: 0 1px 0 var(--line); }
-details.lesson summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: auto auto 1fr auto; align-items: center; gap: 12px; padding: 12px 14px; }
+details.lesson summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 12px 14px; }
 details.lesson summary::-webkit-details-marker { display: none; }
-summary:focus-visible, input:focus-visible, button:focus-visible { outline: 2px solid var(--core); outline-offset: 2px; }
+summary:focus-visible, input:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid var(--core); outline-offset: 2px; }
 .code { font-family: var(--f-mono); font-size: 13px; font-weight: 600; color: var(--k); min-width: 2.6em; }
 .title { min-width: 0; font-weight: 600; }
 .title small { display: block; font-weight: 400; color: var(--muted); font-size: 13px; }
-.chev { color: var(--muted); font-size: 12px; transition: transform .2s; }
-details[open] .chev { transform: rotate(90deg); }
+.pill { font-family: var(--f-mono); font-size: 11px; padding: 2px 8px; border-radius: 10px; background: var(--tint); color: var(--core); white-space: nowrap; }
 input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--done); margin: 0; cursor: pointer; }
-details.lesson.is-done .title { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line); }
-
-.body { padding: 0 14px 14px 14px; display: grid; gap: 14px; font-size: 15px; }
-.body h4 { margin: 0 0 4px; font-size: 12px; font-family: var(--f-mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; }
-.body ul { margin: 0; padding-left: 20px; display: grid; gap: 3px; }
-.body .qs li { font-style: normal; }
-.chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip { font-family: var(--f-mono); font-size: 12px; background: var(--tint); border-radius: 4px; padding: 2px 8px; }
-
-.formats { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
-.format { border-left: 3px solid var(--k); padding: 4px 0 4px 12px; display: grid; gap: 4px; font-size: 14px; }
-.format b { font-size: 15px; }
-
-.done-rule { background: var(--tint); border-radius: 8px; padding: 16px; display: grid; gap: 8px; }
-.done-rule ul { margin: 0; padding-left: 20px; }
-
+details.lesson.is-done .title { color: var(--muted); }
+.body { padding: 0 16px 16px; display: grid; gap: 16px; font-size: 15px; }
+.body h4 { margin: 0 0 6px; font-size: 12px; font-family: var(--f-mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; }
+.body ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.about { font-size: 15.5px; max-width: 70ch; }
+.concepts { display: grid; gap: 12px; }
+.concept { display: grid; gap: 2px; min-width: 0; }
+.concept b { font-weight: 600; }
+.tasks { display: grid; gap: 6px; }
+.tasks div { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; padding-left: 12px; border-left: 2px solid var(--line); }
+.tasks b { font-weight: 600; font-size: 14.5px; }
+.tasks span { font-size: 14px; color: var(--muted); }
+.links { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 14px; }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 button { font: inherit; font-size: 13px; background: none; border: 1px solid var(--line); color: var(--muted); padding: 6px 12px; border-radius: 6px; cursor: pointer; }
 button:hover { color: var(--fg); border-color: var(--muted); }
-
-@media (max-width: 520px) {
-  details.lesson summary { grid-template-columns: auto auto 1fr; }
-  .chev { display: none; }
-}
+@media (max-width: 560px) { details.lesson summary { grid-template-columns: auto auto minmax(0, 1fr); } .pill { grid-column: 3; justify-self: start; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 
@@ -128,37 +103,79 @@ button:hover { color: var(--fg); border-color: var(--muted); }
   <header>
     <span class="eyebrow">Курс · Python для собеседования AQA Middle+/Senior</span>
     <h1>Python к собесу AQA</h1>
-    <p class="lead">Шесть недель: ядро языка на уровне «объясню, как это устроено», все форматы лайвкодинга, которые дают на собесе AQA, и практика каждый день. Каждая тема заканчивается задачами с тестами и вопросами собеса вслух.</p>
-    <p class="prompt">Начать: напиши в чат <b>«начинаем»</b>. Следующий урок: <b>«дальше»</b>. Сдать задачу: <b>«готово C1 t03»</b>.</p>
+    <p class="lead">Шесть недель, чтобы уверенно отвечать на вопросы по Python и решать любые задачи лайвкодинга на собесе AQA. Каждая тема объясняется простыми словами на примерах и сразу закрепляется практикой: задачами с автотестами, «что выведет» и вопросами собеса вслух.</p>
+    <p class="prompt">Начать урок: <b>«дальше»</b>. Сдать задачу: <b>«готово C1 t03»</b>. Непонятно: просто спроси, что именно.</p>
     <div class="stats">
-      <div class="stat"><div class="n">6 нед.</div><div class="l">по ~1 ч 45 мин в день, 5 дней в неделю</div></div>
+      <div class="stat"><div class="n">6 нед.</div><div class="l">~1 ч 45 мин в день, 5 дней в неделю</div></div>
       <div class="stat"><div class="n">16</div><div class="l">уроков ядра Python (трек C)</div></div>
-      <div class="stat"><div class="n">140</div><div class="l">алгоритмических задач по 14 паттернам (трек A)</div></div>
+      <div class="stat"><div class="n">14</div><div class="l">модулей алгоритмов, ~140 задач (трек A)</div></div>
       <div class="stat"><div class="n">30</div><div class="l">практических задач AQA (трек Q)</div></div>
-      <div class="stat"><div class="n">~240</div><div class="l">вопросов собеса с ответами и столько же «что выведет»</div></div>
+      <div class="stat"><div class="n">~240</div><div class="l">вопросов собеса с ответами</div></div>
     </div>
     <div class="progress" aria-live="polite">
-      <div class="row"><span>Пройдено уроков: <b id="pDone">0</b> из <b id="pAll">0</b></span><span class="muted">Отметки хранятся в этом браузере</span></div>
+      <div class="row"><span>Пройдено: <b id="pDone">0</b> из <b id="pAll">0</b></span><span class="muted">Отметки хранятся в этом браузере</span></div>
       <div class="bar"><span id="pBar"></span></div>
     </div>
   </header>
 
   <section>
-    <h2>Три трека каждый день</h2>
-    <div class="legend">
-      <span class="tag k-core"><span class="dot"></span><b>C</b>&nbsp;ядро Python: как устроен язык, вопросы собеса</span>
-      <span class="tag k-algo"><span class="dot"></span><b>A</b>&nbsp;алгоритмы: паттерны задач LeetCode Easy/Medium</span>
-      <span class="tag k-aqa"><span class="dot"></span><b>Q</b>&nbsp;практика AQA: утилиты, классы, автотесты, ревью</span>
-      <span class="tag k-exam"><span class="dot"></span><b>X</b>&nbsp;контрольные и мок-собесы</span>
+    <h2>Что тебя ждёт на собесе и как курс к этому готовит</h2>
+    <div class="prose">
+      <p>Собес AQA по Python обычно состоит из двух частей. <b>Теоретическая</b>: тебя спрашивают, как устроен язык («чем список отличается от кортежа», «что такое декоратор», «что такое GIL»), и показывают кусок кода с вопросом «что он выведет». <b>Практическая (лайвкодинг)</b>: ты пишешь код при интервьюере — алгоритмическую задачу, утилиту вроде декоратора <code>retry</code> или автотесты по описанию API — и вслух объясняешь, что делаешь.</p>
+      <p>Поэтому в курсе три параллельных трека. Каждый день ты понемногу занимаешься каждым: теория без практики забывается, а практика без теории превращается в заучивание решений.</p>
     </div>
+    <div class="tracks">
+      <div class="track k-core"><b>C · Ядро Python</b><span>Как устроен язык изнутри: объекты, функции, классы, генераторы, исключения, память, асинхронность, pytest. Это ответы на теоретические вопросы и все задачи «что выведет».</span></div>
+      <div class="track k-algo"><b>A · Алгоритмы</b><span>Задачи как на LeetCode уровня Easy/Medium. Учим не задачи, а 14 приёмов (паттернов), к которым сводится почти любая задача: хеш-таблица, два указателя, окно, стек и т. д.</span></div>
+      <div class="track k-aqa"><b>Q · Практика AQA</b><span>Задачи «из работы»: разобрать лог, сравнить два JSON, написать retry, LRU-кэш, API-клиент, автотесты по документации, найти баги в чужом тесте.</span></div>
+      <div class="track k-exam"><b>X · Контрольные</b><span>Раз в неделю проверка на время, в конце — мок-собесы (имитация настоящего интервью) и итоговый экзамен.</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Словарь курса</h2>
+    <dl class="gloss">
+      <div><dt>Паттерн</dt><dd>Типовой приём решения задач. Например, «два указателя»: два индекса идут по массиву навстречу друг другу. Узнал паттерн в условии — решение находится за минуты.</dd></div>
+      <div><dt>Big-O, сложность</dt><dd>Как растёт время работы (или память), когда растёт размер входа. <code>O(n)</code> — один проход по данным, <code>O(n²)</code> — вложенный цикл. На собесе после решения всегда спрашивают сложность.</dd></div>
+      <div><dt>«Что выведет»</dt><dd>Формат вопроса: показывают 5–10 строк кода, ты без запуска говоришь результат. В каждом уроке C — 15 таких фрагментов в файле <code>quiz.py</code>.</dd></div>
+      <div><dt>Задача ★</dt><dd>Задача со звёздочкой — сложнее основных, уровня сильного Middle/Senior. Не обязательна для зачёта, но очень желательна.</dd></div>
+      <div><dt>Тесты к задаче</dt><dd>У каждой задачи есть готовые pytest-тесты, включая граничные случаи (пустой вход, дубли, отрицательные числа). Решение принято, когда тесты зелёные и пройдено ревью.</dd></div>
+      <div><dt>Визуализатор</dt><dd>Интерактивная страница, где код выполняется по шагам: видно, какая строка работает и что происходит с переменными и объектами. Есть к каждой сложной теме.</dd></div>
+      <div><dt>Подсказки 1–3</dt><dd>Если застрял: «подсказка 1» — разбор примера руками, «2» — скелет решения, «3» — полный разбор. После третьей задачу через день решаешь заново по памяти.</dd></div>
+      <div><dt>Мок-собес</dt><dd>Репетиция интервью: вопросы и задачи на время, как на настоящем собесе, затем разбор ошибок.</dd></div>
+    </dl>
+  </section>
+
+  <section>
+    <h2>Как проходит урок ядра</h2>
+    <div class="cycle">
+      <div><b>Теория</b>Объяснение простыми словами, картинки памяти, код с комментариями, частые ошибки, «проверь себя».</div>
+      <div><b>Визуализатор</b>Сложные места проходишь по шагам и видишь, что происходит внутри.</div>
+      <div><b>Что выведет</b>15 фрагментов: сначала ответ, потом запуск. Так тренируется «исполнение кода в голове».</div>
+      <div><b>Задачи</b>10 штук: 3 разминки, 5 основных, 2 со звёздочкой. В условии объяснены все термины и пример по шагам.</div>
+      <div><b>Собес вслух</b>Отвечаешь на 5 вопросов, как интервьюеру. Потом они возвращаются в разминке через 1, 3 и 7 дней.</div>
+    </div>
+    <div class="done-rule">
+      <b>Урок засчитан, когда</b>
+      <ul>
+        <li>все задачи проходят тесты и ревью в чате пройдено;</li>
+        <li>в «что выведет» угадано не меньше 12 из 15 до запуска;</li>
+        <li>ответы на вопросы собеса полные и без подсказок;</li>
+        <li>задачи, решённые с подсказкой 3, через день написаны заново по памяти.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>Распорядок</h2>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Когда</th><th>Что</th><th>Время</th></tr></thead>
+        <thead><tr><th>Когда</th><th>Что делаешь</th><th>Время</th></tr></thead>
         <tbody>
-          <tr><td>Пн–Пт</td><td>Разминка: 5 вопросов собеса по прошлым темам + 1 старая задача по памяти</td><td>15 мин</td></tr>
-          <tr><td>Пн–Пт</td><td>Урок трека C: теория → «что выведет» → задачи</td><td>45 мин</td></tr>
+          <tr><td>Пн–Пт</td><td>Разминка: 5 вопросов собеса по прошлым темам и 1 старая задача по памяти</td><td>15 мин</td></tr>
+          <tr><td>Пн–Пт</td><td>Урок трека C: теория, визуализатор, «что выведет», задачи</td><td>45 мин</td></tr>
           <tr><td>Пн–Пт</td><td>2 задачи трека A или 1 задача трека Q, решение вслух</td><td>45 мин</td></tr>
-          <tr><td>Сб</td><td>Контрольная недели: вопросы вслух, «что выведет», задачи на время</td><td>1–1,5 ч</td></tr>
+          <tr><td>Сб</td><td>Контрольная недели на время</td><td>1–1,5 ч</td></tr>
           <tr><td>Вс</td><td>Отдых или добор хвостов</td><td>—</td></tr>
         </tbody>
       </table>
@@ -166,43 +183,18 @@ button:hover { color: var(--fg); border-color: var(--muted); }
   </section>
 
   <section>
-    <h2>Как проходит урок ядра</h2>
-    <div class="cycle">
-      <div><b>Теория</b>Простой язык, код на каждое утверждение, визуализатор для сложных мест.</div>
-      <div><b>Что выведет</b>15 фрагментов. Ответ пишешь до запуска, потом проверяешь.</div>
-      <div><b>Задачи</b>8–10 штук: разминка, основные, классика собеса, одна со звёздочкой. У каждой есть тесты.</div>
-      <div><b>Собес вслух</b>Отвечаешь на 5 вопросов вразброс, по 1–2 минуты на каждый, без шпаргалки.</div>
-      <div><b>Повтор</b>Вопросы урока возвращаются в разминке через 1, 3 и 7 дней.</div>
-    </div>
-    <div class="done-rule">
-      <b>Урок засчитан, когда</b>
-      <ul>
-        <li>все задачи проходят тесты, ревью в чате пройдено;</li>
-        <li>«что выведет»: не меньше 12 из 15 угадано до запуска;</li>
-        <li>вопросы собеса: каждый ответ полный, без подсказок;</li>
-        <li>задачу, решённую с подсказкой 3 (полный разбор), через день пишешь заново по памяти.</li>
-      </ul>
-    </div>
-  </section>
-
-  <section>
-    <h2>Шесть форматов лайвкодинга на собесе AQA</h2>
-    <p class="muted">Курс тренирует каждый, а не только LeetCode.</p>
-    <div class="formats" id="formats"></div>
-  </section>
-
-  <section>
-    <h2>Решение задачи на собесе: 7 шагов</h2>
+    <h2>Как решать задачу на собесе: 7 шагов</h2>
+    <div class="prose"><p>Интервьюер оценивает не только правильный ответ, но и то, как ты думаешь. Этот порядок тренируем на каждой задаче курса, пока он не станет привычкой.</p></div>
     <div class="table-wrap">
       <table>
         <tbody>
-          <tr><td class="mono">1</td><td>Перескажи условие и спроси про границы: пустой вход, один элемент, дубли, отрицательные, регистр, размер входа.</td></tr>
-          <tr><td class="mono">2</td><td>Разбери 1–2 примера руками.</td></tr>
-          <tr><td class="mono">3</td><td>Скажи решение «в лоб» и его сложность. Это нормально и даже ожидается.</td></tr>
-          <tr><td class="mono">4</td><td>Найди лишнюю работу и подбери паттерн: хеш, два указателя, окно, стек, сортировка, куча, BFS, DP.</td></tr>
-          <tr><td class="mono">5</td><td>Пиши код и проговаривай, что делаешь.</td></tr>
-          <tr><td class="mono">6</td><td>Прогони пример глазами по коду, затем граничные случаи.</td></tr>
-          <tr><td class="mono">7</td><td>Назови сложность по времени и памяти и что можно улучшить.</td></tr>
+          <tr><td class="mono">1</td><td><b>Уточни условие.</b> Перескажи своими словами и спроси про граничные случаи: пустой вход, один элемент, дубли, отрицательные числа, регистр букв, размер входа.</td></tr>
+          <tr><td class="mono">2</td><td><b>Разбери пример руками.</b> Пройди 1–2 примера на бумаге: так видно, что именно нужно делать.</td></tr>
+          <tr><td class="mono">3</td><td><b>Предложи решение «в лоб».</b> Самое простое, пусть медленное, и назови его сложность. Это нормально и даже ожидается.</td></tr>
+          <tr><td class="mono">4</td><td><b>Найди лишнюю работу.</b> Что решение в лоб делает повторно? Подбери паттерн, который это убирает.</td></tr>
+          <tr><td class="mono">5</td><td><b>Пиши код и говори.</b> Комментируй вслух, что делает каждая часть.</td></tr>
+          <tr><td class="mono">6</td><td><b>Проверь.</b> Прогони пример глазами по своему коду, потом граничные случаи.</td></tr>
+          <tr><td class="mono">7</td><td><b>Назови сложность</b> по времени и памяти и что можно улучшить.</td></tr>
         </tbody>
       </table>
     </div>
@@ -213,164 +205,329 @@ button:hover { color: var(--fg); border-color: var(--muted); }
       <h2>Программа по неделям</h2>
       <div class="actions"><button type="button" id="openAll">Раскрыть всё</button><button type="button" id="closeAll">Свернуть всё</button></div>
     </div>
-    <div id="plan" style="display:grid;gap:36px"></div>
+    <p class="muted">Нажми на урок, чтобы увидеть, о чём он, ключевые понятия с примерами, вопросы собеса и задачи. Галочка отмечает урок пройденным.</p>
+    <div id="plan" style="display:grid;gap:40px"></div>
   </section>
 </div>
 
 <script>
-const FORMATS = [
-  ["algo", "Алгоритмическая задача", "LeetCode Easy/Medium за 20–30 минут со сложностью.", "Трек A, 14 паттернов"],
-  ["core", "«Что выведет этот код»", "Ловушки: mutable default, замыкания, is, копии, генераторы, MRO.", "Quiz в каждом уроке C"],
-  ["aqa", "Практическая задача на данные", "Парсинг логов, сравнение JSON, частоты, группировки.", "Q1, Q2"],
-  ["aqa", "Утилита или класс с нуля", "retry, кэш, LRU, rate limiter, API-клиент, контекстный менеджер.", "Q2, Q3, Q4"],
-  ["aqa", "Автотесты по заданию", "Чек-лист и pytest-тесты на эндпоинт или функцию по документации.", "Q5"],
-  ["exam", "Ревью кода и поиск багов", "Найти ошибки в чужом коде или тесте, отрефакторить.", "Q5 и задачи-ревью в контрольных"],
-];
-
+// Урок: code, k (core|algo|aqa|exam), title, sub, about, concepts [[термин, объяснение, код?]], q [...], tasks [[название, что сделать]], fmt [...] (формат контрольной), links [[текст, url]], status
 const PLAN = [
-  { week: "Старт", title: "Диагностика и метод", goal: "Понять, где ты сейчас, и поставить рабочий цикл. Курс подстраивается под слабые места.", items: [
-    { code: "X0", k: "exam", title: "Входная диагностика", sub: "1 час, без подготовки", topics: [
-      "30 вопросов собеса вслух по всем темам курса", "15 фрагментов «что выведет»",
-      "Задача Easy на 20 минут и практическая задача на 25 минут", "Итог: карта слабых тем, которой проверяем прогресс в конце"] },
-    { code: "A0", k: "algo", title: "Big-O и метод решения", sub: "Основа всего трека A", topics: [
-      "O(1), O(log n), O(n), O(n log n), O(n²), O(2ⁿ): как оценить по коду", "Время и память, амортизированная сложность",
-      "Сложность операций list, dict, set, deque наизусть", "Размер входа подсказывает нужную сложность (n ≤ 10⁵ → не хуже O(n log n))"],
-      q: ["Какая сложность у x in list и x in set и почему?", "Что такое амортизированная O(1) у append?"] },
-  ]},
-  { week: "Неделя 1", title: "Данные и типы", goal: "Модель объектов Python и встроенные типы: половина вопросов «что выведет» отсюда.", items: [
-    { code: "C1", k: "core", title: "Объекты, имена и ссылки", sub: "Самая частая тема собеса", topics: [
-      "Переменная — имя, привязанное к объекту: id, type, значение", "Изменяемые и неизменяемые типы; += для list и для tuple",
-      "is против ==, кэш малых int, интернирование строк, почему is None", "Копии: присваивание, срез, copy, deepcopy; ловушка [[0]*3]*3",
-      "Изменяемый аргумент по умолчанию и паттерн с None", "Передача аргументов: call by sharing", "Хешируемость: почему list не ключ dict, а tuple иногда тоже"],
-      q: ["Чем изменяемые типы отличаются от неизменяемых? Примеры.", "is или ==, когда что?", "Shallow copy против deep copy.", "Что не так с def f(x=[])?", "Python передаёт по ссылке или по значению?"] },
-    { code: "C2", k: "core", title: "Числа, строки, bool", sub: "Точность, деньги, кодировки", topics: [
-      "int без переполнения; //, %, divmod с отрицательными", "float: 0.1 + 0.2, math.isclose; Decimal для денег; round и банковское округление",
-      "str неизменяема: срезы, методы, join против + в цикле", "f-строки и форматирование; str и bytes, encode/decode, UTF-8",
-      "bool — подкласс int; truthy и falsy значения"],
-      q: ["Почему 0.1 + 0.2 != 0.3 и как сравнивать float?", "Почему суммы денег в Decimal, а не float?", "Почему конкатенация строк в цикле медленная?", "Чем str отличается от bytes?"] },
-    { code: "C3", k: "core", title: "Коллекции и их устройство", sub: "list, tuple, dict, set, collections", topics: [
-      "list — динамический массив: append O(1) амортизированно, insert(0) и pop(0) O(n)", "tuple: неизменяемость, распаковка, когда выбрать tuple",
-      "dict — хеш-таблица: hash, коллизии, порядок вставки, get, setdefault, оператор |", "set и frozenset: операции над множествами, проверка in за O(1)",
-      "collections: Counter, defaultdict, deque, OrderedDict, namedtuple", "Сортировка: sorted против sort, key, стабильность, сортировка по нескольким полям"],
-      q: ["list против tuple.", "Как устроен dict внутри и почему поиск O(1)?", "Почему dict сохраняет порядок?", "Зачем deque, если есть list?", "Что такое стабильная сортировка?"] },
-    { code: "A1", k: "algo", title: "Массивы и строки", sub: "10 задач", tasks: ["reverse words", "move zeros", "merge sorted arrays", "best time to buy and sell stock", "product except self", "string compression"] },
-    { code: "A2", k: "algo", title: "Хеширование", sub: "10 задач", tasks: ["two sum", "valid anagram", "group anagrams", "first unique character", "contains duplicate", "longest consecutive sequence"] },
-    { code: "Q1", k: "aqa", title: "Работа с данными", sub: "6 задач из реальной работы AQA", tasks: [
-      "частота слов в тексте и топ-k", "разница двух JSON-ответов: какие поля добавлены, удалены, изменены", "дубли email в списке пользователей без учёта регистра",
-      "группировка ордеров по статусу и сумма в Decimal", "flatten вложенного dict в ключи вида a.b.c", "валидация структуры ответа без библиотек"] },
-    { code: "X1", k: "exam", title: "Контрольная недели 1", sub: "Суббота", topics: ["20 вопросов по C1–C3 вслух", "10 «что выведет»", "2 задачи A1/A2 на 40 минут, 1 задача Q1 на 20 минут"] },
-  ]},
-  { week: "Неделя 2", title: "Функции и ленивость", goal: "Функции как объекты, генераторы и декораторы — основа pytest и любого фреймворка.", items: [
-    { code: "C4", k: "core", title: "Функции и области видимости", sub: "Аргументы, LEGB, замыкания", topics: [
-      "Позиционные, именованные, *args, **kwargs, keyword-only (*), positional-only (/)", "Распаковка при вызове f(*xs, **kw)",
-      "LEGB, global, nonlocal, UnboundLocalError", "Функции первого класса, lambda, map, filter, zip, enumerate, any, all",
-      "Замыкания и ловушка позднего связывания: [lambda: i for i in range(3)]", "functools: partial, reduce, lru_cache, cache, wraps"],
-      q: ["Что такое *args и **kwargs?", "Что такое замыкание? Пример.", "Как Python ищет имя (LEGB)?", "Зачем nonlocal?", "Что выведет список лямбд из цикла и как починить?"] },
-    { code: "C5", k: "core", title: "Comprehensions, итераторы, генераторы", sub: "Ленивые вычисления", topics: [
-      "list, dict, set comprehension; вложенные и с условием; когда цикл читаемее", "Протокол итерации: iter, next, StopIteration; iterable против iterator",
-      "Как на самом деле работает for", "yield, состояние генератора, однократный проход", "Генераторное выражение против списка: память",
-      "yield from, send, close — на уровне «знаю, что это»", "itertools: chain, islice, groupby, product, permutations, combinations, count"],
-      q: ["Генератор против списка: когда что?", "Чем iterable отличается от iterator?", "Почему генератор нельзя пройти дважды?", "Как yield-фикстура pytest использует генератор?"] },
-    { code: "C6", k: "core", title: "Декораторы", sub: "Классика лайвкодинга", topics: [
-      "Декоратор — функция, которая принимает функцию и возвращает новую", "@ как синтаксический сахар; порядок нескольких декораторов",
-      "functools.wraps и что ломается без него", "Декоратор с параметрами: три уровня вложенности", "Декоратор-класс и декоратор класса",
-      "Как устроены @property, @classmethod, @pytest.fixture, @pytest.mark.parametrize"],
-      q: ["Что такое декоратор и как он работает?", "Зачем functools.wraps?", "Напиши декоратор с параметром.", "В каком порядке применяются два декоратора?"] },
-    { code: "A3", k: "algo", title: "Два указателя", sub: "10 задач", tasks: ["valid palindrome", "two sum II", "3sum", "container with most water", "remove duplicates in place", "squares of sorted array"] },
-    { code: "A4", k: "algo", title: "Скользящее окно", sub: "10 задач", tasks: ["max sum of k", "longest substring without repeating", "minimum size subarray sum", "permutation in string", "longest repeating character replacement"] },
-    { code: "A5", k: "algo", title: "Стек и очередь", sub: "10 задач", tasks: ["valid parentheses", "min stack", "daily temperatures", "evaluate RPN", "queue via two stacks", "simplify path"] },
-    { code: "Q2", k: "aqa", title: "Утилиты на функциях", sub: "6 задач", tasks: [
-      "декоратор retry(times, delay, exceptions)", "декоратор: время выполнения и лог аргументов", "генератор: построчно читать большой лог и отдавать только ERROR",
-      "разбить список на пачки по n (генератор)", "flatten списка любой вложенности", "wait_until(condition, timeout, interval) — своё ожидание"] },
-    { code: "X2", k: "exam", title: "Контрольная недели 2", sub: "Суббота", topics: ["20 вопросов по C1–C6 (половина — новые темы)", "10 «что выведет» на замыкания и генераторы", "retry с нуля за 15 минут; 2 задачи A3–A5 на 40 минут"] },
-  ]},
-  { week: "Неделя 3", title: "ООП", goal: "Классы так, как их спрашивают на собесе и как ими строят фреймворк.", items: [
-    { code: "C7", k: "core", title: "Классы и объекты", sub: "Атрибуты, property, методы", topics: [
-      "Класс, экземпляр, self; атрибуты класса против атрибутов экземпляра (ловушка с list)", "@property и setter, вычисляемые поля",
-      "@classmethod как альтернативный конструктор, @staticmethod", "Инкапсуляция: _protected, __private и name mangling", "Где хранятся атрибуты: __dict__"],
-      q: ["Атрибут класса против атрибута экземпляра.", "classmethod против staticmethod.", "Зачем @property?", "Есть ли в Python private?"] },
-    { code: "C8", k: "core", title: "Наследование и проектирование", sub: "MRO, ABC, композиция, SOLID", topics: [
-      "Наследование, переопределение, super()", "Множественное наследование, ромб, MRO (C3), Class.__mro__",
-      "Абстрактные классы: abc.ABC, @abstractmethod; утиная типизация и Protocol", "Композиция против наследования на примере Page Object и API-клиента",
-      "4 принципа ООП и SOLID на примерах тестового фреймворка"],
-      q: ["Назови 4 принципа ООП с примерами.", "Что такое MRO и как работает super()?", "Когда композиция лучше наследования?", "SOLID на примере твоего фреймворка."] },
-    { code: "C9", k: "core", title: "Магические методы и dataclasses", sub: "Модель данных Python", topics: [
-      "__new__ против __init__", "__repr__ против __str__", "__eq__, __lt__, __hash__ и их связь; functools.total_ordering",
-      "__len__, __getitem__, __contains__, __iter__, __call__, __bool__, __add__", "dataclasses: field(default_factory), frozen, order, asdict; против NamedTuple и pydantic",
-      "__slots__; дескрипторы и метаклассы — что это и где встречаются"],
-      q: ["__new__ против __init__.", "Что сломается, если переопределить __eq__ без __hash__?", "__repr__ против __str__.", "Зачем dataclass?", "Что такое метакласс одной фразой?"] },
-    { code: "A6", k: "algo", title: "Сортировка и интервалы", sub: "10 задач", tasks: ["merge intervals", "insert interval", "meeting rooms", "sort colors", "largest number", "non-overlapping intervals"] },
-    { code: "A7", k: "algo", title: "Бинарный поиск", sub: "10 задач", tasks: ["binary search", "search insert position", "first and last position", "search in rotated array", "sqrt(x)", "koko eating bananas (поиск по ответу)"] },
-    { code: "A8", k: "algo", title: "Префиксные суммы", sub: "10 задач", tasks: ["range sum query", "subarray sum equals k", "pivot index", "contiguous array", "running sum"] },
-    { code: "Q3", k: "aqa", title: "Проектирование классов", sub: "6 задач", tasks: [
-      "LRU cache: на OrderedDict и руками", "rate limiter: fixed и sliding window", "банковский счёт: история операций, свои исключения",
-      "класс Money: операторы, сравнение, хеш, Decimal", "простой API-клиент: base_url, сессия, токен, методы", "Page Object с компонентами через композицию"] },
-    { code: "X3", k: "exam", title: "Контрольная недели 3", sub: "Суббота", topics: ["20 вопросов по C1–C9", "10 «что выведет» на MRO, атрибуты класса, dunder", "LRU cache с нуля за 20 минут; 2 задачи A6–A8"] },
-  ]},
-  { week: "Неделя 4", title: "Ошибки, типы, рантайм", goal: "То, что отличает Senior: как Python исполняет код, память, GIL, конкурентность.", items: [
-    { code: "C10", k: "core", title: "Исключения и контекстные менеджеры", sub: "try, with, contextlib", topics: [
-      "Иерархия: BaseException, Exception; почему нельзя голый except", "try / except / else / finally; return в finally",
-      "raise, raise ... from, свои исключения с полями", "with: __enter__, __exit__, подавление исключения",
-      "contextlib: @contextmanager, suppress, ExitStack", "ExceptionGroup и except* — знать, что есть", "Как устроен pytest.raises"],
-      q: ["Что выведет функция с return в try и в finally?", "Зачем else в try?", "Напиши контекстный менеджер двумя способами.", "Чем raise from отличается от raise?"] },
-    { code: "C11", k: "core", title: "Типизация и современный синтаксис", sub: "typing, match, pydantic", topics: [
-      "Аннотации: list[int], X | None, Callable, Any", "TypedDict, Literal, Protocol, Generic и TypeVar, Final",
-      "mypy: что ловит и зачем во фреймворке", "match / case: разбор JSON-ответа по структуре", "Моржовый оператор :=, f-строки с =, распаковка *rest",
-      "pydantic: модель ответа API и валидация"],
-      q: ["Влияют ли аннотации на выполнение?", "Protocol против ABC.", "Зачем pydantic в API-тестах?"] },
-    { code: "C12", k: "core", title: "Память и интерпретатор", sub: "CPython изнутри", topics: [
-      "Исходник → байткод → виртуальная машина; dis", "Подсчёт ссылок, sys.getrefcount, сборщик циклов gc, weakref",
-      "GIL: что это, зачем, на что влияет; free-threaded Python 3.13+", "Утечки памяти в Python: откуда берутся", "Почему Python медленный и что с этим делают"],
-      q: ["Как Python управляет памятью?", "Что такое GIL и на что он влияет?", "Бывают ли утечки памяти в Python?"] },
-    { code: "C13", k: "core", title: "Конкурентность", sub: "threading, multiprocessing, asyncio", topics: [
-      "Процесс, поток, корутина простыми словами; I/O-bound против CPU-bound", "threading, Lock, состояние гонки на счётчике",
-      "concurrent.futures: ThreadPoolExecutor, ProcessPoolExecutor, as_completed", "asyncio: event loop, async/await, gather, create_task, wait_for, Semaphore",
-      "Почему time.sleep в корутине — ошибка", "AQA: параллельные запросы, pytest-xdist, гонки на стенде"],
-      q: ["threading против multiprocessing против asyncio.", "Помогают ли потоки при GIL?", "Что такое race condition и как его поймать тестом?", "Как ограничить число параллельных запросов в asyncio?"] },
-    { code: "A9", k: "algo", title: "Рекурсия и backtracking", sub: "10 задач", tasks: ["fibonacci с мемоизацией", "power set (subsets)", "permutations", "combination sum", "generate parentheses"] },
-    { code: "A10", k: "algo", title: "Связные списки", sub: "10 задач", tasks: ["reverse linked list", "middle node", "linked list cycle", "merge two sorted lists", "remove nth from end"] },
-    { code: "A11", k: "algo", title: "Деревья: DFS и BFS", sub: "10 задач", tasks: ["max depth", "invert tree", "level order traversal", "validate BST", "lowest common ancestor", "path sum"] },
-    { code: "Q4", k: "aqa", title: "Надёжность и параллельность", sub: "6 задач", tasks: [
-      "контекстный менеджер-таймер: классом и через @contextmanager", "иерархия исключений API-клиента с полями status и body",
-      "10 запросов параллельно, не больше 3 одновременно (asyncio)", "потокобезопасный счётчик и тест, который ловит гонку",
-      "разбор событий через match / case", "retry с экспоненциальной задержкой и джиттером"] },
-    { code: "X4", k: "exam", title: "Контрольная недели 4", sub: "Суббота", topics: ["25 вопросов по C1–C13", "10 «что выведет» на try/finally, генераторы, async", "2 задачи A9–A11 на 45 минут, 1 задача Q4"] },
-  ]},
-  { week: "Неделя 5", title: "Python для тестировщика", goal: "Окружение, pytest и моки на уровне Senior плюс лайвкодинг автотестов.", items: [
-    { code: "C14", k: "core", title: "Модули, окружение, stdlib", sub: "Что пригодится каждый день", topics: [
-      "import: модуль, пакет, __init__.py, sys.path, циклический импорт", "if __name__ == \"__main__\"",
-      "venv, pip, uv, pyproject.toml, lock-файл", "pathlib, json, csv, re (основы регулярок)", "datetime: naive против aware, часовые пояса",
-      "logging: уровни, handler, formatter; почему не print", "os.environ, subprocess, argparse кратко"],
-      q: ["Что происходит при import?", "Зачем виртуальное окружение?", "naive против aware datetime.", "Почему logging, а не print?"] },
-    { code: "C15", k: "core", title: "pytest в глубину", sub: "Фикстуры, параметризация, хуки", topics: [
-      "Как pytest находит тесты; перезапись assert", "Фикстуры: scope, yield, autouse, фабрика, зависимости, request, порядок выполнения",
-      "conftest.py: где действует", "parametrize: ids, indirect, несколько параметров", "Маркеры, skip, xfail, pytest.ini",
-      "Хуки и плагины: pytest_addoption, pytest_collection_modifyitems; xdist"],
-      q: ["Какие scope у фикстур и как они живут?", "Как сделать фикстуру с параметром?", "Как работает conftest.py?", "Как запустить тесты параллельно и что может сломаться?"] },
-    { code: "C16", k: "core", title: "Моки и HTTP", sub: "unittest.mock, requests", topics: [
-      "Mock, MagicMock, return_value, side_effect", "patch: где патчить (по месту использования, а не определения)",
-      "assert_called_once_with, call_args", "requests и httpx: сессия, таймауты, статусы, JSON", "Стабы внешних сервисов: responses, respx, WireMock",
-      "unittest против pytest"],
-      q: ["Mock против MagicMock.", "Где патчить и почему?", "Как замокать исключение?", "Мок против стаба против фейка."] },
-    { code: "A12", k: "algo", title: "Графы и BFS по сетке", sub: "10 задач", tasks: ["number of islands", "flood fill", "shortest path in binary matrix", "course schedule (топосортировка)", "clone graph", "rotting oranges"] },
-    { code: "A13", k: "algo", title: "Кучи и top-k", sub: "10 задач", tasks: ["kth largest element", "top k frequent", "merge k sorted lists", "k closest points", "task scheduler"] },
-    { code: "A14", k: "algo", title: "Динамическое программирование", sub: "10 задач", tasks: ["climbing stairs", "house robber", "coin change", "longest increasing subsequence", "unique paths", "edit distance ★"] },
-    { code: "Q5", k: "aqa", title: "Лайвкодинг автотестов", sub: "6 задач", tasks: [
-      "чек-лист и pytest-тесты на эндпоинт по документации", "тесты на функцию: границы, классы эквивалентности, parametrize",
-      "найди баги в чужом тесте (ревью)", "отрефакторь плохой тест: фикстуры, данные, проверки", "замокай внешний сервис и проверь обработку ошибок",
-      "тест на пагинацию и сортировку списка"] },
-    { code: "X5", k: "exam", title: "Контрольная недели 5", sub: "Суббота", topics: ["25 вопросов по всему ядру", "Задача Q5 на 30 минут с объяснением тест-дизайна", "2 задачи A12–A14 на 45 минут"] },
-  ]},
-  { week: "Неделя 6", title: "Финиш", goal: "Собес как он есть: на время, вслух, на английском. Добираем слабые места.", items: [
-    { code: "M1", k: "exam", title: "Мок-собесы × 4", sub: "Через день", topics: [
-      "20 минут вопросов по ядру", "40 минут: алгоритм Medium", "25 минут: задача AQA (утилита, тесты или ревью)",
-      "Разбор: где запнулся, что повторить", "2 из 4 моков на английском"] },
-    { code: "M2", k: "exam", title: "Добор слабых мест", sub: "Между моками", topics: [
-      "Все вопросы, где ответ был неполным", "Задачи, решённые с подсказкой 3, — заново по памяти",
-      "Скоростной раунд: 10 задач Easy по 10 минут", "Английский: 40 ключевых вопросов собеса"] },
-    { code: "X6", k: "exam", title: "Итоговый экзамен", sub: "Сравниваем с диагностикой X0", topics: [
-      "60 вопросов вразброс, 20 из них на английском", "30 «что выведет»", "2 задачи Medium за 45 минут и 1 задача AQA за 25 минут"] },
-  ]},
+{ week: "Старт", title: "Диагностика и метод", goal: "Понять, с какого уровня стартуешь, и освоить главный инструмент алгоритмических задач — оценку сложности.", items: [
+  { code: "X0", k: "exam", title: "Входная диагностика", sub: "40–60 минут, без подготовки", status: "готов",
+    about: "Срез «как есть» до начала курса. Ошибки здесь нужны: по ним видно, какие темы требуют больше времени. В конце курса итоговый экзамен X6 сравнивается с этим срезом, и ты видишь свой рост. Можно пройти в любой свободный момент до субботней контрольной X1.",
+    fmt: ["15 фрагментов «что выведет» по всем темам курса (quiz.py)", "30 вопросов собеса, отвечаешь своими словами (QUESTIONS.md)", "Задача на алгоритм за 20 минут: первый неповторяющийся символ", "Практическая задача за 25 минут: отчёт по ошибкам из лога"] },
+  { code: "A0", k: "algo", title: "Big-O и метод решения", sub: "Основа всего трека A", status: "готов",
+    about: "Big-O — способ ответить на вопрос «насколько медленнее станет программа, если данных станет в 10 раз больше». Интервьюер всегда спрашивает сложность решения, а размер входа в условии подсказывает, какое решение от тебя ждут. Здесь же учимся видеть «скрытую» сложность: одна безобидная строка внутри цикла может превратить быстрое решение в медленное.",
+    concepts: [
+      ["O(1) — константа", "Время не зависит от размера данных: взять элемент по индексу, найти ключ в словаре, добавить в конец списка.", "user = users_by_id[42]   # словарь: сразу нужная ячейка"],
+      ["O(n) — линейная", "Один проход по данным: время растёт вместе с размером входа.", "total = 0\nfor price in prices:     # n шагов\n    total += price"],
+      ["O(n²) — квадратичная", "Вложенный цикл по тем же данным: на 10 000 элементов это уже 100 млн операций.", "for a in nums:\n    for b in nums:      # n × n\n        ..."],
+      ["O(log n) и O(n log n)", "log n — каждый шаг делит задачу пополам (бинарный поиск: миллион элементов за 20 шагов). n log n — сложность хорошей сортировки, например sorted()."],
+      ["Сложность по памяти", "Сколько дополнительных данных создаёт решение: set из n элементов — O(n) памяти, пара переменных — O(1)."],
+      ["Скрытая сложность", "x in list, list.insert(0, x), s.count(c), срез a[1:] — каждая из них O(n). Внутри цикла они дают O(n²), хотя цикл один.", "for x in a:\n    if x in b_list:     # O(n) внутри O(n) = O(n²)\n        ...\nb_set = set(b_list)     # in для set — O(1)"],
+      ["Размер входа → нужная сложность", "n до 10³ — допустим O(n²); до 10⁵–10⁶ — нужно O(n) или O(n log n). Спроси размер входа, и он подскажет решение."],
+    ],
+    q: ["Какая сложность у x in list и x in set и почему?", "Что значит «append работает за амортизированное O(1)»?", "Почему вложенный цикл — это O(n²)?", "Как понять по размеру входа, какое решение ждут?"],
+    tasks: [["Оцени сложность", "10 фрагментов кода: назвать время и память, найти скрытую O(n) операцию"], ["Ускорь решение", "3 решения за O(n²) переписать в O(n), используя set и dict"]] },
+]},
+{ week: "Неделя 1", title: "Данные и типы", goal: "Как Python хранит данные: объекты, числа, строки, коллекции. Отсюда половина вопросов «что выведет» и основа всех алгоритмических задач.", items: [
+  { code: "C1", k: "core", title: "Объекты, имена и ссылки", sub: "Самая частая тема собеса", status: "готов",
+    links: [["Визуализатор по шагам", "https://claude.ai/artifact/TzYJP1PWSAMPkEiyaZNHLh"]],
+    about: "Главная мысль: переменная в Python — это ярлык, приклеенный к объекту, а не коробка со значением. Присваивание ничего не копирует. Из этого объясняются все «странности»: почему список изменился через другую переменную, почему += у списка и строки ведёт себя по-разному, почему копия бывает неглубокой, почему аргумент по умолчанию «помнит» прошлые вызовы. В автотестах это источник плавающих падений: тест зелёный, когда запускаешь его один, и красный в общем прогоне.",
+    concepts: [
+      ["Мутация против переприсваивания", "Мутация меняет сам объект, и это видят все имена на нём. Переприсваивание переклеивает одно имя на другой объект.", "b = a\nb.append(3)   # мутация: a тоже изменился\nb = [9]       # переприсваивание: a не тронут"],
+      ["Изменяемые и неизменяемые", "list, dict, set можно менять на месте. int, str, tuple нельзя: «изменение» создаёт новый объект."],
+      ["+ против +=", "+ всегда создаёт новый объект. += у списка расширяет тот же список, у строки и кортежа создаёт новый.", "a = [1]; b = a\na += [2]\nprint(b)   # [1, 2]"],
+      ["is против ==", "== сравнивает значения, is проверяет, что это один и тот же объект. is используют только для None и синглтонов."],
+      ["Поверхностная и глубокая копия", "copy() создаёт новый внешний контейнер, но вложенные объекты остаются общими. deepcopy копирует всё.", "shallow = src.copy()\nsrc[0].append(99)    # shallow[0] тоже изменился"],
+      ["Аргумент по умолчанию", "Значение по умолчанию создаётся один раз при def и живёт между вызовами.", "def add(x, acc=[]):   # ошибка\ndef add(x, acc=None): # правильно"],
+      ["Хешируемость", "Ключом dict и элементом set может быть только объект, чей hash не меняется: list нельзя, tuple из чисел можно."],
+    ],
+    q: ["Чем изменяемые типы отличаются от неизменяемых?", "is или ==: когда что?", "Поверхностная и глубокая копия: в чём разница?", "Что не так с def f(x=[])?", "Python передаёт аргументы по ссылке или по значению?", "Почему list не может быть ключом dict?"],
+    tasks: [["t01 add_tag", "починить хелпер с изменяемым аргументом по умолчанию"], ["t02 make_grid", "сетка, где строки — разные списки"], ["t03 relation", "различить «тот же объект», «равный» и «другой»"], ["t04 build_payload", "тело запроса из шаблона, шаблон не портится"], ["t05 deep_merge", "глубокое слияние конфигов"], ["t06 freeze", "сделать JSON-объект хешируемым"], ["t07 dedupe", "убрать дубли словарей за O(n) с сохранением порядка"], ["t08 my_deepcopy", "своя глубокая копия"], ["t09 ★ deepcopy с циклами", "копия объекта, который ссылается сам на себя"], ["t10 ★ CallRecorder", "записыватель вызовов со снимками аргументов, в отличие от Mock"]] },
+  { code: "C2", k: "core", title: "Числа, строки, bool", sub: "Точность, деньги, текст", status: "готов",
+    about: "Как Python работает с числами и текстом и где здесь подвохи. Почему 0.1 + 0.2 не равно 0.3 и почему деньги в тестах сравнивают через Decimal. Как округляет round (не так, как в школе). Почему склеивать строки в цикле через + медленно. Чем текст (str) отличается от байтов (bytes) и откуда берутся ошибки кодировки в ответах API.",
+    concepts: [
+      ["int без переполнения", "Целые числа в Python могут быть любой длины: 2 ** 100 считается точно. Переполнения, как в Java, нет."],
+      ["// и % с отрицательными", "// округляет вниз, к минус бесконечности, а не к нулю. Это частый «что выведет».", "print(7 // 2, -7 // 2, -7 % 2)   # 3 -4 1"],
+      ["float неточен", "Дробные числа хранятся в двоичном виде, и 0.1 в нём не представляется точно. Сравнивай через math.isclose.", "0.1 + 0.2 == 0.3                 # False\nmath.isclose(0.1 + 0.2, 0.3)     # True"],
+      ["Decimal для денег", "Точная десятичная арифметика. Создавай из строки: Decimal(0.1) уже несёт ошибку float.", "Decimal(\"0.1\") + Decimal(\"0.2\") == Decimal(\"0.3\")   # True"],
+      ["Банковское округление", "round(2.5) == 2 и round(3.5) == 4: половинка округляется к чётному. Для денег используй Decimal.quantize с нужным режимом."],
+      ["Строки неизменяемы, join", "Каждый + в цикле создаёт новую строку, поэтому склеивание в цикле — O(n²). Собирай части в список и делай \"\".join(parts)."],
+      ["f-строки", "Форматирование: f\"{price:.2f}\" — два знака после точки; f\"{x=}\" печатает имя и значение, удобно для отладки."],
+      ["str и bytes", "str — текст (символы), bytes — сырые байты. Перевод между ними — encode и decode с кодировкой, обычно UTF-8. Ответ HTTP приходит байтами."],
+      ["Truthy и falsy", "В if пустые коллекции, 0, \"\" и None считаются False. bool — подкласс int: True + True == 2."],
+    ],
+    q: ["Почему 0.1 + 0.2 != 0.3 и как сравнивать float?", "Почему суммы денег хранят в Decimal, а не в float?", "Как работает round(2.5)?", "Почему конкатенация строк в цикле медленная и как правильно?", "Чем str отличается от bytes?", "Что считается ложным в if?"],
+    tasks: [["Сумма ордеров", "сложить цены в Decimal и округлить до 2 знаков по правилам бухгалтерии"], ["Безопасный парсинг числа", "строку из ответа API превратить в число или вернуть ошибку"], ["Палиндром", "проверить строку без учёта регистра, пробелов и знаков препинания"], ["Отчёт-таблица", "отформатировать данные в ровные колонки через f-строки"], ["Байты и кодировки", "декодировать ответ с неизвестной кодировкой, не упав на битых символах"], ["★ Своё округление", "реализовать округление «половина вверх» без Decimal и найти, где оно ломается на float"]] },
+  { code: "C3", k: "core", title: "Коллекции и их устройство", sub: "list, tuple, dict, set, collections", status: "готов",
+    about: "Коллекции — главный инструмент и в тестах, и на лайвкодинге. Мало знать методы: на собесе спрашивают, как коллекции устроены внутри и почему одни операции быстрые, а другие медленные. Список — это массив в памяти, поэтому вставка в начало дорогая. Словарь и множество — хеш-таблицы, поэтому поиск мгновенный. Плюс модуль collections: готовые инструменты, которые экономят половину кода на лайвкодинге.",
+    concepts: [
+      ["list — динамический массив", "Элементы лежат подряд. Доступ по индексу и append — O(1). insert(0, x) и pop(0) сдвигают все элементы, это O(n)."],
+      ["tuple", "Неизменяемый список: может быть ключом dict, им удобно возвращать несколько значений. Распаковка: a, b = b, a."],
+      ["dict — хеш-таблица", "По hash ключа сразу вычисляется ячейка, поэтому поиск, вставка и удаление в среднем O(1). С Python 3.7 словарь хранит порядок вставки.", "counts = {}\ncounts[w] = counts.get(w, 0) + 1"],
+      ["set", "Множество уникальных элементов на той же хеш-таблице: x in s — O(1). Операции: | объединение, & пересечение, - разность.", "set(a) & set(b)   # общие элементы"],
+      ["Counter", "Словарь-счётчик: посчитать частоты одной строкой, most_common(k) — топ-k.", "Counter(\"banana\").most_common(1)   # [('a', 3)]"],
+      ["defaultdict", "Словарь, который сам создаёт значение для нового ключа. Группировка без проверок «есть ли ключ».", "groups = defaultdict(list)\ngroups[order[\"status\"]].append(order)"],
+      ["deque", "Двусторонняя очередь: добавлять и убирать с обоих концов за O(1). Основа BFS и скользящих окон."],
+      ["Сортировка", "sorted() возвращает новый список, .sort() сортирует на месте. key задаёт, по чему сортировать; сортировка стабильна (равные сохраняют порядок).", "sorted(users, key=lambda u: (-u[\"score\"], u[\"name\"]))"],
+    ],
+    q: ["list против tuple: в чём разница?", "Как устроен dict и почему поиск O(1)?", "Почему dict сохраняет порядок?", "Зачем deque, если есть list?", "Что такое стабильная сортировка?", "Когда defaultdict удобнее обычного dict?"],
+    tasks: [["Частота слов", "топ-k слов текста через Counter"], ["Группировка", "сгруппировать ордера по статусу через defaultdict"], ["Пересечения", "найти пользователей, которые есть в обоих ответах API"], ["Сортировка по нескольким полям", "по убыванию суммы, при равенстве по имени"], ["Последние N событий", "хранить только последние N через deque(maxlen=N)"], ["★ Своя хеш-таблица", "простой словарь на списке «корзин», чтобы понять устройство dict"]] },
+  { code: "A1", k: "algo", title: "Массивы и строки", sub: "~10 задач", status: "задачи готовы",
+    about: "Базовые операции с массивами и строками: проход с индексами, работа «на месте» без лишней памяти, сборка результата. Это разминка трека: здесь отрабатываем метод из 7 шагов и привычку называть сложность.",
+    concepts: [["Проход с индексом", "enumerate даёт индекс и значение сразу; range(len(a)) нужен, когда смотришь на соседей a[i - 1]."], ["Изменение на месте", "Задача «без дополнительной памяти»: меняем исходный список, а не создаём новый (O(1) памяти)."], ["Сборка строки", "Части складываем в список, в конце делаем \"\".join(parts)."]],
+    tasks: [["reverse words", "перевернуть порядок слов в строке"], ["move zeros", "сдвинуть нули в конец, не меняя порядок остальных, на месте"], ["merge sorted arrays", "слить два отсортированных массива"], ["max profit", "лучшая прибыль от одной покупки и продажи акции"], ["product except self", "произведение всех элементов, кроме текущего, без деления"], ["string compression", "сжать aaab в a3b1"]] },
+  { code: "A2", k: "algo", title: "Хеширование", sub: "~10 задач", status: "задачи готовы",
+    about: "Самый частый паттерн собеса. Сигнал в условии: «найти пару», «есть ли дубль», «посчитать», «сгруппировать». Идея: вместо того чтобы снова и снова искать по списку (O(n) каждый раз), запоминаем увиденное в dict или set и проверяем за O(1). Решение за O(n²) превращается в O(n).",
+    concepts: [["«Ищу пару» через dict", "Для каждого числа спрашиваем: видели ли мы раньше его «пару»?", "seen = {}\nfor i, x in enumerate(nums):\n    if target - x in seen:\n        return [seen[target - x], i]\n    seen[x] = i"], ["Подсчёт", "Counter или dict.get(k, 0) + 1."], ["Ключ группировки", "Анаграммы имеют одинаковый ключ — отсортированные буквы: tuple(sorted(word))."]],
+    tasks: [["two sum", "индексы двух чисел с заданной суммой"], ["valid anagram", "являются ли строки анаграммами"], ["group anagrams", "сгруппировать слова-анаграммы"], ["first unique char", "первый символ, который встречается один раз"], ["contains duplicate", "есть ли повтор"], ["longest consecutive sequence", "самая длинная последовательность подряд идущих чисел за O(n)"]] },
+  { code: "Q1", k: "aqa", title: "Работа с данными", sub: "6 задач из реальной работы AQA", status: "задачи готовы",
+    about: "Задачи, которые реально дают на собесах AQA вместо LeetCode: обработать ответ API, сравнить данные, посчитать статистику. Проверяют, как ты владеешь коллекциями и аккуратен ли с граничными случаями.",
+    tasks: [["Топ слов", "частота слов в тексте и топ-k без учёта регистра"], ["Diff двух JSON", "какие поля добавлены, удалены, изменены — то, что делает тест сравнения ответов"], ["Дубли email", "найти повторяющиеся email без учёта регистра и пробелов"], ["Сводка ордеров", "сгруппировать по статусу и посчитать сумму в Decimal"], ["Flatten dict", "{\"a\": {\"b\": 1}} → {\"a.b\": 1} — удобно для сравнения вложенных ответов"], ["Валидация структуры", "проверить, что в ответе есть нужные поля нужных типов, без библиотек"]] },
+  { code: "X1", k: "exam", title: "Контрольная недели 1", sub: "Суббота", status: "готов",
+    about: "Проверка, что неделя усвоена, а не просто пройдена. Всё на время, как на собесе.",
+    fmt: ["20 вопросов по C1–C3 вслух", "10 фрагментов «что выведет»", "2 задачи из A1/A2 за 40 минут", "1 задача Q1 за 20 минут"] },
+]},
+{ week: "Неделя 2", title: "Функции и ленивость", goal: "Функции как объекты, генераторы и декораторы. На этом построен pytest: фикстуры — генераторы, маркеры — декораторы.", items: [
+  { code: "C4", k: "core", title: "Функции и области видимости", sub: "Аргументы, LEGB, замыкания", status: "готов",
+    about: "Функция в Python — такой же объект, как число или список: её можно положить в переменную, передать в другую функцию, вернуть из функции. Разбираем все виды аргументов (что такое *args и **kwargs и зачем звёздочка в сигнатуре), как Python ищет переменную по имени и что такое замыкание — функция, которая «помнит» переменные места, где её создали. Без этого не понять декораторы.",
+    concepts: [
+      ["*args и **kwargs", "*args собирает лишние позиционные аргументы в кортеж, **kwargs — именованные в словарь. Так пишут обёртки, которые передают аргументы дальше.", "def log(*args, **kwargs):\n    print(args, kwargs)\nlog(1, 2, x=3)   # (1, 2) {'x': 3}"],
+      ["Только именованные (*) и только позиционные (/)", "Всё после * передаётся только по имени: def get(url, *, timeout). Это защищает от путаницы в длинных сигнатурах."],
+      ["LEGB", "Порядок поиска имени: Local (внутри функции) → Enclosing (внешняя функция) → Global (модуль) → Built-in (len, print)."],
+      ["UnboundLocalError", "Если внутри функции есть присваивание x = ..., то x локальная во всей функции, даже в строках до присваивания.", "x = 10\ndef f():\n    print(x)   # UnboundLocalError\n    x = 5"],
+      ["Замыкание", "Внутренняя функция запоминает переменные внешней даже после того, как внешняя завершилась.", "def counter():\n    n = 0\n    def inc():\n        nonlocal n\n        n += 1\n        return n\n    return inc"],
+      ["Позднее связывание", "Лямбды в цикле видят переменную цикла в момент вызова, а не создания.", "fs = [lambda: i for i in range(3)]\n[f() for f in fs]   # [2, 2, 2]"],
+      ["functools", "partial фиксирует часть аргументов, lru_cache кэширует результаты, wraps сохраняет имя функции в декораторах."],
+    ],
+    q: ["Что такое *args и **kwargs?", "Что такое замыкание? Приведи пример.", "Как Python ищет имя переменной (LEGB)?", "Зачем nonlocal и global?", "Что выведет список лямбд, созданных в цикле, и как это починить?"],
+    tasks: [["Счётчик на замыкании", "функция, которая при каждом вызове возвращает следующее число"], ["Обёртка с *args/**kwargs", "передать любые аргументы во внутреннюю функцию и залогировать их"], ["Починить лямбды в цикле", "исправить позднее связывание двумя способами"], ["Сортировка с key", "отсортировать сложные записи разными ключами"], ["partial", "сделать из общего API-запроса готовые get_user и get_order"], ["★ Своя memoize", "кэширование результатов функции на замыкании"]] },
+  { code: "C5", k: "core", title: "Comprehensions, итераторы, генераторы", sub: "Ленивые вычисления", status: "готов",
+    about: "Как на самом деле работает цикл for и почему по списку, строке, словарю и файлу можно идти одинаково. Генератор — функция, которая отдаёт значения по одному и «засыпает» между ними, поэтому может обработать файл на 10 ГБ, почти не занимая памяти. yield-фикстура в pytest — это как раз генератор: код до yield — подготовка, после — уборка.",
+    concepts: [
+      ["Comprehension", "Короткая запись цикла, собирающего коллекцию.", "squares = [x * x for x in nums if x > 0]\nby_id = {u[\"id\"]: u for u in users}"],
+      ["Iterable и iterator", "Iterable — то, по чему можно пройти (список). Iterator — «курсор», который выдаёт следующий элемент через next() и помнит позицию. for сам вызывает iter() и next()."],
+      ["Генератор и yield", "yield отдаёт значение и замораживает функцию до следующего next().", "def read_errors(path):\n    with open(path) as f:\n        for line in f:\n            if \"ERROR\" in line:\n                yield line"],
+      ["Генератор одноразовый", "Пройденный генератор пуст: второй sum(g) вернёт 0."],
+      ["Генераторное выражение", "(x * x for x in nums) — как список, но ленивый: элементы считаются по запросу, памяти O(1)."],
+      ["itertools", "chain склеивает итерируемые, islice берёт срез генератора, groupby группирует подряд идущие, product/permutations/combinations перебирают варианты."],
+    ],
+    q: ["Генератор против списка: когда что?", "Чем iterable отличается от iterator?", "Что делает yield?", "Почему генератор нельзя пройти дважды?", "Как yield-фикстура pytest использует генератор?"],
+    tasks: [["Свой range", "генератор с шагом, в том числе отрицательным"], ["Чтение лога", "генератор ERROR-строк из большого файла без загрузки в память"], ["Пачки", "разбить поток на пачки по n элементов"], ["Свой итератор-класс", "__iter__ и __next__ для обхода страниц API"], ["Пайплайн генераторов", "прочитать → распарсить → отфильтровать, всё лениво"], ["★ groupby руками", "группировка подряд идущих без itertools"]] },
+  { code: "C6", k: "core", title: "Декораторы", sub: "Классика лайвкодинга", status: "готов",
+    about: "Декоратор — функция, которая принимает функцию и возвращает «улучшенную» версию: с логированием, повтором при ошибке, замером времени. Запись @retry над функцией — сокращение для f = retry(f). На собесах AQA просьба «напиши декоратор retry» — одна из самых частых. А @pytest.fixture, @pytest.mark.parametrize, @property — тоже декораторы.",
+    concepts: [
+      ["Как устроен декоратор", "Обёртка — замыкание вокруг исходной функции.", "def log_calls(func):\n    def wrapper(*args, **kwargs):\n        print(\"call\", func.__name__, args)\n        return func(*args, **kwargs)\n    return wrapper"],
+      ["@ — сахар", "@log_calls над def f — то же самое, что f = log_calls(f) после определения."],
+      ["functools.wraps", "Без него у обёрнутой функции имя wrapper и пропадает docstring, а это ломает отчёты и pytest."],
+      ["Декоратор с параметрами", "@retry(times=3) — сначала вызывается retry(times=3), он возвращает настоящий декоратор. Получается три уровня вложенности."],
+      ["Порядок нескольких декораторов", "Применяются снизу вверх, а выполняются сверху вниз, как матрёшка."],
+    ],
+    q: ["Что такое декоратор и как он работает?", "Зачем functools.wraps?", "Напиши декоратор с параметром.", "В каком порядке применяются два декоратора?", "Какие декораторы есть в pytest?"],
+    tasks: [["timer", "печатает время выполнения функции"], ["log_calls", "логирует аргументы и результат"], ["retry(times, exceptions)", "повторить вызов при указанных исключениях"], ["Декоратор-класс", "тот же счётчик вызовов, но классом с __call__"], ["Кэш с TTL", "результат хранится N секунд"], ["★ Декоратор для методов и функций", "один декоратор, который работает и там, и там"]] },
+  { code: "A3", k: "algo", title: "Два указателя", sub: "~10 задач", status: "готов",
+    about: "Два индекса идут по массиву: навстречу друг другу с концов или один «читает», другой «пишет». Сигналы в условии: отсортированный массив, пара с суммой, палиндром, «на месте», O(1) памяти. Убирает вложенный цикл: O(n²) → O(n).",
+    concepts: [["С двух концов", "left = 0, right = len(a) - 1; двигаем тот, который приближает к цели.", "while left < right:\n    s = a[left] + a[right]\n    if s == target: return ...\n    if s < target: left += 1\n    else: right -= 1"], ["Чтение и запись", "Быстрый указатель читает, медленный пишет нужное: удаление элементов на месте."]],
+    tasks: [["valid palindrome", "палиндром без учёта знаков"], ["two sum II", "пара с суммой в отсортированном массиве"], ["3sum", "все тройки с суммой 0 без дублей"], ["container with most water", "максимальная площадь между линиями"], ["remove duplicates", "убрать дубли на месте"], ["squares of sorted array", "квадраты отсортированного массива с минусами"]] },
+  { code: "A4", k: "algo", title: "Скользящее окно", sub: "~10 задач", status: "готов",
+    about: "Для задач про подряд идущий кусок массива или строки: «самая длинная подстрока, где…», «сумма k подряд». Окно [left, right] расширяется вправо и сжимается слева, когда нарушено условие. Каждый элемент входит и выходит из окна один раз, поэтому O(n) вместо перебора всех подотрезков.",
+    concepts: [["Окно фиксированного размера", "Добавляем новый элемент, вычитаем вышедший."], ["Окно переменного размера", "Расширяем right; пока условие нарушено — двигаем left.", "for right, ch in enumerate(s):\n    while ch in window:\n        window.remove(s[left]); left += 1\n    window.add(ch)"]],
+    tasks: [["max sum of k", "максимальная сумма k подряд"], ["longest substring without repeating", "самая длинная подстрока без повторов"], ["minimum size subarray sum", "самый короткий кусок с суммой ≥ target"], ["permutation in string", "есть ли перестановка строки внутри другой"], ["longest repeating replacement", "самая длинная серия при k заменах"]] },
+  { code: "A5", k: "algo", title: "Стек и очередь", sub: "~10 задач", status: "готов",
+    about: "Стек — «последним пришёл, первым ушёл» (стопка тарелок), в Python это list с append и pop. Сигналы: скобки, вложенность, «отменить последнее», «ближайший больший справа». Очередь — «первым пришёл, первым ушёл», это deque, основа обхода в ширину.",
+    concepts: [["Скобки", "Открывающую кладём в стек, закрывающая должна совпасть с верхней.", "pairs = {\")\": \"(\", \"]\": \"[\"}\nfor ch in s:\n    if ch in pairs:\n        if not stack or stack.pop() != pairs[ch]: return False\n    else: stack.append(ch)"], ["Монотонный стек", "Хранит элементы по убыванию: так за O(n) находится «следующий больший» для каждого."]],
+    tasks: [["valid parentheses", "правильная скобочная последовательность"], ["min stack", "стек с минимумом за O(1)"], ["daily temperatures", "через сколько дней станет теплее"], ["evaluate RPN", "посчитать выражение в обратной польской записи"], ["queue via two stacks", "очередь на двух стеках"], ["simplify path", "упростить путь /a/./b/../c"]] },
+  { code: "Q2", k: "aqa", title: "Утилиты на функциях", sub: "6 задач", status: "готов",
+    about: "Утилиты, которые есть в любом тестовом фреймворке, и которые просят написать на собесе с нуля. Закрепляют замыкания, генераторы и декораторы на реальных задачах.",
+    tasks: [["retry(times, delay, exceptions)", "повтор при сетевых ошибках, классика собеса"], ["timer + log", "время выполнения и аргументы шага теста"], ["Фильтр лога", "генератор ERROR-строк с номером строки"], ["Пачки", "отправлять запросы пачками по n"], ["Flatten", "развернуть список любой вложенности"], ["wait_until", "своё ожидание условия с таймаутом и интервалом, как в Playwright/Selenium"]] },
+  { code: "X2", k: "exam", title: "Контрольная недели 2", sub: "Суббота", status: "готов", about: "Половина вопросов по новым темам, половина — повтор недели 1.",
+    fmt: ["20 вопросов по C1–C6", "10 «что выведет» на замыкания и генераторы", "retry с нуля за 15 минут", "2 задачи из A3–A5 за 40 минут"] },
+]},
+{ week: "Неделя 3", title: "ООП", goal: "Классы так, как их спрашивают на собесе и как на них строится тестовый фреймворк: Page Object, API-клиенты, модели данных.", items: [
+  { code: "C7", k: "core", title: "Классы и объекты", sub: "Атрибуты, property, методы", status: "готов",
+    about: "Класс — чертёж, объект — вещь по этому чертежу. Разбираем, что такое self, где хранятся данные объекта и чем атрибут класса (общий для всех объектов) отличается от атрибута объекта (свой у каждого). Отдельно — ловушка со списком в атрибуте класса. Какие бывают методы: обычные, @classmethod (альтернативный конструктор), @staticmethod. Что такое @property и есть ли в Python private.",
+    concepts: [
+      ["self", "Ссылка на текущий объект: Python передаёт её первым аргументом сам. user.greet() — это User.greet(user)."],
+      ["Атрибут класса и атрибут объекта", "Атрибут класса один на всех. Список в атрибуте класса — общий для всех объектов.", "class Cart:\n    items = []          # общий на все корзины!\n    def __init__(self):\n        self.items = []  # правильно: у каждого свой"],
+      ["@property", "Метод, который читается как поле: user.full_name без скобок. Позволяет добавить проверку в setter."],
+      ["@classmethod", "Получает класс, а не объект. Типичное применение — альтернативный конструктор.", "@classmethod\ndef from_json(cls, data):\n    return cls(data[\"id\"], data[\"email\"])"],
+      ["@staticmethod", "Обычная функция внутри класса, не получает ни self, ни cls."],
+      ["_protected и __private", "Настоящего private нет. _x — договорённость «не трогай». __x Python переименовывает в _Class__x (name mangling)."],
+    ],
+    q: ["Чем атрибут класса отличается от атрибута объекта?", "classmethod против staticmethod.", "Зачем @property?", "Есть ли в Python private?", "Что такое self?"],
+    tasks: [["Модель пользователя", "класс с валидацией email в property"], ["from_json", "альтернативный конструктор из ответа API"], ["Счётчик объектов", "атрибут класса, сколько создано экземпляров"], ["Найди баг", "общий список в атрибуте класса"], ["Деньги", "класс суммы с валютой, только чтение через property"], ["★ Ленивый атрибут", "значение считается один раз при первом обращении"]] },
+  { code: "C8", k: "core", title: "Наследование и проектирование", sub: "MRO, ABC, композиция, SOLID", status: "готов",
+    about: "Наследование позволяет взять готовый класс и расширить его. super() вызывает метод родителя. При множественном наследовании Python ищет методы в определённом порядке (MRO), и это частый «что выведет». Но главный вопрос проектирования — когда лучше не наследовать, а собирать объект из частей (композиция). На примерах тестового фреймворка разберём 4 принципа ООП и SOLID.",
+    concepts: [
+      ["super()", "Вызывает метод следующего класса в MRO, а не обязательно прямого родителя."],
+      ["MRO", "Порядок поиска методов: Class.__mro__. Для class D(B, C) это D → B → C → A → object.", "class D(B, C): pass\nprint([c.__name__ for c in D.__mro__])"],
+      ["Абстрактный класс", "ABC с @abstractmethod нельзя создать, пока наследник не реализует все абстрактные методы. Это задаёт контракт, например «у каждой страницы есть open()»."],
+      ["Утиная типизация и Protocol", "«Если крякает как утка — это утка»: важно наличие методов, а не родитель. Protocol описывает такой контракт для проверки типов."],
+      ["Композиция", "Объект содержит другие объекты вместо наследования: у страницы есть header и cart_widget, а не страница наследует от них."],
+      ["SOLID", "Пять принципов хорошего дизайна. Например, S — у класса одна ответственность: API-клиент отправляет запросы, но не проверяет бизнес-логику."],
+    ],
+    q: ["Назови 4 принципа ООП с примерами.", "Что такое MRO и как работает super()?", "Что такое проблема ромба?", "Когда композиция лучше наследования?", "Расскажи SOLID на примере своего фреймворка."],
+    tasks: [["Иерархия клиентов", "BaseClient и UsersClient с переопределением"], ["Что выведет MRO", "предсказать порядок вызовов super() в ромбе"], ["Абстрактная страница", "BasePage с обязательным open() и проверкой"], ["Композиция", "страница из компонентов вместо наследования"], ["Рефакторинг", "разделить «божественный» класс по принципу S"], ["★ Mixin", "добавить логирование запросов любому клиенту через mixin"]] },
+  { code: "C9", k: "core", title: "Магические методы и dataclasses", sub: "Модель данных Python", status: "готов",
+    about: "Магические (dunder) методы — методы вида __имя__, которые Python вызывает сам: len(x) вызывает x.__len__(), x == y вызывает x.__eq__(y), print(x) вызывает x.__str__(). Реализовав их, свой класс можно сделать «как встроенный»: сравниваемым, итерируемым, вызываемым. dataclass генерирует __init__, __repr__ и __eq__ автоматически — это основа моделей данных в тестах.",
+    concepts: [
+      ["__repr__ и __str__", "__repr__ — для разработчика (видно в отладке и в сообщениях pytest), __str__ — для людей (print)."],
+      ["__eq__ и __hash__", "Если переопределить __eq__ без __hash__, объект станет нехешируемым: равные объекты обязаны иметь равный hash."],
+      ["Контейнерные методы", "__len__, __getitem__, __contains__, __iter__ — и объект работает с len, [], in и for."],
+      ["__call__", "Объект можно вызывать как функцию. Так устроен Mock."],
+      ["__new__ и __init__", "__new__ создаёт объект, __init__ заполняет уже созданный. __new__ нужен редко: синглтоны, наследование от неизменяемых типов."],
+      ["dataclass", "Генерирует __init__, __repr__, __eq__ из аннотаций. frozen=True делает неизменяемым и хешируемым.", "@dataclass(frozen=True)\nclass Order:\n    symbol: str\n    qty: Decimal\n    tags: list = field(default_factory=list)"],
+    ],
+    q: ["__new__ против __init__.", "Что сломается, если переопределить __eq__ без __hash__?", "__repr__ против __str__.", "Зачем dataclass и чем он отличается от pydantic?", "Что такое метакласс, одной фразой?"],
+    tasks: [["Vector", "сложение, сравнение и красивый repr"], ["Корзина", "len, in, for и индексация"], ["Сравнение версий", "сортировать \"1.10.0\" и \"1.9.3\" правильно через __lt__"], ["dataclass-модель", "ордер с значениями по умолчанию и валидацией в __post_init__"], ["Хешируемый объект", "положить свои объекты в set"], ["★ Свой Mock", "объект, который принимает любой вызов и атрибут и всё записывает"]] },
+  { code: "A6", k: "algo", title: "Сортировка и интервалы", sub: "~10 задач", status: "готов",
+    about: "Многие задачи становятся простыми после сортировки: отсортировал — и всё нужное стоит рядом. Интервалы (встречи, брони, отрезки) почти всегда решаются так: сортируем по началу и идём слева направо, сливая пересекающиеся. Сложность O(n log n) из-за сортировки.",
+    concepts: [["Сортировка по ключу", "sorted(intervals, key=lambda x: x[0])"], ["Слияние", "Если начало текущего ≤ конца последнего в результате — продлеваем последний, иначе добавляем новый."]],
+    tasks: [["merge intervals", "слить пересекающиеся отрезки"], ["insert interval", "вставить отрезок и слить"], ["meeting rooms", "хватит ли одной переговорки / сколько нужно"], ["sort colors", "отсортировать 0, 1, 2 за один проход"], ["largest number", "составить наибольшее число из чисел"], ["non-overlapping intervals", "минимум удалений, чтобы не было пересечений"]] },
+  { code: "A7", k: "algo", title: "Бинарный поиск", sub: "~10 задач", status: "готов",
+    about: "В отсортированных данных можно искать, каждый раз отбрасывая половину: миллион элементов — за 20 шагов, O(log n). Сигналы: «отсортировано», «найди за O(log n)», «минимальное X, при котором…» (поиск по ответу). Главная сложность — не ошибиться на единицу в границах.",
+    concepts: [["Шаблон", "Ищем, пока границы не сошлись.", "lo, hi = 0, len(a) - 1\nwhile lo <= hi:\n    mid = (lo + hi) // 2\n    if a[mid] == x: return mid\n    if a[mid] < x: lo = mid + 1\n    else: hi = mid - 1"], ["bisect", "Модуль bisect даёт готовый поиск позиции вставки."], ["Поиск по ответу", "Если «подходит ли X» проверяется легко и монотонно, бинарный поиск идёт по самим значениям ответа."]],
+    tasks: [["binary search", "классика"], ["search insert position", "куда вставить"], ["first and last position", "границы диапазона одинаковых"], ["search in rotated array", "поиск в повёрнутом массиве"], ["sqrt(x)", "целый корень без math"], ["koko eating bananas", "минимальная скорость — поиск по ответу"]] },
+  { code: "A8", k: "algo", title: "Префиксные суммы", sub: "~10 задач", status: "готов",
+    about: "Заранее считаем массив накопленных сумм, и тогда сумма любого отрезка получается одним вычитанием за O(1). В связке с dict решают задачи «сколько подмассивов с суммой k» за O(n).",
+    concepts: [["Префикс", "prefix[i] — сумма первых i элементов; сумма [l, r) = prefix[r] − prefix[l]."], ["Префикс + dict", "Считаем, сколько раз встречалась сумма (текущая − k)."]],
+    tasks: [["range sum query", "много запросов суммы отрезка"], ["subarray sum equals k", "число подмассивов с суммой k"], ["pivot index", "индекс, где суммы слева и справа равны"], ["contiguous array", "самый длинный кусок с равным числом 0 и 1"], ["running sum", "накопленная сумма"]] },
+  { code: "Q3", k: "aqa", title: "Проектирование классов", sub: "6 задач", status: "готов",
+    about: "На собесах уровня Middle+/Senior часто просят спроектировать небольшой класс с нуля: проверяют ООП, крайние случаи и умение объяснить решения. Каждую задачу разбираем: что спросить у интервьюера, какие методы, какая сложность операций.",
+    tasks: [["LRU cache", "кэш, вытесняющий давно не используемое: на OrderedDict и руками, get/put за O(1)"], ["Rate limiter", "не больше N запросов за окно времени: фиксированное и скользящее окно"], ["Банковский счёт", "пополнение, списание, история, свои исключения"], ["Money", "сумма с валютой: операторы, сравнение, хеш, запрет сложения разных валют"], ["API-клиент", "base_url, сессия, токен, методы get/post, обработка ошибок"], ["Page Object", "страница из компонентов через композицию"]] },
+  { code: "X3", k: "exam", title: "Контрольная недели 3", sub: "Суббота", status: "готов", about: "Акцент на ООП и проектировании.",
+    fmt: ["20 вопросов по C1–C9", "10 «что выведет» на MRO, атрибуты класса и магические методы", "LRU cache с нуля за 20 минут", "2 задачи из A6–A8"] },
+]},
+{ week: "Неделя 4", title: "Ошибки, типы, рантайм", goal: "То, что отличает Senior от Middle: как Python исполняет код, управляет памятью, что такое GIL и когда нужны потоки, процессы и asyncio.", items: [
+  { code: "C10", k: "core", title: "Исключения и контекстные менеджеры", sub: "try, with, contextlib",
+    about: "Как правильно ловить и создавать ошибки, в каком порядке выполняются блоки try / except / else / finally (и что будет, если в finally есть return). Контекстный менеджер — объект для with: он гарантирует, что ресурс будет закрыт, даже если внутри случилась ошибка. Файлы, соединения с БД, замер времени, pytest.raises — всё это контекстные менеджеры.",
+    concepts: [
+      ["Иерархия", "Ловим Exception или конкретные классы. Голый except: ловит даже Ctrl+C (KeyboardInterrupt) — так нельзя."],
+      ["else и finally", "else выполняется, если ошибки не было. finally выполняется всегда, даже после return.", "def f():\n    try:\n        return 1\n    finally:\n        return 2    # вернётся 2!"],
+      ["raise from", "Сохраняет исходную причину: raise ApiError(...) from e — в трейсбеке видно обе ошибки."],
+      ["Свои исключения", "Класс от Exception с полями: class ApiError(Exception) с status и body."],
+      ["Контекстный менеджер", "__enter__ вызывается при входе в with, __exit__ — при выходе, даже при ошибке.", "@contextmanager\ndef timer():\n    start = time.perf_counter()\n    yield\n    print(time.perf_counter() - start)"],
+    ],
+    q: ["Что выведет функция с return и в try, и в finally?", "Зачем блок else в try?", "Напиши контекстный менеджер двумя способами.", "Чем raise from отличается от raise?", "Почему нельзя писать голый except?"],
+    tasks: [["Порядок блоков", "предсказать вывод сложных try/finally"], ["ApiError", "иерархия исключений клиента с полями"], ["timer двумя способами", "классом и через @contextmanager"], ["suppress", "свой аналог contextlib.suppress"], ["Временная переменная окружения", "менеджер, который ставит env и возвращает старое значение"], ["★ ExitStack", "открыть N ресурсов и гарантированно закрыть все"]] },
+  { code: "C11", k: "core", title: "Типизация и современный синтаксис", sub: "typing, match, pydantic",
+    about: "Аннотации типов (def get(id: int) -> User) Python при выполнении не проверяет. Их читают люди, IDE и mypy, который находит ошибки до запуска. Во фреймворке это спасает от «передал строку вместо числа». Плюс современный синтаксис: match/case для разбора структур, моржовый оператор, pydantic для валидации ответов API.",
+    concepts: [
+      ["Базовые аннотации", "list[int], dict[str, Any], int | None, Callable[[int], str]."],
+      ["TypedDict и Literal", "TypedDict описывает форму словаря (JSON), Literal[\"buy\", \"sell\"] — разрешённые значения."],
+      ["Protocol", "Контракт «есть такие методы» без наследования — статическая утиная типизация."],
+      ["match / case", "Разбор по структуре, а не только по значению.", "match event:\n    case {\"type\": \"order.filled\", \"id\": oid}:\n        handle(oid)\n    case _:\n        ignore()"],
+      ["pydantic", "Модель ответа API: проверяет типы и обязательные поля, сразу даёт понятную ошибку."],
+    ],
+    q: ["Влияют ли аннотации на выполнение?", "Зачем mypy в тестовом фреймворке?", "Protocol против ABC.", "Зачем pydantic в API-тестах?"],
+    tasks: [["Аннотировать модуль", "расставить типы и прогнать mypy"], ["TypedDict ответа", "описать JSON ответа и найти ошибку типов"], ["match по событиям", "обработчик событий через match/case"], ["pydantic-модель", "валидация ответа с вложенными объектами"], ["Generic", "типизированный репозиторий Repo[T]"]] },
+  { code: "C12", k: "core", title: "Память и интерпретатор", sub: "CPython изнутри",
+    about: "Что происходит, когда ты запускаешь python file.py: код компилируется в байткод и выполняется виртуальной машиной. Как Python освобождает память: считает ссылки на объект и удаляет его, когда ссылок не осталось, а циклические ссылки находит отдельный сборщик. Что такое GIL — глобальная блокировка, из-за которой потоки Python не выполняют байткод параллельно, — и на что она реально влияет.",
+    concepts: [
+      ["Байткод", "Python-код компилируется в инструкции виртуальной машины. Модуль dis их показывает."],
+      ["Подсчёт ссылок", "У каждого объекта есть счётчик ссылок. Когда он падает до нуля, объект удаляется сразу."],
+      ["Сборщик циклов (gc)", "Объекты, ссылающиеся друг на друга, никогда не дойдут до нуля ссылок — их находит gc."],
+      ["GIL", "В каждый момент байткод выполняет только один поток. Потоки ускоряют ожидание (сеть, диск), но не вычисления."],
+      ["Утечки памяти", "Бывают: растущий глобальный кэш, ссылки в замыканиях, забытые подписки."],
+    ],
+    q: ["Как Python управляет памятью?", "Что такое GIL и на что он влияет?", "Бывают ли утечки памяти в Python?", "Что такое байткод?"],
+    tasks: [["Счётчик ссылок", "предсказать sys.getrefcount в разных ситуациях"], ["Цикл и gc", "создать цикл, убедиться, что его собирает gc"], ["Найти утечку", "в коде с растущим кэшем"], ["weakref", "кэш, который не держит объекты"]] },
+  { code: "C13", k: "core", title: "Конкурентность", sub: "threading, multiprocessing, asyncio",
+    about: "Как делать несколько дел одновременно. Задачи делятся на ожидающие (I/O-bound: HTTP-запросы, БД, файлы) и считающие (CPU-bound: вычисления). Для ожидающих подходят потоки или asyncio, для считающих — процессы, потому что GIL. Разберём race condition (два потока портят общие данные) и как поймать его тестом, а также asyncio: event loop, await, gather, ограничение параллельности.",
+    concepts: [
+      ["I/O-bound и CPU-bound", "100 HTTP-запросов — I/O, потоки ускорят. Подсчёт хешей миллиона строк — CPU, нужны процессы."],
+      ["Race condition", "counter += 1 из двух потоков теряет обновления: это три операции (прочитать, сложить, записать). Лечится Lock."],
+      ["ThreadPoolExecutor", "Пул потоков: executor.map(fetch, urls) — простой параллелизм для запросов."],
+      ["asyncio", "Один поток, много задач: пока одна ждёт ответа, работает другая. await отдаёт управление.", "async def main():\n    sem = asyncio.Semaphore(3)\n    async def one(url):\n        async with sem:\n            return await fetch(url)\n    return await asyncio.gather(*(one(u) for u in urls))"],
+      ["Блокировка event loop", "time.sleep в корутине останавливает все задачи. Нужен await asyncio.sleep."],
+    ],
+    q: ["threading, multiprocessing, asyncio: когда что?", "Помогают ли потоки при GIL?", "Что такое race condition и как поймать его тестом?", "Как ограничить число одновременных запросов в asyncio?", "Почему нельзя time.sleep в async-функции?"],
+    tasks: [["Гонка на счётчике", "воспроизвести и починить через Lock"], ["Параллельные запросы", "ThreadPoolExecutor с таймаутом"], ["asyncio.gather с лимитом", "10 запросов, не больше 3 одновременно"], ["CPU-задача", "сравнить потоки и процессы"], ["★ Producer–consumer", "очередь задач на asyncio.Queue"]] },
+  { code: "A9", k: "algo", title: "Рекурсия и backtracking", sub: "~10 задач",
+    about: "Рекурсия — функция вызывает сама себя на меньшей задаче, пока не дойдёт до базового случая. Backtracking — перебор всех вариантов: делаем выбор, идём глубже, отменяем выбор. Сигналы: «все подмножества», «все перестановки», «все комбинации».",
+    concepts: [["Базовый случай", "Без него рекурсия бесконечна (RecursionError)."], ["Шаблон backtracking", "Выбрал → рекурсия → отменил.", "def bt(path, start):\n    result.append(path[:])\n    for i in range(start, len(nums)):\n        path.append(nums[i])\n        bt(path, i + 1)\n        path.pop()"], ["Мемоизация", "@lru_cache убирает повторные вычисления: Фибоначчи за O(n) вместо O(2ⁿ)."]],
+    tasks: [["fibonacci + memo", "сравнить скорость с кэшем и без"], ["subsets", "все подмножества"], ["permutations", "все перестановки"], ["combination sum", "комбинации с заданной суммой"], ["generate parentheses", "все правильные скобочные последовательности"]] },
+  { code: "A10", k: "algo", title: "Связные списки", sub: "~10 задач",
+    about: "Цепочка узлов, где каждый знает только следующий. Задачи проверяют аккуратность с указателями. Главные приёмы — фиктивный первый узел (dummy) и быстрый с медленным указатели (середина списка, поиск цикла).",
+    concepts: [["Разворот", "Три переменные: prev, cur, next.", "prev = None\nwhile cur:\n    cur.next, prev, cur = prev, cur, cur.next"], ["Быстрый и медленный", "Быстрый идёт через шаг: когда он в конце, медленный в середине; если есть цикл, они встретятся."]],
+    tasks: [["reverse linked list", "развернуть"], ["middle node", "середина"], ["linked list cycle", "есть ли цикл"], ["merge two sorted lists", "слить два отсортированных"], ["remove nth from end", "удалить n-й с конца за один проход"]] },
+  { code: "A11", k: "algo", title: "Деревья: DFS и BFS", sub: "~10 задач",
+    about: "Дерево — узлы с детьми. DFS (в глубину) естественно пишется рекурсией: ответ для узла собирается из ответов детей. BFS (в ширину) идёт по уровням через очередь deque. Сигналы: глубина, путь, «по уровням», проверка свойства всего дерева.",
+    concepts: [["DFS рекурсией", "def depth(n): return 0 if not n else 1 + max(depth(n.left), depth(n.right))"], ["BFS по уровням", "В очереди лежит текущий уровень; обрабатываем его целиком и кладём детей."]],
+    tasks: [["max depth", "глубина дерева"], ["invert tree", "зеркально отразить"], ["level order", "обход по уровням"], ["validate BST", "проверить дерево поиска"], ["lowest common ancestor", "общий предок"], ["path sum", "есть ли путь с суммой"]] },
+  { code: "Q4", k: "aqa", title: "Надёжность и параллельность", sub: "6 задач",
+    about: "Утилиты для устойчивых тестов: ретраи с правильной задержкой, понятные ошибки клиента, параллельные запросы, тест на гонку. Такое просят на собесах Senior AQA, а на работе это пишется постоянно.",
+    tasks: [["Таймер двумя способами", "классом и через @contextmanager"], ["Исключения клиента", "иерархия с полями status и body"], ["10 запросов с лимитом 3", "asyncio.Semaphore"], ["Тест на гонку", "потокобезопасный счётчик и тест, который ловит гонку без Lock"], ["match по событиям", "разбор событий вебхука"], ["Retry с backoff", "экспоненциальная задержка 1, 2, 4 с и случайный джиттер"]] },
+  { code: "X4", k: "exam", title: "Контрольная недели 4", sub: "Суббота", about: "Самая «сеньорская» контрольная: рантайм и конкурентность.",
+    fmt: ["25 вопросов по C1–C13", "10 «что выведет» на try/finally, генераторы и async", "2 задачи из A9–A11 за 45 минут", "1 задача Q4"] },
+]},
+{ week: "Неделя 5", title: "Python для тестировщика", goal: "Окружение, pytest и моки на уровне Senior плюс лайвкодинг самих автотестов.", items: [
+  { code: "C14", k: "core", title: "Модули, окружение, stdlib", sub: "Что пригодится каждый день",
+    about: "Как Python находит и импортирует модули, откуда берётся циклический импорт, зачем if __name__ == \"__main__\". Виртуальное окружение и uv: почему у каждого проекта свои версии библиотек. Самые нужные модули стандартной библиотеки для тестировщика: pathlib, json, re, datetime с часовыми поясами, logging, subprocess.",
+    concepts: [
+      ["import", "Python ищет модуль по sys.path, выполняет его один раз и кладёт в sys.modules. Повторный import берёт готовый."],
+      ["__name__ == \"__main__\"", "Код под этим условием выполняется только при прямом запуске файла, но не при импорте."],
+      ["Виртуальное окружение", "Отдельный набор библиотек для проекта. Lock-файл фиксирует точные версии, чтобы CI и твой ноутбук работали одинаково."],
+      ["datetime: naive и aware", "Naive — без часового пояса, aware — с ним. Сравнивать их нельзя. В API-тестах всегда используй aware и UTC.", "datetime.now(timezone.utc)"],
+      ["logging", "Уровни (DEBUG…ERROR), вывод в файл и консоль, формат с временем. В отличие от print, логи можно отключить, отфильтровать и прикрепить к отчёту."],
+      ["re", "Регулярные выражения: найти request_id в логе, проверить формат.", "re.findall(r\"request_id=(\\w+)\", text)"],
+    ],
+    q: ["Что происходит при import?", "Зачем виртуальное окружение?", "Что такое циклический импорт и как его избежать?", "naive против aware datetime.", "Почему logging, а не print?"],
+    tasks: [["Парсер лога регуляркой", "достать время, уровень и request_id"], ["Время в UTC", "сравнить время из ответа API с допуском"], ["Настроить logging", "консоль и файл с разными уровнями"], ["pathlib", "найти все отчёты за сегодня"], ["subprocess", "запустить команду и проверить код возврата"]] },
+  { code: "C15", k: "core", title: "pytest в глубину", sub: "Фикстуры, параметризация, хуки",
+    about: "pytest ты уже используешь, а на собесе Senior спрашивают, как он устроен: как находит тесты, почему обычный assert даёт подробное сообщение, в каком порядке создаются и удаляются фикстуры разных scope, как работает conftest.py, как написать свой плагин или хук. Плюс параллельный запуск через xdist и что из-за него ломается.",
+    concepts: [
+      ["Scope фикстур", "function — на каждый тест, class, module, session — одна на весь прогон. Чем шире scope, тем опаснее изменяемые данные."],
+      ["yield-фикстура", "До yield — подготовка, после — уборка. Уборка выполняется в обратном порядке создания."],
+      ["Фикстура-фабрика", "Фикстура возвращает функцию, которая создаёт объекты, и сама их удаляет в конце.", "@pytest.fixture\ndef make_user(api):\n    created = []\n    def _make(**kw):\n        u = api.create_user(**kw); created.append(u); return u\n    yield _make\n    for u in created: api.delete_user(u.id)"],
+      ["parametrize", "Один тест — много наборов данных; ids дают читаемые имена; indirect передаёт параметр в фикстуру."],
+      ["conftest.py", "Фикстуры и хуки из него видны всем тестам в этой папке и ниже, без импорта."],
+      ["Хуки", "pytest_addoption добавляет свой флаг (--env), pytest_collection_modifyitems меняет собранные тесты."],
+    ],
+    q: ["Какие scope бывают у фикстур и в каком порядке они создаются и удаляются?", "Как сделать фикстуру с параметром?", "Как работает conftest.py?", "Почему assert в pytest даёт подробное сообщение?", "Что ломается при параллельном запуске xdist?"],
+    tasks: [["Порядок фикстур", "предсказать вывод setup/teardown разных scope"], ["Фабрика пользователей", "фикстура-фабрика с уборкой"], ["parametrize + ids", "читаемые имена кейсов"], ["Свой флаг --env", "через pytest_addoption"], ["Маркер smoke", "запуск только smoke и автодобавление маркера"], ["★ Мини-плагин", "считает время тестов и печатает топ медленных"]] },
+  { code: "C16", k: "core", title: "Моки и HTTP", sub: "unittest.mock, requests",
+    about: "Мок подменяет настоящую зависимость (внешний сервис, время, случайность), чтобы тест был быстрым и предсказуемым. Главный вопрос собеса — где ставить patch: там, где объект используется, а не где он определён. Плюс работа с HTTP из Python: сессии, таймауты, статусы, и подмена ответов внешних сервисов (responses, WireMock).",
+    concepts: [
+      ["Mock и MagicMock", "Mock принимает любые вызовы и атрибуты и всё записывает. MagicMock дополнительно поддерживает магические методы (len, with, итерацию)."],
+      ["return_value и side_effect", "return_value — что вернуть; side_effect — исключение или список ответов по очереди.", "client.get.side_effect = [TimeoutError(), {\"ok\": True}]"],
+      ["Где патчить", "Если в orders.py написано from prices import get_price, патчить нужно orders.get_price, а не prices.get_price."],
+      ["Проверки вызовов", "assert_called_once_with(...), call_args, call_count."],
+      ["Таймауты в requests", "Без timeout запрос может висеть вечно — тест зависнет в CI."],
+    ],
+    q: ["Mock против MagicMock.", "Где ставить patch и почему?", "Как замокать исключение или последовательность ответов?", "Чем мок отличается от стаба и фейка?", "Почему у HTTP-запросов в тестах всегда нужен timeout?"],
+    tasks: [["patch в правильном месте", "найти и починить неработающий patch"], ["Ретрай с моком", "side_effect: сначала ошибка, потом успех"], ["Замокать время", "проверить истечение токена без ожидания"], ["Клиент с таймаутами", "requests.Session с ретраями"], ["Стаб внешнего сервиса", "подменить ответы через responses"]] },
+  { code: "A12", k: "algo", title: "Графы и BFS по сетке", sub: "~10 задач",
+    about: "Граф — вершины и связи (города и дороги, задачи и зависимости). Сетка (поле из клеток) — тоже граф, где соседи — клетки рядом. Почти всё решается обходом в ширину (BFS) или в глубину (DFS) с множеством visited, чтобы не ходить по кругу. BFS даёт кратчайший путь, если все рёбра одинаковые.",
+    concepts: [["BFS", "Очередь и visited; уровень = расстояние от старта.", "q = deque([start]); seen = {start}\nwhile q:\n    node = q.popleft()\n    for nb in graph[node]:\n        if nb not in seen:\n            seen.add(nb); q.append(nb)"], ["Топологическая сортировка", "Порядок выполнения задач с зависимостями: сначала те, у кого нет входящих связей."]],
+    tasks: [["number of islands", "посчитать острова на карте"], ["flood fill", "заливка области"], ["shortest path in grid", "кратчайший путь в лабиринте"], ["course schedule", "можно ли пройти курсы с зависимостями"], ["clone graph", "скопировать граф"], ["rotting oranges", "за сколько минут всё сгниёт (BFS от многих источников)"]] },
+  { code: "A13", k: "algo", title: "Кучи и top-k", sub: "~10 задач",
+    about: "Куча (heapq) — структура, которая за O(log n) выдаёт минимальный элемент. Сигналы: «k наибольших», «k-й по величине», «слить k отсортированных списков». Вместо сортировки всего (n log n) держим кучу размера k (n log k).",
+    concepts: [["heapq", "Минимальная куча на обычном list: heappush, heappop; для максимума кладут −x."], ["Куча размера k", "Если в куче больше k элементов — выбрасываем минимальный; останутся k наибольших."]],
+    tasks: [["kth largest", "k-й наибольший"], ["top k frequent", "k самых частых"], ["merge k sorted lists", "слить k списков"], ["k closest points", "k ближайших точек"], ["task scheduler", "минимальное время выполнения задач с паузами"]] },
+  { code: "A14", k: "algo", title: "Динамическое программирование", sub: "~10 задач",
+    about: "Если задача разбивается на подзадачи, которые повторяются, запоминаем их ответы и не считаем заново. Сигналы: «сколько способов», «минимальная стоимость», «можно ли собрать». Схема: что хранит dp[i], как dp[i] получается из прошлых, с чего начать. На собесах AQA бывает редко и в простом виде, поэтому берём базу.",
+    concepts: [["Состояние и переход", "Лестница: dp[i] = dp[i − 1] + dp[i − 2] — на ступень i приходят с i − 1 или i − 2."], ["Сверху вниз или снизу вверх", "Рекурсия с @lru_cache или цикл с массивом dp — одно и то же разными способами."]],
+    tasks: [["climbing stairs", "сколько способов подняться"], ["house robber", "максимум без соседних"], ["coin change", "минимум монет для суммы"], ["longest increasing subsequence", "самая длинная возрастающая подпоследовательность"], ["unique paths", "число путей по сетке"], ["edit distance ★", "минимум правок, чтобы превратить одну строку в другую"]] },
+  { code: "Q5", k: "aqa", title: "Лайвкодинг автотестов", sub: "6 задач",
+    about: "Формат, который всё чаще дают вместо алгоритмов: «вот документация эндпоинта / вот функция — напиши чек-лист и автотесты». Проверяют тест-дизайн (что проверить), качество кода тестов и умение объяснить выбор. Сюда же ревью: найти ошибки в чужом тесте.",
+    tasks: [["Тесты на эндпоинт", "чек-лист и pytest-тесты по документации: позитив, валидация, авторизация, границы"], ["Тесты на функцию", "классы эквивалентности, граничные значения, parametrize"], ["Ревью чужого теста", "найти ошибки: нет проверок, зависимость от порядка, sleep, общие данные"], ["Рефакторинг плохого теста", "вынести данные, фикстуры, понятные проверки"], ["Замокать внешний сервис", "проверить, как код обрабатывает 500 и таймаут"], ["Пагинация и сортировка", "проверить, что страницы не теряют и не дублируют записи"]] },
+  { code: "X5", k: "exam", title: "Контрольная недели 5", sub: "Суббота", about: "Проверка всего ядра и тест-дизайна.",
+    fmt: ["25 вопросов по всему ядру", "Задача Q5 за 30 минут с объяснением тест-дизайна", "2 задачи из A12–A14 за 45 минут"] },
+]},
+{ week: "Неделя 6", title: "Финиш", goal: "Собес как он есть: на время, вслух, частично на английском. Добираем слабые места.", items: [
+  { code: "M1", k: "exam", title: "Мок-собесы × 4", sub: "Через день",
+    about: "Полная репетиция интервью. Я играю интервьюера: задаю вопросы, даю задачи, перебиваю уточнениями, как на настоящем собесе. После — подробный разбор, где ты запнулся и что сказать лучше.",
+    fmt: ["20 минут: вопросы по ядру Python", "40 минут: алгоритмическая задача уровня Medium", "25 минут: задача AQA (утилита, тесты или ревью)", "Разбор: ошибки, формулировки, что повторить", "2 мока из 4 на английском"] },
+  { code: "M2", k: "exam", title: "Добор слабых мест", sub: "Между моками",
+    about: "Точечная работа по итогам моков и контрольных.",
+    fmt: ["Все вопросы, где ответ был неполным", "Задачи, решённые с подсказкой 3, заново по памяти", "Скоростной раунд: 10 задач Easy по 10 минут", "40 ключевых вопросов собеса на английском"] },
+  { code: "X6", k: "exam", title: "Итоговый экзамен", sub: "Сравниваем с диагностикой X0",
+    about: "Финальная проверка в формате собеса. Результат сравниваем с X0 по каждой теме.",
+    fmt: ["60 вопросов вразброс, 20 из них на английском", "30 фрагментов «что выведет»", "2 задачи Medium за 45 минут и 1 задача AQA за 25 минут"] },
+]},
 ];
 
 const KEY = "py-course-done-v1";
@@ -378,23 +535,22 @@ let done = {};
 try { done = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { done = {}; }
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} };
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-const ul = (arr, cls = "") => `<ul class="${cls}">${arr.map(t => `<li>${esc(t)}</li>`).join("")}</ul>`;
-
-document.getElementById("formats").innerHTML = FORMATS.map(([k, t, d, w]) =>
-  `<div class="format k-${k}"><b>${esc(t)}</b><span>${esc(d)}</span><span class="mono muted">${esc(w)}</span></div>`).join("");
 
 function lessonHTML(it) {
   const parts = [];
-  if (it.topics) parts.push(`<div><h4>${it.k === "exam" ? "Формат" : "Темы"}</h4>${ul(it.topics)}</div>`);
-  if (it.tasks) parts.push(`<div><h4>Задачи (примеры)</h4><div class="chips">${it.tasks.map(t => `<span class="chip">${esc(t)}</span>`).join("")}</div></div>`);
-  if (it.q) parts.push(`<div><h4>Вопросы собеса</h4>${ul(it.q, "qs")}</div>`);
-  const id = "cb-" + it.code;
+  if (it.about) parts.push(`<p class="about">${esc(it.about)}</p>`);
+  if (it.links) parts.push(`<div class="links">${it.links.map(([t, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)} ↗</a>`).join("")}</div>`);
+  if (it.concepts) parts.push(`<div><h4>Ключевые понятия</h4><div class="concepts">${it.concepts.map(([t, d, c]) =>
+    `<div class="concept"><b>${esc(t)}</b><span>${esc(d)}</span>${c ? `<pre>${esc(c)}</pre>` : ""}</div>`).join("")}</div></div>`);
+  if (it.fmt) parts.push(`<div><h4>Формат</h4><ul>${it.fmt.map(t => `<li>${esc(t)}</li>`).join("")}</ul></div>`);
+  if (it.q) parts.push(`<div><h4>Вопросы собеса</h4><ul>${it.q.map(t => `<li>${esc(t)}</li>`).join("")}</ul></div>`);
+  if (it.tasks) parts.push(`<div><h4>Задачи</h4><div class="tasks">${it.tasks.map(([t, d]) => `<div><b>${esc(t)}</b><span>${esc(d)}</span></div>`).join("")}</div></div>`);
   return `<details class="lesson k-${it.k}${done[it.code] ? " is-done" : ""}" data-code="${it.code}">
     <summary>
-      <input type="checkbox" id="${id}" aria-label="Урок ${it.code} пройден" ${done[it.code] ? "checked" : ""}>
+      <input type="checkbox" aria-label="Урок ${it.code} пройден" ${done[it.code] ? "checked" : ""}>
       <span class="code">${it.code}</span>
       <span class="title">${esc(it.title)}<small>${esc(it.sub || "")}</small></span>
-      <span class="chev" aria-hidden="true">▶</span>
+      ${it.status ? `<span class="pill">${esc(it.status)}</span>` : "<span></span>"}
     </summary>
     <div class="body">${parts.join("")}</div>
   </details>`;
@@ -422,20 +578,15 @@ function refresh() {
   });
 }
 
-plan.addEventListener("click", e => { if (e.target.matches("input[type=checkbox]")) e.stopPropagation(); }, true);
-plan.addEventListener("change", e => {
-  if (!e.target.matches("input[type=checkbox]")) return;
-  const det = e.target.closest("details");
-  const code = det.dataset.code;
-  if (e.target.checked) done[code] = true; else delete done[code];
-  det.classList.toggle("is-done", e.target.checked);
-  save(); refresh();
-});
-// клик по чекбоксу не должен раскрывать карточку
+// клик по галочке отмечает урок и не раскрывает карточку
 plan.querySelectorAll("summary input").forEach(cb => cb.addEventListener("click", e => {
   e.preventDefault();
-  cb.checked = !cb.checked;
-  cb.dispatchEvent(new Event("change", { bubbles: true }));
+  const det = cb.closest("details");
+  const on = !done[det.dataset.code];
+  if (on) done[det.dataset.code] = true; else delete done[det.dataset.code];
+  setTimeout(() => { cb.checked = on; }, 0);
+  det.classList.toggle("is-done", on);
+  save(); refresh();
 }));
 document.getElementById("openAll").onclick = () => plan.querySelectorAll("details").forEach(d => d.open = true);
 document.getElementById("closeAll").onclick = () => plan.querySelectorAll("details").forEach(d => d.open = false);
