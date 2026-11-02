@@ -1,0 +1,33 @@
+# Переиспользуемый workflow: собирает allure-results всех джоб прогона в один HTML-отчёт.
+# Вызывается из regression, nightly и manual:  uses: ./.github/workflows/allure-report.yml
+name: allure-report
+
+on:
+  workflow_call:
+
+jobs:
+  allure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: allure-*           # все артефакты allure-* этого прогона
+          path: artifacts
+      - name: Слить результаты в одну папку
+        run: |
+          mkdir -p allure-results
+          find artifacts -type f -not -path '*/test-results/*' -exec cp {} allure-results/ \;
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Сгенерировать отчёт
+        run: |
+          curl -sL https://github.com/allure-framework/allure2/releases/download/2.29.0/allure-2.29.0.tgz | tar -xz
+          ./allure-2.29.0/bin/allure generate allure-results --clean -o allure-report
+      - uses: actions/upload-artifact@v4
+        with:
+          name: report-allure-html    # скачать → открыть index.html (или: allure open allure-report)
+          path: allure-report/
+          retention-days: 14

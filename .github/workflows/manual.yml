@@ -1,0 +1,63 @@
+# Ручной запуск: Actions → manual → Run workflow. Выбираешь, что и в каком браузере прогнать.
+# Удобно, чтобы перепроверить падение или прогнать один слой на ветке до PR.
+name: manual
+
+on:
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: "Набор: smoke — ключевые сценарии, regression — всё"
+        type: choice
+        options: [smoke, regression]
+        default: smoke
+      layer:
+        description: "Слой тестов"
+        type: choice
+        options: [all, unit, api, ui, e2e]
+        default: all
+      browser:
+        description: "Браузер для ui и e2e"
+        type: choice
+        options: [chromium, firefox, webkit]
+        default: chromium
+
+env:
+  ENV: dev
+  BASE_URL: http://localhost:8080
+  PYTEST_ADDOPTS: -o addopts=-ra
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+        with:
+          browser: ${{ inputs.browser }}
+      - name: Собрать выражение -m
+        id: marker
+        run: |
+          layer="${{ inputs.layer }}"
+          [ "$layer" = all ] && expr="(unit or api or ui or e2e)" || expr="$layer"
+          [ "${{ inputs.suite }}" = smoke ] && expr="$expr and smoke"
+          echo "expr=$expr" >> "$GITHUB_OUTPUT"
+      - run: >
+          uv run pytest -m "${{ steps.marker.outputs.expr }}" -v --browser ${{ inputs.browser }}
+          --tracing retain-on-failure --screenshot only-on-failure --alluredir=allure-results
+      - name: Логи стенда при падении
+        if: failure()
+        run: docker compose logs exchange
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: allure-manual
+          path: |
+            allure-results/
+            test-results/
+          retention-days: 7
+
+  report:
+    needs: tests
+    if: always()
+    uses: ./.github/workflows/allure-report.yml

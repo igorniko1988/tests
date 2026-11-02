@@ -1,0 +1,60 @@
+# Уровень 3 — ночью: всё, что долго для PR. UI и e2e в трёх браузерах + общий Allure-отчёт.
+# Ловит то, что не видно в Chromium: вёрстку и поведение Firefox и WebKit (Safari).
+name: nightly
+
+on:
+  schedule:
+    - cron: "0 2 * * *"               # 02:00 UTC каждую ночь
+  workflow_dispatch:
+
+env:
+  ENV: dev
+  BASE_URL: http://localhost:8080
+  PYTEST_ADDOPTS: -o addopts=-ra
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: uv run pytest -m "unit or api" -v --alluredir=allure-results
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: allure-nightly-api
+          path: allure-results/
+          retention-days: 14
+
+  ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false                # упал Firefox — Chromium и WebKit всё равно доезжают
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+        with:
+          browser: ${{ matrix.browser }}
+      - run: >
+          uv run pytest -m "ui or e2e" -v --browser ${{ matrix.browser }}
+          --tracing retain-on-failure --screenshot only-on-failure --alluredir=allure-results
+      - name: Логи стенда при падении
+        if: failure()
+        run: docker compose logs exchange
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: allure-nightly-${{ matrix.browser }}
+          path: |
+            allure-results/
+            test-results/
+          retention-days: 14
+
+  report:
+    needs: [api, ui]
+    if: always()
+    uses: ./.github/workflows/allure-report.yml
