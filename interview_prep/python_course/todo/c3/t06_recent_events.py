@@ -31,17 +31,31 @@ Run (from interview_prep/python_course/todo): uv run pytest tests/test_c3.py -k 
 
 class RecentEvents:
     def __init__(self, n: int) -> None:
-        raise NotImplementedError
+        self.n = n
+        self.events = []
+
+    @property
+    def n(self) -> int:
+        return self._n
+
+    @n.setter
+    def n(self, value: int) -> None:
+        if value < 1:
+            raise ValueError('n should be more than zero')
+        else:
+            self._n = value
 
     def add(self, event) -> None:
-        raise NotImplementedError
+        self.events.append(event)
+        if len(self.events) > self.n:
+            self.events.pop()
 
     def items(self) -> list:
-        raise NotImplementedError
+        return self.events
 
     @property
     def total(self) -> int:
-        raise NotImplementedError
+        return sum(self.events)
 
     def __len__(self) -> int:
-        raise NotImplementedError
+        return len(self.events)

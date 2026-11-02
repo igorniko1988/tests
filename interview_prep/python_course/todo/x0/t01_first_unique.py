@@ -17,13 +17,14 @@ Follow-up questions:
 Run (from interview_prep/python_course/todo): uv run pytest tests/test_x0.py -k t01
 """
 
+from collections import Counter
 
 def first_unique(s: str) -> int:
     for index, char in enumerate(s):
         if s.count(char) == 1:
-            return index
+            return index, char
     return -1
 
-print( first_unique("") )
+print(  first_unique("loveleetcode"))
 
 

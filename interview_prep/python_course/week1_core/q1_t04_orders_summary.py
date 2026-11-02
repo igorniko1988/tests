@@ -27,6 +27,25 @@ Run (from interview_prep/python_course/week1_core): uv run pytest -k q1_t04
 Теория: interview_prep/python_course/c02_numbers_strings/s03_decimal/THEORY.md.
 """
 
+from decimal import Decimal
+
 
 def orders_summary(orders: list[dict]) -> dict[str, dict]:
-    raise NotImplementedError
+    result = {}
+
+    for order in orders:
+        if not order['status'] in result:
+            result[order['status']] = {'count':0 ,'total':0}
+        result[order['status']]['count'] +=1
+        result[order['status']]['total'] += Decimal(order['amount'])
+
+
+    return result
+
+x = [
+        {"id": 1, "status": "NEW", "amount": "10.10"},
+        {"id": 2, "status": "FILLED", "amount": "5"},
+        {"id": 3, "status": "NEW", "amount": "0.2"},
+    ]
+
+print(orders_summary(x))

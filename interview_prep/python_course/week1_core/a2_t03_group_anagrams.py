@@ -1,4 +1,4 @@
-"""A2 t03 (required, ~15 min). Group anagrams.
+ """A2 t03 (required, ~15 min). Group anagrams.
 
 Given a list of words, group the anagrams together.
 

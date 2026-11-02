@@ -24,4 +24,14 @@ Run (from interview_prep/python_course/week1_core): uv run pytest -k a1_t02
 
 
 def move_zeros(nums: list[int]) -> None:
-    raise NotImplementedError
+    write = 0
+    for i in range(len(nums)):
+        if nums[i] != 0:
+            nums[write], nums[i] = nums[i], nums[write]
+            write +=1
+    return nums
+
+
+nums = [0, 1, 0, 3, 12]
+
+print(move_zeros(nums))

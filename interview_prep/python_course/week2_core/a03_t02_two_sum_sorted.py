@@ -22,4 +22,10 @@ Run (from interview_prep/python_course/week2_core): uv run pytest -k a03_t02
 
 
 def two_sum_sorted(nums: list[int], target: int) -> list[int]:
-    raise NotImplementedError
+    for i in range(len(nums)):
+        for j in range(len(nums)):
+            if i < j and nums[i] + nums[j] == target:
+                return i,j
+
+
+two_sum_sorted([1, 3, 4, 6, 9], 7)

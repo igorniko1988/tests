@@ -21,7 +21,7 @@ Run (from interview_prep/python_course/todo): uv run python a0/t01_estimate.py
 from collections import Counter
 
 
-# f1
+# f1 O(n)
 def total(prices):
     result = 0
     for p in prices:
@@ -29,7 +29,7 @@ def total(prices):
     return result
 
 
-# f2
+# f2 O(n2)
 def has_dup(items):
     seen = []
     for x in items:
@@ -39,7 +39,7 @@ def has_dup(items):
     return False
 
 
-# f3
+# f3 O(n)
 def first_unique(s):
     for i, ch in enumerate(s):
         if s.count(ch) == 1:
@@ -47,7 +47,7 @@ def first_unique(s):
     return -1
 
 
-# f4
+# f4 O(n2)
 def first_unique_fast(s):
     counts = Counter(s)
     for i, ch in enumerate(s):
@@ -56,7 +56,7 @@ def first_unique_fast(s):
     return -1
 
 
-# f5
+# f5 O(n)
 def drain(queue):
     total = 0
     while queue:
@@ -64,7 +64,7 @@ def drain(queue):
     return total
 
 
-# f6
+# f6 O(log n)
 def contains(sorted_nums, target):
     lo, hi = 0, len(sorted_nums) - 1
     while lo <= hi:
@@ -78,13 +78,13 @@ def contains(sorted_nums, target):
     return False
 
 
-# f7
+# f7 O(n)
 def spread(nums):
     ordered = sorted(nums)
     return ordered[-1] - ordered[0]
 
 
-# f8
+# f8 O(n2)
 def squares(nums):
     result = []
     for x in nums:
@@ -92,7 +92,7 @@ def squares(nums):
     return result
 
 
-# f9
+# f9 O(n)
 def rec_sum(nums):
     if not nums:
         return 0

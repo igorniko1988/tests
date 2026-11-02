@@ -29,32 +29,30 @@ Run (from interview_prep/python_course/week3_core): uv run pytest -k c08_t01
 Теория: THEORY.md в этой папке, раздел 2–3.
 """
 
+import requests
 
 class BaseClient:
-    def __init__(self, base_url: str, session) -> None:
-        self.base_url = base_url
-        self.session = session
+    def __init__(self, base_url: str, timeout: float = 10.00):
+        self.base_url: str = base_url
+        self.timeout = timeout
+        self.session = requests.Session
+        self.session.headers.update({'Accept':'application/jsob'})
 
-    def headers(self) -> dict:
-        return {"Accept": "application/json"}
+    def request(self, method, path, **kwargs):
+        kwargs.setdefault('timeout', self.timeout)
+        return self.session.request(method, self.base_url + path, **kwargs)
 
-    def request(self, method: str, path: str, **kwargs):
-        # self.headers() — полиморфизм: у наследника вызовется его версия
-        return self.session.request(method, self.base_url + path, headers=self.headers(), **kwargs)
+    def get(self, path: str, **kwargs) -> requests.Response:
+        return self.request('GET', path, **kwargs)
+
+    def post(self, path: str, **kwargs) -> requests.Response:
+        return self.request('POST', path, **kwargs)
 
 
-class UsersClient(BaseClient):
-    def __init__(self, base_url: str, session, token: str) -> None:
-        super().__init__(base_url, session)  # родитель сохранит base_url и session
-        self.token = token
-
-    def headers(self) -> dict:
-        result = super().headers()  # заголовки родителя + свой
-        result["Authorization"] = f"Bearer {self.token}"
-        return result
+class UserService(BaseClient):
 
     def get_user(self, user_id):
-        return self.request("GET", f"/users/{user_id}")
+        self.get(f'/users/{user_id}')
 
-    def create_user(self, **fields):
-        return self.request("POST", "/users", json=fields)
+    def create_user(self, name, password):
+        self.post('/user',json={'name':name, 'password':password)

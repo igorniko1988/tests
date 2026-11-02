@@ -1,16 +1,17 @@
-events = [
-    {"sensor_id": "cam-1",   "seq": 1, "ts": "2026-10-28T10:00:00.000"},
-    {"sensor_id": "cam-1",   "seq": 2, "ts": "2026-10-28T10:00:00.100"},
-    {"sensor_id": "cam-1",   "seq": 5, "ts": "2026-10-28T10:00:00.400"},
-    {"sensor_id": "radar-7", "seq": 1, "ts": "2026-10-28T10:00:00.050"},
-    {"sensor_id": "radar-7", "seq": 1, "ts": "2026-10-28T10:00:00.051"},
-]
+class Order:
+    def __init__(self, symbol, qty, price):
+        self.symbol, self.qty, self.price = symbol, qty, price
+        self.__name = 'niko'
 
-filtered_events = {}
+    @classmethod
+    def from_json(cls):            # альтернативный конструктор
+        return 1
 
-for event in events:
-    for k,v in event.items():
-        if k == 'seq':
-            filtered_events[k] = filtered_events.get(k, 0 ) + 1
+    @staticmethod
+    def is_valid_symbol():         # обычная функция, «живущая» в классе
+        return 'asdsadas'
 
-print(filtered_events)
+print(Order.from_json())
+print(Order.is_valid_symbol())
+order = Order('asdsad',22,213)
+print(order._Order__name)

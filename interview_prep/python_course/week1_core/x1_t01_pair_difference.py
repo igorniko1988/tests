@@ -23,4 +23,10 @@ Run (from interview_prep/python_course/week1_core): uv run pytest -k x1_t01
 
 
 def pair_difference(nums: list[int], k: int) -> bool:
-    raise NotImplementedError
+    for i in range(len(nums)):
+        for j in range(len(nums)):
+            if i != j and nums[i] - nums[j] == k:
+                return True
+    return False
+
+print(pair_difference([1, 2, 1], 0))

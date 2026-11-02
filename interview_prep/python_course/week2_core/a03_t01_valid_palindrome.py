@@ -23,4 +23,7 @@ Run (from interview_prep/python_course/week2_core): uv run pytest -k a03_t01
 
 
 def valid_palindrome(s: str) -> bool:
-    raise NotImplementedError
+    cleaned = ''.join([ch.lower() for ch in s if ch.isalnum()])
+    return cleaned == cleaned[::-1]
+
+print(valid_palindrome("A man, a plan, a canal: Panama") )

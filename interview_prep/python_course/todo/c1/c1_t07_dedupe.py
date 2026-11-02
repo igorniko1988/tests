@@ -29,4 +29,11 @@ Run (from interview_prep/python_course/todo): uv run pytest -k c1_t07
 
 
 def dedupe(items: list) -> list:
-    raise NotImplementedError
+    result = []
+    for item in items:
+            if item not in result:
+                result.append(item)
+    return result
+
+
+print(    dedupe([{"a": 1, "b": 2}, {"b": 2, "a": 1}]))

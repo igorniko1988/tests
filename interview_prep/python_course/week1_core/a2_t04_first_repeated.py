@@ -19,4 +19,10 @@ Run (from interview_prep/python_course/week1_core): uv run pytest -k a2_t04
 
 
 def first_repeated(s: str) -> str | None:
-    raise NotImplementedError
+    for index,ch in enumerate(s):
+        if s.count(ch) > 1:
+            print(s.index(ch,index,len(s)))
+
+print(first_repeated("abcba"))
+
+

@@ -14,9 +14,9 @@ Example:
     sort_records([
         {"name": "bob", "amount": "9.50"},
         {"name": "Ann", "amount": "100.00"},
-        {"name": "cat", "amount": None},
+        {"name": "cat", "amount": 23},
         {"name": "dan", "amount": "100"},
-        {"name": "Abe", "amount": None},
+        {"name": "Abe", "amount": 1},
     ])
     -> names in order: Ann, dan, bob, Abe, cat
        ("100.00" and "100" are equal as Decimal, so they are ordered by name)
@@ -29,6 +29,18 @@ Run (from interview_prep/python_course/todo): uv run pytest tests/test_c3.py -k 
 Теория: interview_prep/python_course/c03_collections/s07_sorting/THEORY.md, раздел 7.
 """
 
+from decimal import Decimal
 
 def sort_records(records: list[dict]) -> list[dict]:
-    raise NotImplementedError
+    sorted_list = sorted(records,key=lambda k: Decimal(k['amount'] if k['amount'] is not None else 0),reverse=True)
+    return sorted_list
+
+rec = [
+    {"name": "bob", "amount": "9.50"},
+    {"name": "Ann", "amount": "100.00"},
+    {"name": "cat", "amount": None},      # ← было None, у тебя 23
+    {"name": "dan", "amount": "100"},
+    {"name": "Abe", "amount": None},      # ← было None, у тебя 1
+]
+
+print(sort_records(rec))

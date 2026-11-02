@@ -28,4 +28,23 @@ Run (from interview_prep/python_course/todo): uv run pytest tests/test_x0.py -k 
 
 
 def error_report(lines: list[str], top: int = 3) -> list[tuple[str, int]]:
-    raise NotImplementedError
+    result = {}
+
+    for item in lines:
+        parts = item.split(maxsplit=3)
+        if 'ERROR' in parts:
+            result[parts[2]] = result.get(parts[2],0) + 1
+            print(parts)
+
+    return list(result.items())
+
+
+x = ([
+        "2026-10-28T10:00:00 ERROR orders Timeout to price-feed",
+        "2026-10-28T10:00:01 INFO orders Created 42",
+        "2026-10-28T10:00:02 ERROR auth Bad token",
+        "2026-10-28T10:00:03 ERROR orders Insufficient funds",
+        "",
+    ])
+
+print(error_report(x))

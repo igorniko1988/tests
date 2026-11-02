@@ -27,4 +27,4 @@ def is_anagram(a: str, b: str) -> bool:
 
     return count(a) == count(b)
 
-print(is_anagram("aab", "abb") )
+print(is_anagram("listen", "silent") )

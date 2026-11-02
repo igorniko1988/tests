@@ -31,6 +31,13 @@ Run (from interview_prep/python_course/todo): uv run pytest -k c2_t01
 
 from decimal import Decimal
 
+from decimal import Decimal
 
 def order_total(lines: list[tuple[str, int]], fee_percent: str = "0") -> str:
-    raise NotImplementedError
+    price, quantity = lines[0][0], lines[0][1]
+
+    if not Decimal(fee_percent):
+        return Decimal(price) * Decimal(quantity)
+    return Decimal(price) * Decimal(quantity) + Decimal(fee_percent)
+
+print(order_total([("19.99", 3)], "0.1"))

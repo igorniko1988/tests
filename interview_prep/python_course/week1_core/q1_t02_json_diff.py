@@ -26,6 +26,19 @@ Run (from interview_prep/python_course/week1_core): uv run pytest -k q1_t02
 Теория: interview_prep/python_course/c03_collections/s04_set/THEORY.md и s08_autotests/THEORY.md.
 """
 
+from collections import defaultdict
 
 def json_diff(old: dict, new: dict) -> dict[str, list[str]]:
-    raise NotImplementedError
+    result = defaultdict(list)
+    for key in new.keys():
+        if key not in old:
+            result['added'].append(key)
+    for key in old.keys():
+        if key not in new:
+            result['removed'].append(key)
+    common_keys = set(old) & set(new)
+    print(common_keys)
+    return result
+
+
+print(json_diff({"id": 1, "status": "NEW", "price": "10.00"},{"id": 1, "status": "FILLED", "qty": 2}))
