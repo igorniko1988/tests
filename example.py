@@ -1,17 +1,32 @@
-class Order:
-    def __init__(self, symbol, qty, price):
-        self.symbol, self.qty, self.price = symbol, qty, price
-        self.__name = 'niko'
+import requests
 
-    @classmethod
-    def from_json(cls):            # альтернативный конструктор
-        return 1
+class BaseClient:
+    def __init__(self, base_url: str, timeout: float =10.0):
+        self.base_url = base_url
+        self.timeout = timeout
+        self.session = requests.Session()
+        self.session.headers.update({'Accept':'application/json'})
 
-    @staticmethod
-    def is_valid_symbol():         # обычная функция, «живущая» в классе
-        return 'asdsadas'
+    def request(self, method, path, **kwargs):
+        kwargs.setdefault('timeout', self.timeout)
+        return self.session.request(method, f'{self.base_url}{path}',**kwargs)
 
-print(Order.from_json())
-print(Order.is_valid_symbol())
-order = Order('asdsad',22,213)
-print(order._Order__name)
+    def get(self, path, **kwargs):
+        return self.request('GET', path, **kwargs)
+
+    def post(self, path, **kwargs):
+        return self.request('POST', path, **kwargs)
+
+    def set_token(self, token):
+        self.session.headers.update({'Authorizatio': f'Bearer {token}'})
+
+    def clear_token(self):
+        self.session.headers.pop('Authorization')
+
+class AuthClient(BaseClient):
+
+    def register(self, email, password):
+        return self.post('/users', json={'email': email, 'password': password})
+
+    def authorize(self, email, password):
+        return self.post('/user/auth', json={'email': email, 'password': password})
